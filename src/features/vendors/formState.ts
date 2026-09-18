@@ -2,7 +2,6 @@ import type {
   AttachmentKind,
   FairRef,
   PipelineStatus,
-  PriceTier,
   ProcessedImage,
   Rating,
   SocialLink,
@@ -35,6 +34,12 @@ export interface ContactDraft {
   cardPhotoKey?: string
 }
 
+export interface TierDraft {
+  key: string
+  minQty: string
+  unitPrice: string
+}
+
 export interface ProductDraft {
   key: string
   name: string
@@ -45,7 +50,7 @@ export interface ProductDraft {
   moq: string
   leadTimeDays: string
   paymentTerms: string
-  tiers: PriceTier[]
+  tiers: TierDraft[]
   photoKeys: string[]
 }
 
@@ -111,6 +116,10 @@ export function createEmptyProduct(key: string): ProductDraft {
     tiers: [],
     photoKeys: [],
   }
+}
+
+export function createEmptyTier(key: string): TierDraft {
+  return { key, minQty: '', unitPrice: '' }
 }
 
 export function createEmptyDraft(): VendorDraft {

@@ -52,7 +52,11 @@ function bundleToDraft(bundle: VendorBundle): VendorDraft {
       moq: product.moq !== undefined ? String(product.moq) : '',
       leadTimeDays: product.leadTimeDays !== undefined ? String(product.leadTimeDays) : '',
       paymentTerms: product.paymentTerms ?? '',
-      tiers: product.tiers,
+      tiers: product.tiers.map((tier) => ({
+        key: crypto.randomUUID(),
+        minQty: String(tier.minQty),
+        unitPrice: String(tier.unitPrice),
+      })),
       photoKeys: product.photoAttachmentIds,
     })),
     photos: attachments.map((attachment) => ({

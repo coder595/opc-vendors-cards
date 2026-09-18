@@ -23,5 +23,25 @@ export async function updateSettings(patch: Partial<Omit<Settings, 'id'>>): Prom
   if (safe.theme !== undefined && !['light', 'dark', 'system'].includes(safe.theme)) {
     throw new Error('Unknown theme')
   }
+  if (safe.rates !== undefined) {
+    for (const [code, rate] of Object.entries(safe.rates)) {
+      if (
+        !/^[A-Z]{3}$/.test(code) ||
+        typeof rate !== 'number' ||
+        !Number.isFinite(rate) ||
+        rate <= 0
+      ) {
+        throw new Error('Rates must be positive numbers keyed by 3-letter currency codes')
+      }
+    }
+  }
+  // Rates are expressed per base; changing the base alone invalidates them.
+  if (
+    safe.baseCurrency !== undefined &&
+    safe.baseCurrency !== current.baseCurrency &&
+    safe.rates === undefined
+  ) {
+    safe.rates = {}
+  }
   await db.settings.put({ ...current, ...safe, id: 'app' })
 }

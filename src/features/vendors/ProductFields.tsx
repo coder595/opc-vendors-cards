@@ -1,18 +1,66 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import { TextField } from '../../components/Field'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
-import { newKey, type ProductDraft } from './formState'
+import { getSettings } from '../../data/settings'
+import type { Settings } from '../../db/models'
+import {
+  COMMON_CURRENCIES,
+  convertToBase,
+  formatMoney,
+  normalizeCurrencyCode,
+} from '../../lib/currency'
+import { createEmptyTier, newKey, type ProductDraft, type TierDraft } from './formState'
 import { useVendorForm } from './VendorFormContext'
 
-function ProductRow({ product }: { product: ProductDraft }) {
+function BasePreview({
+  amount,
+  currency,
+  base,
+  rates,
+}: {
+  amount: string
+  currency: string
+  base: string
+  rates: Settings['rates']
+}) {
+  const trimmed = amount.trim()
+  const code = normalizeCurrencyCode(currency)
+  if (!code || code === base || trimmed === '') return null
+  const value = Number(trimmed)
+  if (!Number.isFinite(value) || value < 0) return null
+  const converted = convertToBase(value, code, base, rates)
+  if (converted === null) return <span className="no-rate">no {base} rate</span>
+  return <span className="tier-row__base mono">≈ {formatMoney(converted, base)}</span>
+}
+
+function ProductRow({
+  product,
+  settings,
+}: {
+  product: ProductDraft
+  settings: Settings | undefined
+}) {
   const { draft, dispatch, errors, removePhoto } = useVendorForm()
   const id = `product-${product.key}`
   const update = (patch: Partial<ProductDraft>) =>
     dispatch({ type: 'updateProduct', key: product.key, patch })
   const photos = draft.photos.filter((photo) => product.photoKeys.includes(photo.key))
 
+  const updateTier = (tierKey: string, patch: Partial<TierDraft>) =>
+    update({
+      tiers: product.tiers.map((tier) => (tier.key === tierKey ? { ...tier, ...patch } : tier)),
+    })
+  const removeTier = (tierKey: string) =>
+    update({ tiers: product.tiers.filter((tier) => tier.key !== tierKey) })
+  const addTier = () => {
+    const key = newKey()
+    update({ tiers: [...product.tiers, createEmptyTier(key)] })
+    window.setTimeout(() => document.getElementById(`${id}-tier-${key}-qty`)?.focus(), 0)
+  }
+
   return (
     <fieldset className="subform">
-      <legend>Product</legend>
+      <legend>{product.name.trim() || 'Product'}</legend>
       <TextField
         id={`${id}-name`}
         label="Product name"
@@ -30,6 +78,7 @@ function ProductRow({ product }: { product: ProductDraft }) {
         id={`${id}-currency`}
         label="Currency"
         hint="Three-letter code, for example CNY"
+        list="currency-codes"
         mono
         value={product.currency}
         onChange={(currency) => update({ currency: currency.toUpperCase() })}
@@ -44,6 +93,14 @@ function ProductRow({ product }: { product: ProductDraft }) {
         onChange={(price) => update({ price })}
         error={errors[`products.${product.key}.price`]}
       />
+      {settings ? (
+        <BasePreview
+          amount={product.price}
+          currency={product.currency}
+          base={settings.baseCurrency}
+          rates={settings.rates}
+        />
+      ) : null}
       <TextField
         id={`${id}-moq`}
         label="MOQ"
@@ -68,6 +125,52 @@ function ProductRow({ product }: { product: ProductDraft }) {
         value={product.paymentTerms}
         onChange={(paymentTerms) => update({ paymentTerms })}
       />
+
+      <div className="tier-editor">
+        <p className="field__hint">MOQ breaks — unit price at a quantity</p>
+        {product.tiers.map((tier) => (
+          <div key={tier.key} className="tier-row">
+            <TextField
+              id={`${id}-tier-${tier.key}-qty`}
+              label="From quantity"
+              inputMode="numeric"
+              mono
+              value={tier.minQty}
+              onChange={(minQty) => updateTier(tier.key, { minQty })}
+              error={errors[`products.${product.key}.tiers.${tier.key}.minQty`]}
+            />
+            <TextField
+              id={`${id}-tier-${tier.key}-price`}
+              label="Unit price"
+              inputMode="decimal"
+              mono
+              value={tier.unitPrice}
+              onChange={(unitPrice) => updateTier(tier.key, { unitPrice })}
+              error={errors[`products.${product.key}.tiers.${tier.key}.unitPrice`]}
+            />
+            {settings ? (
+              <BasePreview
+                amount={tier.unitPrice}
+                currency={product.currency}
+                base={settings.baseCurrency}
+                rates={settings.rates}
+              />
+            ) : null}
+            <button
+              type="button"
+              className="btn btn--ghost"
+              aria-label={`Remove break from ${tier.minQty || 'new'}`}
+              onClick={() => removeTier(tier.key)}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <button type="button" className="btn btn--ghost" onClick={addTier}>
+          Add break
+        </button>
+      </div>
+
       <div className="photo-row">
         <PhotoPicker
           id={`${id}-photo`}
@@ -93,6 +196,7 @@ function ProductRow({ product }: { product: ProductDraft }) {
 
 export function ProductFields() {
   const { draft, dispatch } = useVendorForm()
+  const settings = useLiveQuery(() => getSettings(), [])
 
   const addProduct = () => {
     const key = newKey()
@@ -104,11 +208,16 @@ export function ProductFields() {
     <section className="form-section" aria-labelledby="products-heading">
       <h2 id="products-heading">Products</h2>
       {draft.products.map((product) => (
-        <ProductRow key={product.key} product={product} />
+        <ProductRow key={product.key} product={product} settings={settings} />
       ))}
       <button type="button" className="btn btn--ghost" onClick={addProduct}>
         Add product
       </button>
+      <datalist id="currency-codes">
+        {COMMON_CURRENCIES.map((code) => (
+          <option key={code} value={code} />
+        ))}
+      </datalist>
     </section>
   )
 }

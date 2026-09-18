@@ -34,6 +34,7 @@ export const LIMITS = {
   maxAttachmentB64Length: Math.ceil((20 * 1024 * 1024 * 4) / 3) + 4,
   maxStringLength: 10_000,
   maxNestedItems: 200,
+  maxMoney: 1e12,
 } as const
 
 export interface RejectedRecord {
@@ -141,6 +142,10 @@ function nonNegativeNumber(value: unknown): number | undefined {
   return isNonNegative(value) ? value : undefined
 }
 
+function moneyNumber(value: unknown): number | undefined {
+  return isNonNegative(value) && value <= LIMITS.maxMoney ? value : undefined
+}
+
 function parseSocials(value: unknown): SocialLink[] | null {
   if (value === undefined) return []
   if (!Array.isArray(value) || value.length > LIMITS.maxNestedItems) return null
@@ -195,10 +200,16 @@ function parseTiers(value: unknown): PriceTier[] | null {
   if (!Array.isArray(value) || value.length > LIMITS.maxNestedItems) return null
   const out: PriceTier[] = []
   for (const item of value) {
-    if (!isObject(item) || !isNonNegative(item.minQty) || !isNonNegative(item.unitPrice)) {
+    if (
+      !isObject(item) ||
+      !isFiniteNumber(item.minQty) ||
+      !Number.isInteger(item.minQty) ||
+      item.minQty < 1 ||
+      moneyNumber(item.unitPrice) === undefined
+    ) {
       return null
     }
-    out.push({ minQty: item.minQty, unitPrice: item.unitPrice })
+    out.push({ minQty: item.minQty, unitPrice: item.unitPrice as number })
   }
   return out
 }
@@ -208,7 +219,7 @@ function parseRates(value: unknown): Record<string, number> | null {
   if (!isObject(value)) return null
   const out: Record<string, number> = {}
   for (const [key, rate] of Object.entries(value)) {
-    if (!CURRENCY_RE.test(key) || !isFiniteNumber(rate)) return null
+    if (!CURRENCY_RE.test(key) || !isFiniteNumber(rate) || rate <= 0) return null
     out[key] = rate
   }
   return out
@@ -280,6 +291,8 @@ function parseProduct(value: unknown): Product | null {
   const photoAttachmentIds = parseIdArray(value.photoAttachmentIds)
   if (photoAttachmentIds === null) return null
   if (!isPositive(value.createdAt)) return null
+  const price = value.price === undefined ? undefined : moneyNumber(value.price)
+  if (value.price !== undefined && price === undefined) return null
   return {
     id: value.id,
     vendorId: value.vendorId,
@@ -287,7 +300,7 @@ function parseProduct(value: unknown): Product | null {
     description: optString(value.description),
     unit: optString(value.unit),
     currency,
-    price: nonNegativeNumber(value.price),
+    price,
     moq: nonNegativeNumber(value.moq),
     tiers,
     leadTimeDays: nonNegativeNumber(value.leadTimeDays),

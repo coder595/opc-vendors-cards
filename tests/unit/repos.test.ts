@@ -71,6 +71,19 @@ describe('repositories', () => {
     await expect(updateSettings({ theme: 'neon' as never })).rejects.toThrow()
   })
 
+  it('rejects invalid rates but stores valid ones', async () => {
+    await expect(updateSettings({ rates: { CNY: 0 } })).rejects.toThrow()
+    await expect(updateSettings({ rates: { cny: 7.2 } })).rejects.toThrow()
+    await updateSettings({ rates: { CNY: 7.2 } })
+    expect((await getSettings()).rates).toEqual({ CNY: 7.2 })
+  })
+
+  it('clears rates when the base currency changes without new rates', async () => {
+    await updateSettings({ rates: { CNY: 7.2 } })
+    await updateSettings({ baseCurrency: 'CNY' })
+    expect((await getSettings()).rates).toEqual({})
+  })
+
   it('throws when updating a missing vendor', async () => {
     await expect(updateVendor('missing', { name: 'X' })).rejects.toThrow()
   })

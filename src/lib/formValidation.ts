@@ -1,6 +1,7 @@
 import type { VendorBundleDraft } from '../data/bundle'
 import { LIMITS } from './validate'
 import type { VendorDraft } from '../features/vendors/formState'
+import type { PriceTier } from '../db/models'
 
 export interface DraftValidation {
   errors: Record<string, string>
@@ -19,11 +20,12 @@ function parseOptionalNumber(
   path: string,
   label: string,
   errors: Record<string, string>,
+  max = Number.POSITIVE_INFINITY,
 ): number | undefined {
   const trimmed = raw.trim()
   if (trimmed === '') return undefined
   const value = Number(trimmed)
-  if (!Number.isFinite(value) || value < 0) {
+  if (!Number.isFinite(value) || value < 0 || value > max) {
     errors[path] = label
     return undefined
   }
@@ -52,7 +54,9 @@ function productHasContent(product: VendorDraft['products'][number]): boolean {
       product.moq,
       product.leadTimeDays,
       product.paymentTerms,
-    ].some((value) => (value ?? '').toString().trim() !== '') || product.photoKeys.length > 0
+    ].some((value) => (value ?? '').toString().trim() !== '') ||
+    product.photoKeys.length > 0 ||
+    product.tiers.some((tier) => tier.minQty.trim() !== '' || tier.unitPrice.trim() !== '')
   )
 }
 
@@ -90,6 +94,34 @@ export function validateVendorDraft(draft: VendorDraft): DraftValidation {
       else errors[`products.${product.key}.currency`] = 'Use a 3-letter code'
     }
 
+    const tiers: PriceTier[] = []
+    const seenQty = new Set<number>()
+    for (const tier of product.tiers) {
+      const minQtyRaw = tier.minQty.trim()
+      const unitPriceRaw = tier.unitPrice.trim()
+      if (minQtyRaw === '' && unitPriceRaw === '') continue
+      const minQty = Number(minQtyRaw)
+      const unitPrice = Number(unitPriceRaw)
+      const path = `products.${product.key}.tiers.${tier.key}`
+      const qtyValid = Number.isInteger(minQty) && minQty >= 1
+      const priceValid =
+        unitPriceRaw !== '' &&
+        Number.isFinite(unitPrice) &&
+        unitPrice >= 0 &&
+        unitPrice <= LIMITS.maxMoney
+      if (!qtyValid) errors[`${path}.minQty`] = 'Enter a whole quantity of 1 or more'
+      if (!priceValid) errors[`${path}.unitPrice`] = 'Enter a valid price'
+      if (qtyValid && seenQty.has(minQty)) {
+        errors[`${path}.minQty`] = 'Duplicate quantity'
+        continue
+      }
+      if (qtyValid && priceValid) {
+        seenQty.add(minQty)
+        tiers.push({ minQty, unitPrice })
+      }
+    }
+    tiers.sort((a, b) => a.minQty - b.minQty)
+
     return {
       key: product.key,
       name: productName,
@@ -101,6 +133,7 @@ export function validateVendorDraft(draft: VendorDraft): DraftValidation {
         `products.${product.key}.price`,
         'Enter a valid price',
         errors,
+        LIMITS.maxMoney,
       ),
       moq: parseOptionalNumber(
         product.moq,
@@ -115,7 +148,7 @@ export function validateVendorDraft(draft: VendorDraft): DraftValidation {
         errors,
       ),
       paymentTerms: blankToUndefined(product.paymentTerms),
-      tiers: product.tiers,
+      tiers,
       photoKeys: product.photoKeys,
     }
   })

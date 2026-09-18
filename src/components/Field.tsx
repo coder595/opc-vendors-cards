@@ -45,6 +45,7 @@ interface TextFieldProps extends FieldBaseProps {
   inputMode?: 'text' | 'decimal' | 'numeric' | 'email' | 'url' | 'tel'
   placeholder?: string
   autoComplete?: string
+  list?: string
   mono?: boolean
 }
 
@@ -58,6 +59,7 @@ export function TextField({
   inputMode,
   placeholder,
   autoComplete,
+  list,
   mono,
 }: TextFieldProps) {
   return (
@@ -70,6 +72,7 @@ export function TextField({
         value={value}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        list={list}
         maxLength={LIMITS.maxStringLength}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(id, hint, error)}

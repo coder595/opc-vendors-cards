@@ -598,3 +598,71 @@
     grid-template-columns: 2fr 1fr 1fr 1fr;
   }
 }
+
+/* Currency, tiers and rates */
+.tier-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.tier-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.tier-row .field {
+  flex: 1 1 120px;
+}
+
+.tier-row__base,
+.rate-preview {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.no-rate {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  font-style: italic;
+}
+
+.tier-list {
+  list-style: none;
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.tier-list__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.settings {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.rate-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.rate-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+
+.rate-row .field {
+  flex: 1 1 140px;
+}

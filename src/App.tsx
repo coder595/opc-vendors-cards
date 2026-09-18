@@ -1,3 +1,4 @@
+import { SettingsScreen } from './features/settings/SettingsScreen'
 import { VendorDetail } from './features/vendors/VendorDetail'
 import { VendorForm } from './features/vendors/VendorForm'
 import { VendorList } from './features/vendors/VendorList'
@@ -40,7 +41,6 @@ const NAV: NavItem[] = [
 const PLACEHOLDERS: Record<string, string> = {
   people: 'People',
   trip: 'Trip',
-  me: 'Me',
 }
 
 function NavIcon({ paths }: { paths: string[] }) {
@@ -112,6 +112,8 @@ export default function App() {
           <VendorDetail key={route.id} vendorId={route.id} />
         ) : route.name === 'vendors' ? (
           <VendorList />
+        ) : route.name === 'me' ? (
+          <SettingsScreen />
         ) : (
           <section className="empty" aria-labelledby="placeholder-title">
             <h1 id="placeholder-title" className="empty__title">

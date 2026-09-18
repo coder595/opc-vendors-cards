@@ -9,7 +9,9 @@ import type { Attachment, Certification, Contact, Note, Product, Vendor } from '
 import { db } from '../../db/schema'
 import { addCert, deleteCert } from '../../data/certs'
 import { addNote, deleteNote, updateNote } from '../../data/notes'
+import { getSettings } from '../../data/settings'
 import { updateVendor } from '../../data/vendors'
+import { convertToBase, formatMoney } from '../../lib/currency'
 import { safeHref } from '../../lib/safeHref'
 import { LIMITS } from '../../lib/validate'
 import { useMutation } from './useMutation'
@@ -196,33 +198,82 @@ function ProductsPanel({
   products: Product[]
   attachments: Attachment[]
 }) {
+  const settings = useLiveQuery(() => getSettings(), [])
   if (products.length === 0) return <p className="panel__empty">No products yet.</p>
   return (
     <ul className="record-list">
-      {products.map((product) => (
-        <li key={product.id} className="record">
-          <div className="record__body">
-            <p className="record__title">{product.name}</p>
-            <p className="record__meta">
-              <span className="mono">
-                {product.currency} {product.price ?? '—'}
-              </span>
-              {product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
-              {product.leadTimeDays !== undefined ? (
-                <span className="mono">{product.leadTimeDays}d</span>
+      {products.map((product) => {
+        const converted =
+          settings && product.price !== undefined
+            ? convertToBase(product.price, product.currency, settings.baseCurrency, settings.rates)
+            : null
+        return (
+          <li key={product.id} className="record">
+            <div className="record__body">
+              <p className="record__title">{product.name}</p>
+              <p className="record__meta">
+                <span className="mono">
+                  {product.price !== undefined ? formatMoney(product.price, product.currency) : '—'}
+                </span>
+                {settings &&
+                product.price !== undefined &&
+                product.currency !== settings.baseCurrency ? (
+                  converted === null ? (
+                    <span className="no-rate">no {settings.baseCurrency} rate</span>
+                  ) : (
+                    <span className="mono" data-testid="base-price">
+                      ≈ {formatMoney(converted, settings.baseCurrency)}
+                    </span>
+                  )
+                ) : null}
+                {product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
+                {product.leadTimeDays !== undefined ? (
+                  <span className="mono">{product.leadTimeDays} days</span>
+                ) : null}
+              </p>
+              {product.tiers.length > 0 ? (
+                <ul className="tier-list">
+                  {product.tiers.map((tier, index) => {
+                    const tierBase = settings
+                      ? convertToBase(
+                          tier.unitPrice,
+                          product.currency,
+                          settings.baseCurrency,
+                          settings.rates,
+                        )
+                      : null
+                    return (
+                      <li key={`${product.id}-${index}`} className="tier-list__row">
+                        <span className="mono">{tier.minQty}+</span>
+                        <span className="mono">
+                          {formatMoney(tier.unitPrice, product.currency)}
+                        </span>
+                        {settings && product.currency !== settings.baseCurrency ? (
+                          tierBase === null ? (
+                            <span className="no-rate">no {settings.baseCurrency} rate</span>
+                          ) : (
+                            <span className="mono">
+                              ≈ {formatMoney(tierBase, settings.baseCurrency)}
+                            </span>
+                          )
+                        ) : null}
+                      </li>
+                    )
+                  })}
+                </ul>
               ) : null}
-            </p>
-            {product.paymentTerms ? <p className="record__sub">{product.paymentTerms}</p> : null}
-          </div>
-          <div className="record__photos">
-            {attachments
-              .filter((item) => product.photoAttachmentIds.includes(item.id))
-              .map((item) => (
-                <BlobImage key={item.id} blob={item.thumb} alt={product.name} size={56} />
-              ))}
-          </div>
-        </li>
-      ))}
+              {product.paymentTerms ? <p className="record__sub">{product.paymentTerms}</p> : null}
+            </div>
+            <div className="record__photos">
+              {attachments
+                .filter((item) => product.photoAttachmentIds.includes(item.id))
+                .map((item) => (
+                  <BlobImage key={item.id} blob={item.thumb} alt={product.name} size={56} />
+                ))}
+            </div>
+          </li>
+        )
+      })}
     </ul>
   )
 }

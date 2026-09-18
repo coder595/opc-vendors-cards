@@ -118,11 +118,68 @@ describe('validateVendorDraft', () => {
     draft.name = 'ACME'
     draft.socials = [{ platform: 'wechat', value: 'acme_wx' }]
     draft.tags = ['tools']
-    draft.products = [product({ name: 'Drill', tiers: [{ minQty: 10, unitPrice: 9 }] })]
+    draft.products = [
+      product({
+        name: 'Drill',
+        tiers: [{ key: 't1', minQty: '10', unitPrice: '9' }],
+      }),
+    ]
     const result = validateVendorDraft(draft)
     expect(result.bundle?.vendor.socials).toEqual([{ platform: 'wechat', value: 'acme_wx' }])
     expect(result.bundle?.vendor.tags).toEqual(['tools'])
     expect(result.bundle?.products[0]?.tiers).toEqual([{ minQty: 10, unitPrice: 9 }])
+  })
+
+  it('sorts tiers by quantity and drops blank rows', () => {
+    const draft = createEmptyDraft()
+    draft.name = 'ACME'
+    draft.products = [
+      product({
+        name: 'Drill',
+        tiers: [
+          { key: 't2', minQty: '100', unitPrice: '8' },
+          { key: 'blank', minQty: '', unitPrice: '' },
+          { key: 't1', minQty: '10', unitPrice: '9' },
+        ],
+      }),
+    ]
+    const result = validateVendorDraft(draft)
+    expect(result.bundle?.products[0]?.tiers).toEqual([
+      { minQty: 10, unitPrice: 9 },
+      { minQty: 100, unitPrice: 8 },
+    ])
+  })
+
+  it('rejects invalid or duplicate tier quantities', () => {
+    const draft = createEmptyDraft()
+    draft.name = 'ACME'
+    draft.products = [
+      product({
+        name: 'Drill',
+        tiers: [
+          { key: 't1', minQty: '0', unitPrice: '9' },
+          { key: 't2', minQty: '10', unitPrice: '5' },
+          { key: 't3', minQty: '10', unitPrice: '5' },
+          { key: 't4', minQty: '20', unitPrice: '-1' },
+        ],
+      }),
+    ]
+    const result = validateVendorDraft(draft)
+    expect(result.errors['products.p1.tiers.t1.minQty']).toBeDefined()
+    expect(result.errors['products.p1.tiers.t3.minQty']).toBeDefined()
+    expect(result.errors['products.p1.tiers.t4.unitPrice']).toBeDefined()
+    expect(result.bundle).toBeNull()
+  })
+
+  it('rejects a tier with a quantity but no price', () => {
+    const draft = createEmptyDraft()
+    draft.name = 'ACME'
+    draft.products = [
+      product({ name: 'Drill', tiers: [{ key: 't1', minQty: '10', unitPrice: '' }] }),
+    ]
+    const result = validateVendorDraft(draft)
+    expect(result.errors['products.p1.tiers.t1.unitPrice']).toBeDefined()
+    expect(result.bundle).toBeNull()
   })
 
   it('excludes photos that are no longer referenced by a contact or product', () => {
