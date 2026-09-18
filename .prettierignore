@@ -1,0 +1,13 @@
+node_modules
+dist
+dev-dist
+coverage
+playwright-report
+test-results
+package-lock.json
+public/icons
+
+# Source-of-truth docs and generated harness assets are not formatted by Prettier
+*.md
+.opencode
+scripts

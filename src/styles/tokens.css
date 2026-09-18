@@ -1,0 +1,54 @@
+:root {
+  /* Base */
+  --paper: #ffffff;
+  --surface: #f5f6f8;
+  --surface-2: #eceef1;
+  --ink: #17171a; /* neutral near-black, not warm-tinted */
+  --ink-2: #3c4149;
+  --muted: #6b7280;
+  --line: #d9dce1;
+
+  /* Brand — Canton vermilion */
+  --brand: #d8321f;
+  --brand-ink: #ffffff;
+  --brand-soft: #fbe7e3;
+
+  /* Status */
+  --jade: #0e7c66; /* verified / ordered */
+  --amber: #b7791f; /* quoted / pending */
+  --slate: #5b6470; /* lead / archived */
+
+  /* Type */
+  --font-display: 'Archivo', 'Noto Sans SC', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', 'Noto Sans SC', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Scale (1.25 minor third) */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.563rem;
+  --fs-2xl: 1.953rem;
+  --fs-3xl: 2.441rem;
+
+  /* Space (4px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* Shape — restrained, intentional radius */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 14px;
+  --r-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(17, 17, 26, 0.06);
+  --shadow-2: 0 6px 20px rgba(17, 17, 26, 0.1);
+
+  --tap: 44px; /* minimum touch target */
+}
