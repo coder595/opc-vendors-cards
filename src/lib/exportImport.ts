@@ -225,7 +225,10 @@ export function dedupeKey(vendor: Pick<Vendor, 'name' | 'website'>): string {
 }
 
 export function exportFilename(date = new Date()): string {
-  return `opc-vendors-${date.toISOString().slice(0, 10)}.ocv.json.gz`
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `opc-vendors-${year}-${month}-${day}.ocv.json.gz`
 }
 
 async function bulkPutChunked<T>(table: Table<T, string>, rows: T[]): Promise<void> {
@@ -240,7 +243,7 @@ async function upsertChildren<T extends { id: string }>(
   rows: T[],
   policy: MergePolicy,
   summary: ImportSummary,
-): Promise<void> {
+): Promise<number> {
   const existingIds = new Set((await table.toCollection().primaryKeys()).map(String))
   const toPut: T[] = []
   for (const row of rows) {
@@ -256,6 +259,7 @@ async function upsertChildren<T extends { id: string }>(
     }
   }
   await bulkPutChunked(table, toPut)
+  return toPut.length
 }
 
 export async function importData(
@@ -350,10 +354,11 @@ export async function importData(
     [db.vendors, db.contacts, db.products, db.notes, db.certs, db.attachments, db.settings],
     async () => {
       const existingVendors = await db.vendors.toArray()
-      const byId = new Map(existingVendors.map((vendor): [string, Vendor] => [vendor.id, vendor]))
+      const liveVendors = existingVendors.filter((vendor) => vendor.deletedAt === undefined)
+      const byId = new Map(liveVendors.map((vendor): [string, Vendor] => [vendor.id, vendor]))
       const byKey = new Map<string, Vendor>()
-      for (const vendor of existingVendors) {
-        if (vendor.deletedAt === undefined) byKey.set(dedupeKey(vendor), vendor)
+      for (const vendor of liveVendors) {
+        byKey.set(dedupeKey(vendor), vendor)
       }
 
       const vendorIdMap = new Map<string, string>()
@@ -410,8 +415,13 @@ export async function importData(
       await upsertChildren(db.products, reparent('products', data.products), policy, summary)
       await upsertChildren(db.notes, reparent('notes', data.notes), policy, summary)
       await upsertChildren(db.certs, reparent('certs', data.certs), policy, summary)
-      await upsertChildren(db.attachments, reparent('attachments', attachments), policy, summary)
-      summary.importedAttachments = attachments.length
+      const upsertedAttachments = await upsertChildren(
+        db.attachments,
+        reparent('attachments', attachments),
+        policy,
+        summary,
+      )
+      summary.importedAttachments = upsertedAttachments
       if (options.importSettings && data.settings) {
         await db.settings.put(data.settings)
       }
@@ -419,4 +429,56 @@ export async function importData(
   )
 
   return summary
+}
+
+export interface ImportPreview {
+  counts: {
+    vendors: number
+    contacts: number
+    products: number
+    notes: number
+    certs: number
+    attachments: number
+  }
+  matchedVendors: number
+  newVendors: number
+}
+
+/** Read-only pass so the UI can preview conflicts before writing anything. */
+export async function previewImport(envelope: ExportEnvelope): Promise<ImportPreview> {
+  const existing = await db.vendors.toArray()
+  const byId = new Set(existing.map((vendor) => vendor.id))
+  const byKey = new Set(
+    existing.filter((vendor) => vendor.deletedAt === undefined).map((vendor) => dedupeKey(vendor)),
+  )
+  let matchedVendors = 0
+  const claimedIds = new Set<string>()
+  const claimedKeys = new Set<string>()
+  for (const vendor of envelope.data.vendors) {
+    const key = dedupeKey(vendor)
+    if (
+      byId.has(vendor.id) ||
+      byKey.has(key) ||
+      claimedIds.has(vendor.id) ||
+      claimedKeys.has(key)
+    ) {
+      matchedVendors += 1
+    } else {
+      claimedIds.add(vendor.id)
+      claimedKeys.add(key)
+    }
+  }
+  const { data } = envelope
+  return {
+    counts: {
+      vendors: data.vendors.length,
+      contacts: data.contacts.length,
+      products: data.products.length,
+      notes: data.notes.length,
+      certs: data.certs.length,
+      attachments: data.attachments.length,
+    },
+    matchedVendors,
+    newVendors: data.vendors.length - matchedVendors,
+  }
 }

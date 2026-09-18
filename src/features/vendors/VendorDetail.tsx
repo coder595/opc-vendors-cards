@@ -562,9 +562,14 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
               {mutationError}
             </p>
           ) : null}
-          <a className="btn btn--ghost" href={`#/vendors/${vendor.id}/edit`}>
-            Edit
-          </a>
+          <div className="detail__actions">
+            <a className="btn btn--ghost" href={`#/vendors/${vendor.id}/edit`}>
+              Edit
+            </a>
+            <a className="btn btn--ghost" href={`#/vendors/${vendor.id}/share`}>
+              Share
+            </a>
+          </div>
         </div>
       </header>
 

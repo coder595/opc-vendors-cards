@@ -1,0 +1,41 @@
+@media print {
+  @page {
+    size: A6 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .appbar,
+  .nav,
+  .skip-link,
+  .detail__back,
+  .share__actions,
+  .form-summary,
+  .form-section,
+  .sharing > h1 {
+    display: none !important;
+  }
+
+  .app {
+    min-height: 0;
+  }
+
+  .main {
+    padding: 0;
+  }
+
+  .share-card {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+}

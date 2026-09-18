@@ -1,4 +1,6 @@
 import { SettingsScreen } from './features/settings/SettingsScreen'
+import { ShareScreen } from './features/sharing/ShareScreen'
+import { VendorShare } from './features/sharing/VendorShare'
 import { VendorDetail } from './features/vendors/VendorDetail'
 import { VendorForm } from './features/vendors/VendorForm'
 import { VendorList } from './features/vendors/VendorList'
@@ -62,13 +64,14 @@ function NavIcon({ paths }: { paths: string[] }) {
     </svg>
   )
 }
-
 function activeNav(route: Route): string {
-  return route.name === 'vendorNew' || route.name === 'vendorDetail' || route.name === 'vendorEdit'
+  return route.name === 'vendorNew' ||
+    route.name === 'vendorDetail' ||
+    route.name === 'vendorEdit' ||
+    route.name === 'vendorShare'
     ? 'vendors'
     : route.name
 }
-
 export default function App() {
   const route = useHashRoute()
   const active = activeNav(route)
@@ -110,6 +113,10 @@ export default function App() {
           <VendorForm key={`${route.id}-edit`} mode="edit" vendorId={route.id} />
         ) : route.name === 'vendorDetail' ? (
           <VendorDetail key={route.id} vendorId={route.id} />
+        ) : route.name === 'vendorShare' ? (
+          <VendorShare key={route.id} vendorId={route.id} />
+        ) : route.name === 'share' ? (
+          <ShareScreen />
         ) : route.name === 'vendors' ? (
           <VendorList />
         ) : route.name === 'me' ? (

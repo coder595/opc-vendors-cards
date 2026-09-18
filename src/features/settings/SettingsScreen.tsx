@@ -161,6 +161,13 @@ function SettingsForm({ initial }: { initial: Settings }) {
           </p>
         ) : null}
       </form>
+      <section className="form-section" aria-labelledby="sharing-link-heading">
+        <h2 id="sharing-link-heading">Sharing &amp; data</h2>
+        <p className="field__hint">Export, import, CSV and single-vendor QR sharing.</p>
+        <a className="btn btn--ghost" href="#/share">
+          Open sharing &amp; data
+        </a>
+      </section>
       <datalist id="currency-codes">
         {COMMON_CURRENCIES.map((code) => (
           <option key={code} value={code} />

@@ -666,3 +666,72 @@
 .rate-row .field {
   flex: 1 1 140px;
 }
+
+/* Sharing */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.sharing {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.sharing h1 {
+  font-size: var(--fs-2xl);
+  margin-bottom: var(--sp-4);
+}
+
+.import-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.share-card {
+  max-width: 480px;
+  margin: 0 auto var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.share-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+.share-card__head h1 {
+  font-size: var(--fs-xl);
+}
+
+.share-card__qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.share-card__qr canvas {
+  width: 200px;
+  height: 200px;
+}
+
+.share-card__footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+
+.detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

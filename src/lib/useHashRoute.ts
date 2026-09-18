@@ -5,6 +5,8 @@ export type Route =
   | { name: 'vendorNew' }
   | { name: 'vendorDetail'; id: string }
   | { name: 'vendorEdit'; id: string }
+  | { name: 'vendorShare'; id: string }
+  | { name: 'share' }
   | { name: 'people' }
   | { name: 'trip' }
   | { name: 'me' }
@@ -40,8 +42,11 @@ export function parseHash(hash: string): Route {
       if (!segment) return { name: 'vendors' }
       if (segment === 'new') return { name: 'vendorNew' }
       if (parts[2] === 'edit') return { name: 'vendorEdit', id: segment }
+      if (parts[2] === 'share') return { name: 'vendorShare', id: segment }
       return { name: 'vendorDetail', id: segment }
     }
+    case 'share':
+      return { name: 'share' }
     case 'people':
       return { name: 'people' }
     case 'trip':

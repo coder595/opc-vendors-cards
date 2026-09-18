@@ -10,6 +10,7 @@ import { updateSettings } from '../../src/data/settings'
 import { createVendor } from '../../src/data/vendors'
 import {
   buildExportBlob,
+  exportFilename,
   importData,
   isGzip,
   parseImport,
@@ -155,5 +156,9 @@ describe('export / import round-trip', () => {
     expect(parsed.ok).toBe(true)
     if (!parsed.ok) return
     expect(parsed.envelope.data.attachments).toHaveLength(1)
+  })
+
+  it('uses a local date for the export filename', () => {
+    expect(exportFilename(new Date(2026, 9, 5))).toBe('opc-vendors-2026-10-05.ocv.json.gz')
   })
 })

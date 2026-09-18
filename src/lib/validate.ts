@@ -30,7 +30,7 @@ export const LIMITS = {
   maxCerts: 200_000,
   maxAttachments: 100_000,
   maxAttachmentBytes: 20 * 1024 * 1024,
-  maxTotalAttachmentBytes: 1_500 * 1024 * 1024,
+  maxTotalAttachmentBytes: 300 * 1024 * 1024,
   maxAttachmentB64Length: Math.ceil((20 * 1024 * 1024 * 4) / 3) + 4,
   maxStringLength: 10_000,
   maxNestedItems: 200,

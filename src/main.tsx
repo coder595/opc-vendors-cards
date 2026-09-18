@@ -4,6 +4,7 @@ import App from './App'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/forms.css'
+import './styles/print.css'
 
 const rootEl = document.getElementById('root')
 if (!rootEl) {
