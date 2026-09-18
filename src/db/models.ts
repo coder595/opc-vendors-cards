@@ -181,6 +181,9 @@ export interface NewAttachment {
   bytes: number
 }
 
+/** A resized image before it is associated with a vendor/kind. */
+export type ProcessedImage = Omit<NewAttachment, 'kind'>
+
 /* Import / export shapes. Attachments are inlined as base64 with explicit MIME. */
 
 export interface ExportedAttachment extends Omit<Attachment, 'blob' | 'thumb'> {

@@ -1,12 +1,11 @@
 import { render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from '../../src/App'
 
 describe('app shell', () => {
-  it('renders the empty state', () => {
+  it('renders the empty state', async () => {
     render(<App />)
-    expect(screen.getByRole('heading', { name: /no vendors yet/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /no vendors yet/i })).toBeInTheDocument()
   })
 
   it('renders the four primary destinations', () => {
@@ -24,10 +23,10 @@ describe('app shell', () => {
     expect(screen.getByRole('link', { name: /vendors/i })).not.toHaveAttribute('aria-current')
   })
 
-  it('announces the placeholder when capture is requested', async () => {
-    const user = userEvent.setup()
+  it('renders the capture form at #/vendors/new', () => {
+    window.location.hash = '#/vendors/new'
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
     render(<App />)
-    await user.click(screen.getAllByRole('button', { name: /add vendor/i })[0]!)
-    expect(screen.getByRole('status')).toHaveTextContent(/next phase/i)
+    expect(screen.getByRole('heading', { name: /new vendor/i })).toBeInTheDocument()
   })
 })

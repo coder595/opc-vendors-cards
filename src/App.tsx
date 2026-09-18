@@ -1,17 +1,19 @@
-import { useState } from 'react'
-import { EmptyState } from './components/EmptyState'
-import { useHashRoute } from './lib/useHashRoute'
+import { VendorForm } from './features/vendors/VendorForm'
+import { VendorList } from './features/vendors/VendorList'
+import { useHashRoute, type Route } from './lib/useHashRoute'
 
 type NavItem = {
   href: string
+  name: string
   label: string
   paths: string[]
 }
 
 const NAV: NavItem[] = [
-  { href: '#/vendors', label: 'Vendors', paths: ['M4 6h16M4 12h16M4 18h10'] },
+  { href: '#/vendors', name: 'vendors', label: 'Vendors', paths: ['M4 6h16M4 12h16M4 18h10'] },
   {
     href: '#/people',
+    name: 'people',
     label: 'People',
     paths: [
       'M8 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7z',
@@ -22,15 +24,23 @@ const NAV: NavItem[] = [
   },
   {
     href: '#/trip',
+    name: 'trip',
     label: 'Trip',
     paths: ['M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z', 'M12 11a2 2 0 100-4 2 2 0 000 4z'],
   },
   {
     href: '#/me',
+    name: 'me',
     label: 'Me',
     paths: ['M12 12a4 4 0 100-8 4 4 0 000 8z', 'M5 20a7 7 0 0114 0'],
   },
 ]
+
+const PLACEHOLDERS: Record<string, string> = {
+  people: 'People',
+  trip: 'Trip',
+  me: 'Me',
+}
 
 function NavIcon({ paths }: { paths: string[] }) {
   return (
@@ -52,18 +62,14 @@ function NavIcon({ paths }: { paths: string[] }) {
   )
 }
 
-const CAPTURE_PENDING = 'Vendor capture arrives in the next phase.'
+function activeNav(route: Route): string {
+  return route.name === 'vendorNew' || route.name === 'vendorDetail' ? 'vendors' : route.name
+}
 
 export default function App() {
   const route = useHashRoute()
-  const [notice, setNotice] = useState('')
-
-  // Clear then re-set so repeated activations still announce (React bails on
-  // an identical state value).
-  const announceCapturePending = () => {
-    setNotice('')
-    queueMicrotask(() => setNotice(CAPTURE_PENDING))
-  }
+  const active = activeNav(route)
+  const onForm = route.name === 'vendorNew' || route.name === 'vendorDetail'
 
   return (
     <div className="app">
@@ -75,9 +81,11 @@ export default function App() {
           OPC Vendors Cards
           <span className="wordmark__sub">Trade fair notebook</span>
         </div>
-        <button type="button" className="btn btn--primary" onClick={announceCapturePending}>
-          Add vendor
-        </button>
+        {onForm ? null : (
+          <a className="btn btn--primary" href="#/vendors/new">
+            Add vendor
+          </a>
+        )}
       </header>
       <nav className="nav" aria-label="Primary">
         {NAV.map((item) => (
@@ -85,7 +93,7 @@ export default function App() {
             key={item.href}
             className="nav__item"
             href={item.href}
-            aria-current={route === item.href ? 'page' : undefined}
+            aria-current={active === item.name ? 'page' : undefined}
           >
             <NavIcon paths={item.paths} />
             {item.label}
@@ -93,10 +101,20 @@ export default function App() {
         ))}
       </nav>
       <main id="main" className="main">
-        <EmptyState onAdd={announceCapturePending} />
-        <p className="status-line" role="status" aria-live="polite">
-          {notice}
-        </p>
+        {route.name === 'vendorNew' ? (
+          <VendorForm key="new" mode="new" />
+        ) : route.name === 'vendorDetail' ? (
+          <VendorForm key={route.id} mode="edit" vendorId={route.id} />
+        ) : route.name === 'vendors' ? (
+          <VendorList />
+        ) : (
+          <section className="empty" aria-labelledby="placeholder-title">
+            <h1 id="placeholder-title" className="empty__title">
+              {PLACEHOLDERS[route.name] ?? 'Coming soon'}
+            </h1>
+            <p className="empty__body">This section arrives in a later phase.</p>
+          </section>
+        )}
       </main>
     </div>
   )

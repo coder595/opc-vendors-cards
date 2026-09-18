@@ -1,8 +1,4 @@
-type EmptyStateProps = {
-  onAdd: () => void
-}
-
-export function EmptyState({ onAdd }: EmptyStateProps) {
+export function EmptyState() {
   return (
     <section className="empty" aria-labelledby="empty-title">
       <svg className="empty__seal" viewBox="0 0 96 96" fill="none" aria-hidden="true">
@@ -25,9 +21,9 @@ export function EmptyState({ onAdd }: EmptyStateProps) {
         the rest later.
       </p>
       <div className="empty__actions">
-        <button type="button" className="btn btn--primary" onClick={onAdd}>
+        <a className="btn btn--primary" href="#/vendors/new">
           Add vendor
-        </button>
+        </a>
       </div>
       <p className="empty__note">Works offline. Everything stays on this device.</p>
     </section>
