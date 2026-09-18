@@ -25,4 +25,12 @@ describe('safeHref', () => {
     expect(safeHref(undefined)).toBeUndefined()
     expect(safeHref('   ')).toBeUndefined()
   })
+
+  it('treats host:port as a host, not a scheme', () => {
+    expect(safeHref('acme.com:8080/path')).toBe('https://acme.com:8080/path')
+  })
+
+  it('rejects URLs with embedded credentials', () => {
+    expect(safeHref('https://user:pass@evil.example')).toBeUndefined()
+  })
 })

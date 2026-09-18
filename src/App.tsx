@@ -1,3 +1,4 @@
+import { VendorDetail } from './features/vendors/VendorDetail'
 import { VendorForm } from './features/vendors/VendorForm'
 import { VendorList } from './features/vendors/VendorList'
 import { useHashRoute, type Route } from './lib/useHashRoute'
@@ -63,13 +64,15 @@ function NavIcon({ paths }: { paths: string[] }) {
 }
 
 function activeNav(route: Route): string {
-  return route.name === 'vendorNew' || route.name === 'vendorDetail' ? 'vendors' : route.name
+  return route.name === 'vendorNew' || route.name === 'vendorDetail' || route.name === 'vendorEdit'
+    ? 'vendors'
+    : route.name
 }
 
 export default function App() {
   const route = useHashRoute()
   const active = activeNav(route)
-  const onForm = route.name === 'vendorNew' || route.name === 'vendorDetail'
+  const onForm = route.name === 'vendorNew' || route.name === 'vendorEdit'
 
   return (
     <div className="app">
@@ -103,8 +106,10 @@ export default function App() {
       <main id="main" className="main">
         {route.name === 'vendorNew' ? (
           <VendorForm key="new" mode="new" />
+        ) : route.name === 'vendorEdit' ? (
+          <VendorForm key={`${route.id}-edit`} mode="edit" vendorId={route.id} />
         ) : route.name === 'vendorDetail' ? (
-          <VendorForm key={route.id} mode="edit" vendorId={route.id} />
+          <VendorDetail key={route.id} vendorId={route.id} />
         ) : route.name === 'vendors' ? (
           <VendorList />
         ) : (

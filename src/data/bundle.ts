@@ -147,6 +147,6 @@ export async function getVendorBundle(id: string): Promise<VendorBundle | undefi
     db.products.where('vendorId').equals(id).toArray(),
     db.attachments.where('vendorId').equals(id).toArray(),
   ])
-  if (!vendor) return undefined
+  if (!vendor || vendor.deletedAt !== undefined) return undefined
   return { vendor, contacts, products, attachments }
 }

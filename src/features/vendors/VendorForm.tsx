@@ -3,33 +3,13 @@ import type { FormEvent } from 'react'
 import { RatingField, SelectField, TextAreaField, TextField } from '../../components/Field'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { getVendorBundle, saveVendorBundle, type VendorBundle } from '../../data/bundle'
-import type { PipelineStatus, VendorType } from '../../db/models'
+import { STATUSES, VENDOR_TYPES } from '../../db/labels'
 import { validateVendorDraft } from '../../lib/formValidation'
 import { requestPersistentStorage } from '../../lib/storage'
 import { ContactFields } from './ContactFields'
 import { ProductFields } from './ProductFields'
 import { createEmptyDraft, vendorReducer, type PhotoDraft, type VendorDraft } from './formState'
 import { VendorFormContext } from './VendorFormContext'
-
-const VENDOR_TYPES: { value: VendorType; label: string }[] = [
-  { value: 'supplier', label: 'Supplier' },
-  { value: 'factory', label: 'Factory' },
-  { value: 'dealer', label: 'Dealer' },
-  { value: 'agent', label: 'Agent' },
-  { value: 'trader', label: 'Trader' },
-  { value: 'other', label: 'Other' },
-]
-
-const STATUSES: { value: PipelineStatus; label: string }[] = [
-  { value: 'lead', label: 'Lead' },
-  { value: 'contacted', label: 'Contacted' },
-  { value: 'met', label: 'Met' },
-  { value: 'quoted', label: 'Quoted' },
-  { value: 'sample', label: 'Sample' },
-  { value: 'negotiating', label: 'Negotiating' },
-  { value: 'ordered', label: 'Ordered' },
-  { value: 'archived', label: 'Archived' },
-]
 
 function bundleToDraft(bundle: VendorBundle): VendorDraft {
   const { vendor, contacts, products, attachments } = bundle
@@ -153,7 +133,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
     try {
       await saveVendorBundle(result.bundle, mode === 'edit' ? vendorId : undefined)
       void requestPersistentStorage()
-      window.location.hash = '#/vendors'
+      window.location.hash = mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'
     } catch {
       setSummary('The vendor could not be saved. Try again.')
     } finally {
@@ -188,7 +168,10 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         <div className="form-head">
           <h1>{mode === 'edit' ? 'Edit vendor' : 'New vendor'}</h1>
           <div className="form-head__actions">
-            <a className="btn btn--ghost" href="#/vendors">
+            <a
+              className="btn btn--ghost"
+              href={mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'}
+            >
               Cancel
             </a>
             <button type="submit" className="btn btn--primary" disabled={saving}>

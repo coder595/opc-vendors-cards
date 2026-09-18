@@ -16,11 +16,10 @@ export async function addCert(vendorId: string, input: CertInput): Promise<strin
 }
 
 export async function updateCert(id: string, patch: Partial<CertInput>): Promise<void> {
-  const existing = await db.certs.get(id)
-  if (!existing) throw new Error(`Certification ${id} not found`)
   const safe = definedPatch(patch)
   if (safe.name !== undefined) requireText(safe.name, 'Certification name')
-  await db.certs.put({ ...existing, ...safe, id, vendorId: existing.vendorId })
+  const count = await db.certs.update(id, safe)
+  if (count === 0) throw new Error(`Certification ${id} not found`)
 }
 
 export async function deleteCert(id: string): Promise<void> {

@@ -17,11 +17,10 @@ export async function addNote(vendorId: string, input: NoteInput): Promise<strin
 }
 
 export async function updateNote(id: string, patch: Partial<NoteInput>): Promise<void> {
-  const existing = await db.notes.get(id)
-  if (!existing) throw new Error(`Note ${id} not found`)
   const safe = definedPatch(patch)
   if (safe.text !== undefined) requireText(safe.text, 'Note text', true)
-  await db.notes.put({ ...existing, ...safe, id, vendorId: existing.vendorId })
+  const count = await db.notes.update(id, safe)
+  if (count === 0) throw new Error(`Note ${id} not found`)
 }
 
 export async function deleteNote(id: string): Promise<void> {

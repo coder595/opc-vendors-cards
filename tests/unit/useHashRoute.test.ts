@@ -5,6 +5,8 @@ const cases: [string, Route][] = [
   ['#/vendors', { name: 'vendors' }],
   ['#/vendors/new', { name: 'vendorNew' }],
   ['#/vendors/abc', { name: 'vendorDetail', id: 'abc' }],
+  ['#/vendors/abc/edit', { name: 'vendorEdit', id: 'abc' }],
+  ['#/vendors?status=quoted', { name: 'vendors' }],
   ['#/people', { name: 'people' }],
   ['#/trip', { name: 'trip' }],
   ['#/me', { name: 'me' }],

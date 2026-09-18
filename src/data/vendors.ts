@@ -26,11 +26,10 @@ export async function createVendor(input: VendorInput): Promise<string> {
 }
 
 export async function updateVendor(id: string, patch: Partial<VendorInput>): Promise<void> {
-  const existing = await db.vendors.get(id)
-  if (!existing) throw new Error(`Vendor ${id} not found`)
   const safe = definedPatch(patch)
   if (safe.name !== undefined) requireText(safe.name, 'Vendor name')
-  await db.vendors.put({ ...existing, ...safe, id, updatedAt: Date.now() })
+  const count = await db.vendors.update(id, { ...safe, updatedAt: Date.now() })
+  if (count === 0) throw new Error(`Vendor ${id} not found`)
 }
 
 export async function getVendor(id: string): Promise<Vendor | undefined> {

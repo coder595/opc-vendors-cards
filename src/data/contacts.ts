@@ -20,11 +20,10 @@ export async function addContact(vendorId: string, input: ContactInput): Promise
 }
 
 export async function updateContact(id: string, patch: Partial<ContactInput>): Promise<void> {
-  const existing = await db.contacts.get(id)
-  if (!existing) throw new Error(`Contact ${id} not found`)
   const safe = definedPatch(patch)
   if (safe.name !== undefined) requireText(safe.name, 'Contact name')
-  await db.contacts.put({ ...existing, ...safe, id, vendorId: existing.vendorId })
+  const count = await db.contacts.update(id, safe)
+  if (count === 0) throw new Error(`Contact ${id} not found`)
 }
 
 export async function deleteContact(id: string): Promise<void> {

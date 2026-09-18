@@ -4,6 +4,7 @@ export type Route =
   | { name: 'vendors' }
   | { name: 'vendorNew' }
   | { name: 'vendorDetail'; id: string }
+  | { name: 'vendorEdit'; id: string }
   | { name: 'people' }
   | { name: 'trip' }
   | { name: 'me' }
@@ -30,13 +31,16 @@ function safeDecode(segment: string): string {
 }
 
 export function parseHash(hash: string): Route {
-  const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(safeDecode)
+  const path = hash.replace(/^#\/?/, '').split('?')[0] ?? ''
+  const parts = path.split('/').filter(Boolean).map(safeDecode)
 
   switch (parts[0]) {
     case 'vendors': {
       const segment = parts[1]
       if (!segment) return { name: 'vendors' }
-      return segment === 'new' ? { name: 'vendorNew' } : { name: 'vendorDetail', id: segment }
+      if (segment === 'new') return { name: 'vendorNew' }
+      if (parts[2] === 'edit') return { name: 'vendorEdit', id: segment }
+      return { name: 'vendorDetail', id: segment }
     }
     case 'people':
       return { name: 'people' }

@@ -23,11 +23,10 @@ export async function addProduct(vendorId: string, input: ProductInput): Promise
 }
 
 export async function updateProduct(id: string, patch: Partial<ProductInput>): Promise<void> {
-  const existing = await db.products.get(id)
-  if (!existing) throw new Error(`Product ${id} not found`)
   const safe = definedPatch(patch)
   if (safe.name !== undefined) requireText(safe.name, 'Product name')
-  await db.products.put({ ...existing, ...safe, id, vendorId: existing.vendorId })
+  const count = await db.products.update(id, safe)
+  if (count === 0) throw new Error(`Product ${id} not found`)
 }
 
 export async function deleteProduct(id: string): Promise<void> {
