@@ -1,12 +1,15 @@
 :root {
+  color-scheme: light;
+
   /* Base */
   --paper: #ffffff;
   --surface: #f5f6f8;
   --surface-2: #eceef1;
   --ink: #17171a; /* neutral near-black, not warm-tinted */
   --ink-2: #3c4149;
-  --muted: #6b7280;
+  --muted: #5f6670;
   --line: #d9dce1;
+  --control-line: #767c86; /* 3:1 against paper for form-control boundaries */
 
   /* Brand — Canton vermilion */
   --brand: #d8321f;
@@ -15,7 +18,7 @@
 
   /* Status */
   --jade: #0e7c66; /* verified / ordered */
-  --amber: #b7791f; /* quoted / pending */
+  --amber: #8a5a12; /* quoted / pending — 5.9:1 on paper */
   --slate: #5b6470; /* lead / archived */
 
   /* Type */
@@ -49,6 +52,35 @@
   --r-pill: 999px;
   --shadow-1: 0 1px 2px rgba(17, 17, 26, 0.06);
   --shadow-2: 0 6px 20px rgba(17, 17, 26, 0.1);
+  --overlay-ink: rgba(23, 23, 26, 0.85);
+  --overlay-fg: #ffffff; /* glyph on the always-dark photo-remove disc */
 
   --tap: 44px; /* minimum touch target */
+}
+
+/* Dark theme. Applied as a resolved light|dark value on <html data-theme>. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --paper: #14151a;
+  --surface: #1c1e24;
+  --surface-2: #23262e;
+  --ink: #f2f3f5;
+  --ink-2: #c7cbd1;
+  --muted: #9aa1ac;
+  --line: #333740;
+  --control-line: #6b7280;
+
+  --brand: #ff6b52;
+  --brand-ink: #1a0f0c;
+  --brand-soft: #3a211d;
+
+  --jade: #3dd9b0;
+  --amber: #e3a83c;
+  --slate: #9aa6b4;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.55);
+  --overlay-ink: rgba(0, 0, 0, 0.75);
+  --overlay-fg: #ffffff;
 }

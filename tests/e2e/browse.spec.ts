@@ -1,46 +1,5 @@
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
-
-async function seed(page: Page) {
-  await page.evaluate(async () => {
-    const database = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open('opc-vendors-cards')
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => reject(request.error)
-    })
-    const put = (store: string, record: unknown) =>
-      new Promise<void>((resolve, reject) => {
-        const tx = database.transaction(store, 'readwrite')
-        tx.objectStore(store).put(record)
-        tx.oncomplete = () => resolve()
-        tx.onerror = () => reject(tx.error)
-      })
-    const base = {
-      type: 'factory',
-      rating: 4,
-      socials: [],
-      tags: [],
-      fair: {},
-      createdAt: 1,
-      updatedAt: 1,
-    }
-    await put('vendors', {
-      ...base,
-      id: 'v-cn',
-      name: 'Guangzhou Lighting',
-      status: 'quoted',
-      country: 'China',
-    })
-    await put('vendors', {
-      ...base,
-      id: 'v-de',
-      name: 'Berlin Metal',
-      status: 'lead',
-      country: 'Germany',
-    })
-    await put('contacts', { id: 'c1', vendorId: 'v-cn', name: 'Li Wei', isPrimary: true })
-  })
-}
+import { seed } from './helpers/seed'
 
 test('searches, filters by status and country, and opens a detail', async ({ page }) => {
   await page.goto('/')

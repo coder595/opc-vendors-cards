@@ -1,7 +1,7 @@
 import { STATUS_LABEL, TYPE_LABEL } from '../db/labels'
 import type { Contact, Product, Vendor } from '../db/models'
 
-const DANGEROUS_PREFIX = /^[=+\-@\t\r]/
+const DANGEROUS_PREFIX = /^[=+\-@\t\r\n]/
 
 /** Quotes and formula-guards a single CSV cell (architecture.md §9). */
 export function csvCell(value: string | number | undefined | null): string {

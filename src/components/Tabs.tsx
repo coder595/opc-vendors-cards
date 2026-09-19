@@ -47,6 +47,7 @@ export function Tabs({ items, active, onChange, label, children }: TabsProps) {
             type="button"
             role="tab"
             id={`${baseId}-tab-${item.id}`}
+            aria-controls={`${baseId}-panel`}
             aria-selected={active === item.id}
             tabIndex={active === item.id ? 0 : -1}
             className="tab"
@@ -59,6 +60,7 @@ export function Tabs({ items, active, onChange, label, children }: TabsProps) {
       </div>
       <div
         className="tabpanel"
+        id={`${baseId}-panel`}
         role="tabpanel"
         aria-labelledby={activeItem ? `${baseId}-tab-${activeItem.id}` : undefined}
       >

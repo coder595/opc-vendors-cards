@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
 import { RatingField, SelectField } from '../../components/Field'
@@ -69,6 +69,7 @@ function PhoneLink({ phone, whatsapp = false }: { phone: string; whatsapp?: bool
       rel={whatsapp ? 'noreferrer noopener' : undefined}
       target={whatsapp ? '_blank' : undefined}
     >
+      {whatsapp ? <span className="sr-only">WhatsApp </span> : null}
       {phone}
     </a>
   )
@@ -505,6 +506,11 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
     ])
     return { vendor, contacts, products, notes, certs, attachments }
   }, [vendorId])
+
+  const vendorName = data?.vendor?.name
+  useEffect(() => {
+    if (vendorName) document.title = `${vendorName} · OPC Vendors Cards`
+  }, [vendorId, vendorName])
 
   if (data === undefined) {
     return (

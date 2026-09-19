@@ -9,6 +9,8 @@ describe('csvCell', () => {
     expect(csvCell('-2')).toBe("'-2")
     expect(csvCell('@x')).toBe("'@x")
     expect(csvCell('\tstart')).toBe("'\tstart")
+    expect(csvCell('\nstart')).toBe(`"'\nstart"`)
+    expect(csvCell('\rstart')).toBe(`"'\rstart"`)
   })
 
   it('quotes commas, quotes and newlines', () => {

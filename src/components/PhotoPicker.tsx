@@ -84,16 +84,19 @@ export function PhotoPicker({ id, label, kind, onAdd, multiple, testId }: PhotoP
   )
 }
 
-export function PhotoThumb({ photo, onRemove }: { photo: PhotoDraft; onRemove: () => void }) {
+export function PhotoThumb({
+  photo,
+  onRemove,
+  label = 'Remove photo',
+}: {
+  photo: PhotoDraft
+  onRemove: () => void
+  label?: string
+}) {
   return (
     <figure className="photo-thumb">
       <img src={photo.previewUrl} alt="" width={72} height={72} />
-      <button
-        type="button"
-        className="photo-thumb__remove"
-        aria-label="Remove photo"
-        onClick={onRemove}
-      >
+      <button type="button" className="photo-thumb__remove" aria-label={label} onClick={onRemove}>
         ×
       </button>
     </figure>

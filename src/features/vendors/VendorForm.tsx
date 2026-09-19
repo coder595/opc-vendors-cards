@@ -296,8 +296,13 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             />
             {draft.photos
               .filter((photo) => photo.kind === 'booth' || photo.kind === 'other')
-              .map((photo) => (
-                <PhotoThumb key={photo.key} photo={photo} onRemove={() => removePhoto(photo)} />
+              .map((photo, index) => (
+                <PhotoThumb
+                  key={photo.key}
+                  photo={photo}
+                  label={`Remove photo ${index + 1}`}
+                  onRemove={() => removePhoto(photo)}
+                />
               ))}
           </div>
         </section>

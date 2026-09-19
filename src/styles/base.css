@@ -195,7 +195,7 @@ p {
 
 .btn--ghost {
   background: transparent;
-  border-color: var(--line);
+  border-color: var(--control-line);
   color: var(--ink);
 }
 

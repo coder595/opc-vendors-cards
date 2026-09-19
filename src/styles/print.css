@@ -4,6 +4,28 @@
     margin: 8mm;
   }
 
+  /* Printing is always black-on-white, even when the app is in dark mode. */
+  :root,
+  :root[data-theme='dark'] {
+    color-scheme: light;
+    --paper: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #ffffff;
+    --ink: #000000;
+    --ink-2: #222222;
+    --muted: #555555;
+    --line: #999999;
+    --control-line: #767c86;
+    --brand: #b3261a;
+    --brand-ink: #ffffff;
+    --brand-soft: #fbe7e3;
+    --jade: #0e7c66;
+    --amber: #8a5a12;
+    --slate: #5b6470;
+    --overlay-ink: rgba(23, 23, 26, 0.85);
+    --overlay-fg: #ffffff;
+  }
+
   * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -11,6 +33,7 @@
 
   body {
     background: #fff;
+    color: #000;
   }
 
   .appbar,

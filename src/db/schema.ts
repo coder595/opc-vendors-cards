@@ -31,12 +31,3 @@ export class OpcDb extends Dexie {
 }
 
 export const db = new OpcDb()
-
-export const TRIP_TABLES = [
-  'vendors',
-  'contacts',
-  'products',
-  'notes',
-  'certs',
-  'attachments',
-] as const

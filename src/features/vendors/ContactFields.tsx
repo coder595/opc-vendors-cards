@@ -73,7 +73,13 @@ function ContactRow({ contact }: { contact: ContactDraft }) {
           kind="business_card"
           onAdd={addCard}
         />
-        {card ? <PhotoThumb photo={card} onRemove={() => removePhoto(card)} /> : null}
+        {card ? (
+          <PhotoThumb
+            photo={card}
+            label="Remove business card photo"
+            onRemove={() => removePhoto(card)}
+          />
+        ) : null}
       </div>
       <div className="subform__actions">
         <label className="checkbox">
@@ -81,6 +87,7 @@ function ContactRow({ contact }: { contact: ContactDraft }) {
             type="radio"
             name="primary-contact"
             checked={contact.isPrimary}
+            aria-label={`Primary contact${contact.name.trim() ? `: ${contact.name.trim()}` : ''}`}
             onChange={() => dispatch({ type: 'setPrimaryContact', key: contact.key })}
           />
           Primary contact

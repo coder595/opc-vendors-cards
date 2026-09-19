@@ -1,9 +1,13 @@
+import { useEffect, useRef } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { getSettings } from './data/settings'
 import { SettingsScreen } from './features/settings/SettingsScreen'
 import { ShareScreen } from './features/sharing/ShareScreen'
 import { VendorShare } from './features/sharing/VendorShare'
 import { VendorDetail } from './features/vendors/VendorDetail'
 import { VendorForm } from './features/vendors/VendorForm'
 import { VendorList } from './features/vendors/VendorList'
+import { setThemePreference, watchSystemTheme } from './lib/theme'
 import { useHashRoute, type Route } from './lib/useHashRoute'
 
 type NavItem = {
@@ -45,6 +49,18 @@ const PLACEHOLDERS: Record<string, string> = {
   trip: 'Trip',
 }
 
+const TITLES: Record<Route['name'], string> = {
+  vendors: 'Vendors',
+  vendorNew: 'New vendor',
+  vendorDetail: 'Vendor',
+  vendorEdit: 'Edit vendor',
+  vendorShare: 'Share vendor',
+  share: 'Sharing & data',
+  people: 'People',
+  trip: 'Trip',
+  me: 'Settings',
+}
+
 function NavIcon({ paths }: { paths: string[] }) {
   return (
     <svg
@@ -65,21 +81,56 @@ function NavIcon({ paths }: { paths: string[] }) {
   )
 }
 function activeNav(route: Route): string {
-  return route.name === 'vendorNew' ||
+  if (
+    route.name === 'vendorNew' ||
     route.name === 'vendorDetail' ||
     route.name === 'vendorEdit' ||
     route.name === 'vendorShare'
-    ? 'vendors'
-    : route.name
+  ) {
+    return 'vendors'
+  }
+  return route.name === 'share' ? 'me' : route.name
 }
 export default function App() {
   const route = useHashRoute()
   const active = activeNav(route)
   const onForm = route.name === 'vendorNew' || route.name === 'vendorEdit'
+  const routeKey = route.name + ('id' in route ? `:${route.id}` : '')
+  const mainRef = useRef<HTMLElement>(null)
+  const firstRender = useRef(true)
+  const settings = useLiveQuery(() => getSettings(), [])
+  const theme = settings?.theme
+
+  // Keep the persisted theme authoritative (also covers imported settings).
+  useEffect(() => {
+    if (theme) setThemePreference(theme)
+  }, [theme])
+
+  useEffect(() => watchSystemTheme(), [])
+
+  useEffect(() => {
+    document.title = `${TITLES[route.name]} · OPC Vendors Cards`
+  }, [routeKey, route.name])
+
+  // Move focus to the new screen for keyboard/screen-reader users.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    mainRef.current?.focus()
+  }, [routeKey])
 
   return (
     <div className="app">
-      <a className="skip-link" href="#main">
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(event) => {
+          event.preventDefault()
+          mainRef.current?.focus()
+        }}
+      >
         Skip to content
       </a>
       <header className="appbar">
@@ -106,7 +157,7 @@ export default function App() {
           </a>
         ))}
       </nav>
-      <main id="main" className="main">
+      <main id="main" className="main" ref={mainRef} tabIndex={-1}>
         {route.name === 'vendorNew' ? (
           <VendorForm key="new" mode="new" />
         ) : route.name === 'vendorEdit' ? (

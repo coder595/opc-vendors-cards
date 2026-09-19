@@ -179,8 +179,13 @@ function ProductRow({
           multiple
           onAdd={(photo) => dispatch({ type: 'addPhoto', photo, productKey: product.key })}
         />
-        {photos.map((photo) => (
-          <PhotoThumb key={photo.key} photo={photo} onRemove={() => removePhoto(photo)} />
+        {photos.map((photo, index) => (
+          <PhotoThumb
+            key={photo.key}
+            photo={photo}
+            label={`Remove product photo ${index + 1}`}
+            onRemove={() => removePhoto(photo)}
+          />
         ))}
       </div>
       <button

@@ -10,11 +10,12 @@ const CSP = [
   "script-src 'self'",
   "worker-src 'self'",
   "img-src 'self' blob: data:",
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self'",
   "font-src 'self'",
   "connect-src 'self'",
   "manifest-src 'self'",
   "form-action 'self'",
+  "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'none'",
 ].join('; ')

@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { TextField } from '../../components/Field'
+import { SelectField, TextField } from '../../components/Field'
 import { getSettings, updateSettings } from '../../data/settings'
-import type { Settings } from '../../db/models'
+import type { Settings, Theme } from '../../db/models'
 import { COMMON_CURRENCIES, normalizeCurrencyCode } from '../../lib/currency'
+import { setThemePreference } from '../../lib/theme'
 import { newKey } from '../vendors/formState'
 import { useMutation } from '../vendors/useMutation'
 
@@ -24,11 +25,23 @@ function toRows(rates: Settings['rates']): RateRow[] {
 
 function SettingsForm({ initial }: { initial: Settings }) {
   const [base, setBase] = useState(initial.baseCurrency)
+  const [theme, setTheme] = useState<Theme>(initial.theme)
   const [rows, setRows] = useState<RateRow[]>(() => toRows(initial.rates))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
   const originalRows = useRef<RateRow[]>(toRows(initial.rates))
   const { error: saveError, run } = useMutation()
+
+  const changeTheme = (next: Theme) => {
+    setTheme(next)
+    setThemePreference(next)
+    setNotice('')
+    updateSettings({ theme: next }).catch(() => {
+      setTheme(initial.theme)
+      setThemePreference(initial.theme)
+      setNotice('Could not save the theme. Try again.')
+    })
+  }
 
   const changeBase = (value: string) => {
     const code = value
@@ -93,12 +106,25 @@ function SettingsForm({ initial }: { initial: Settings }) {
     <section className="settings" aria-labelledby="settings-heading">
       <h1 id="settings-heading">Settings</h1>
       <form className="form-section" onSubmit={save} noValidate>
+        <h2>Appearance</h2>
+        <SelectField
+          id="theme"
+          label="Theme"
+          hint="System follows your device's light or dark setting."
+          value={theme}
+          onChange={changeTheme}
+          options={[
+            { value: 'system', label: 'System' },
+            { value: 'light', label: 'Light' },
+            { value: 'dark', label: 'Dark' },
+          ]}
+        />
         <h2>Currency</h2>
         <TextField
           id="base-currency"
           label="Base currency"
           hint="Three-letter ISO code, for example USD."
-          list="currency-codes"
+          list="settings-currency-codes"
           mono
           value={base}
           onChange={changeBase}
@@ -113,7 +139,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
               <TextField
                 id={`rate-${row.key}-code`}
                 label={`Currency ${index + 1}`}
-                list="currency-codes"
+                list="settings-currency-codes"
                 mono
                 value={row.code}
                 onChange={(code) => updateRow(row.key, { code: code.toUpperCase() })}
@@ -168,7 +194,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
           Open sharing &amp; data
         </a>
       </section>
-      <datalist id="currency-codes">
+      <datalist id="settings-currency-codes">
         {COMMON_CURRENCIES.map((code) => (
           <option key={code} value={code} />
         ))}

@@ -13,6 +13,8 @@ test('ships the strict Content-Security-Policy in the built shell', async ({ pag
     .getAttribute('content')
   expect(csp).toContain("default-src 'self'")
   expect(csp).toContain("object-src 'none'")
+  expect(csp).toContain("style-src 'self'")
+  expect(csp).not.toContain('unsafe-inline')
 })
 
 test('serves the cached shell from the service worker with the network offline', async ({

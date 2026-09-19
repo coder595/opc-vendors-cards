@@ -418,8 +418,13 @@ No hover-transition-on-every-card, no scattered fade-slide-ups.
 - **XSS:** React escapes by default; **never** use `dangerouslySetInnerHTML`.
   URLs rendered in `<a>` are scheme-checked (allow `http(s)`, `mailto`, `tel`).
 - **CSV injection:** prefix cells starting with `= + - @` with `'` on export.
-- **CSP** meta: `default-src 'self'; img-src 'self' blob: data:;
-  style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'none'`.
+- **CSP** meta: `default-src 'self'; script-src 'self'; worker-src 'self';
+  img-src 'self' blob: data:; style-src 'self'; font-src 'self';
+  connect-src 'self'; manifest-src 'self'; form-action 'self';
+  frame-src 'none'; object-src 'none'; base-uri 'none'`.
+  A meta CSP cannot enforce `frame-ancestors`/`sandbox`; clickjacking protection
+  requires an HTTP header (`Content-Security-Policy: frame-ancestors 'none'` +
+  `X-Frame-Options: DENY`) at the hosting layer where supported.
 - **Blob URLs** are revoked after use; no secrets or keys exist in the app.
 - Photos are stored only on-device; the user decides what to export.
 - **Review gates:** the `security-reviewer` ECC agent reviews all import/export

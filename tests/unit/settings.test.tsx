@@ -39,4 +39,16 @@ describe('SettingsScreen', () => {
     expect(await screen.findByText(/positive number/i)).toBeInTheDocument()
     expect((await getSettings()).rates).toEqual({})
   })
+
+  it('persists the theme preference', async () => {
+    const user = userEvent.setup()
+    render(<SettingsScreen />)
+    await screen.findByRole('heading', { name: /settings/i })
+
+    await user.selectOptions(screen.getByLabelText('Theme'), 'dark')
+
+    await waitFor(async () => {
+      expect((await getSettings()).theme).toBe('dark')
+    })
+  })
 })
