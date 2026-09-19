@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getSettings } from './data/settings'
+import { PeopleScreen } from './features/people/PeopleScreen'
 import { SettingsScreen } from './features/settings/SettingsScreen'
 import { ShareScreen } from './features/sharing/ShareScreen'
 import { VendorShare } from './features/sharing/VendorShare'
+import { TripScreen } from './features/trip/TripScreen'
 import { VendorDetail } from './features/vendors/VendorDetail'
 import { VendorForm } from './features/vendors/VendorForm'
 import { VendorList } from './features/vendors/VendorList'
@@ -43,11 +45,6 @@ const NAV: NavItem[] = [
     paths: ['M12 12a4 4 0 100-8 4 4 0 000 8z', 'M5 20a7 7 0 0114 0'],
   },
 ]
-
-const PLACEHOLDERS: Record<string, string> = {
-  people: 'People',
-  trip: 'Trip',
-}
 
 const TITLES: Record<Route['name'], string> = {
   vendors: 'Vendors',
@@ -170,15 +167,14 @@ export default function App() {
           <ShareScreen />
         ) : route.name === 'vendors' ? (
           <VendorList />
+        ) : route.name === 'people' ? (
+          <PeopleScreen />
+        ) : route.name === 'trip' ? (
+          <TripScreen />
         ) : route.name === 'me' ? (
           <SettingsScreen />
         ) : (
-          <section className="empty" aria-labelledby="placeholder-title">
-            <h1 id="placeholder-title" className="empty__title">
-              {PLACEHOLDERS[route.name] ?? 'Coming soon'}
-            </h1>
-            <p className="empty__body">This section arrives in a later phase.</p>
-          </section>
+          <VendorList />
         )}
       </main>
     </div>

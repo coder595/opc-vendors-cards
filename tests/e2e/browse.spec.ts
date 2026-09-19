@@ -28,3 +28,19 @@ test('searches, filters by status and country, and opens a detail', async ({ pag
   await page.getByRole('tab', { name: 'Overview' }).click()
   await expect(page.getByLabel('Status', { exact: true })).toHaveValue('quoted')
 })
+
+test('lists people and summarizes the trip', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: /no vendors yet/i })).toBeVisible()
+  await seed(page)
+  await page.reload()
+
+  await page.getByRole('link', { name: 'People' }).click()
+  await expect(page.getByRole('heading', { name: 'People' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Li Wei at Guangzhou Lighting/ })).toBeVisible()
+
+  await page.getByRole('link', { name: 'Trip' }).click()
+  await expect(page.getByRole('heading', { name: 'Trip summary' })).toBeVisible()
+  await expect(page.getByText('Ask for samples')).toBeVisible()
+  await expect(page.getByText('1.2 A14')).toBeVisible()
+})

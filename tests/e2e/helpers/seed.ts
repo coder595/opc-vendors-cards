@@ -30,6 +30,7 @@ export async function seed(page: Page) {
       name: 'Guangzhou Lighting',
       status: 'quoted',
       country: 'China',
+      fair: { edition: '140th', hall: '1.2', booth: 'A14' },
     })
     await put('vendors', {
       ...base,

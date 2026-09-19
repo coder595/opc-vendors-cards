@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
+import { EmailLink, PhoneLink } from '../../components/ContactLinks'
 import { RatingField, SelectField } from '../../components/Field'
 import { StatusSeal } from '../../components/StatusSeal'
 import { Tabs, type TabItem } from '../../components/Tabs'
@@ -46,31 +47,6 @@ function ExternalLink({ value }: { value: string }) {
   return (
     <a href={href} rel="noreferrer noopener" target="_blank">
       {value}
-    </a>
-  )
-}
-
-function EmailLink({ email }: { email: string }) {
-  const href = safeHref(`mailto:${email}`)
-  if (!href) return <span className="mono">{email}</span>
-  return <a href={href}>{email}</a>
-}
-
-function PhoneLink({ phone, whatsapp = false }: { phone: string; whatsapp?: boolean }) {
-  const digits = phone.replace(/[^\d+]/g, '')
-  if (!digits) return <span className="mono">{phone}</span>
-  const href = whatsapp
-    ? safeHref(`https://wa.me/${digits.replace(/\+/g, '')}`)
-    : safeHref(`tel:${digits}`)
-  if (!href) return <span className="mono">{phone}</span>
-  return (
-    <a
-      href={href}
-      rel={whatsapp ? 'noreferrer noopener' : undefined}
-      target={whatsapp ? '_blank' : undefined}
-    >
-      {whatsapp ? <span className="sr-only">WhatsApp </span> : null}
-      {phone}
     </a>
   )
 }

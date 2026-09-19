@@ -43,7 +43,8 @@
   .share__actions,
   .form-summary,
   .form-section,
-  .sharing > h1 {
+  .sharing > h1,
+  .trip__print {
     display: none !important;
   }
 

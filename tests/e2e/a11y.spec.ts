@@ -70,6 +70,28 @@ test('settings', async ({ page }) => {
   await expectClean(page)
 })
 
+test('people list', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: /no vendors yet/i })).toBeVisible()
+  await seed(page)
+  await page.reload()
+  await page.goto('/#/people')
+  await expect(page.getByRole('heading', { name: 'People' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Li Wei at Guangzhou Lighting/ })).toBeVisible()
+  await expectClean(page)
+})
+
+test('trip summary', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: /no vendors yet/i })).toBeVisible()
+  await seed(page)
+  await page.reload()
+  await page.goto('/#/trip')
+  await expect(page.getByRole('heading', { name: 'Trip summary' })).toBeVisible()
+  await expect(page.getByText('Ask for samples')).toBeVisible()
+  await expectClean(page)
+})
+
 test('sharing & data', async ({ page }) => {
   await page.goto('/#/share')
   await expect(page.getByRole('heading', { name: 'Sharing & data' })).toBeVisible()
