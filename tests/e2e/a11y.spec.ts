@@ -22,13 +22,26 @@ async function scan(page: Page): Promise<Violation[]> {
   }))
 }
 
+const THEMES = ['light', 'dark', 'gruvbox', 'oled', 'sepia'] as const
+
+/** Set the data-theme attribute directly and clear any OS color-scheme emulation. */
+async function setTheme(page: Page, theme: string) {
+  await page.evaluate((t) => {
+    document.documentElement.dataset.theme = t
+  }, theme)
+  await page.emulateMedia({ colorScheme: theme === 'dark' || theme === 'gruvbox' || theme === 'oled' ? 'dark' : 'light' })
+}
+
+async function expectCleanInAllThemes(page: Page, label: string) {
+  for (const theme of THEMES) {
+    await setTheme(page, theme)
+    expect(await scan(page), `${label} — ${theme}`).toEqual([])
+  }
+}
+
 /** Key screens must be axe-clean in both themes (contrast is computed per theme). */
 async function expectClean(page: Page) {
-  expect(await scan(page), 'light theme').toEqual([])
-  await page.emulateMedia({ colorScheme: 'dark' })
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  expect(await scan(page), 'dark theme').toEqual([])
-  await page.emulateMedia({ colorScheme: 'light' })
+  await expectCleanInAllThemes(page, '')
 }
 
 test('vendors list — empty state', async ({ page }) => {

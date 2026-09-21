@@ -73,6 +73,15 @@ describe('theme', () => {
     setThemePreference('light')
     expect(document.documentElement.dataset.theme).toBe('light')
     expect(meta.getAttribute('content')).toBe('#D8321F')
+    setThemePreference('gruvbox')
+    expect(document.documentElement.dataset.theme).toBe('gruvbox')
+    expect(meta.getAttribute('content')).toBe('#282828')
+    setThemePreference('oled')
+    expect(document.documentElement.dataset.theme).toBe('oled')
+    expect(meta.getAttribute('content')).toBe('#000000')
+    setThemePreference('sepia')
+    expect(document.documentElement.dataset.theme).toBe('sepia')
+    expect(meta.getAttribute('content')).toBe('#FAF0E6')
   })
 
   it('initTheme applies the mirrored preference before render', () => {

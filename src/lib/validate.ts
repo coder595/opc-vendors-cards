@@ -99,7 +99,7 @@ const ATTACHMENT_KINDS = new Set<AttachmentKind>([
   'document',
   'other',
 ])
-const THEMES = new Set<Theme>(['light', 'dark', 'system'])
+const THEMES = new Set<Theme>(['light', 'dark', 'system', 'gruvbox', 'oled', 'sepia'])
 const MIME_ALLOWLIST = new Set([
   'image/jpeg',
   'image/png',

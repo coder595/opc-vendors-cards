@@ -1,10 +1,15 @@
 import type { Theme } from '../db/models'
 
 export const THEME_STORAGE_KEY = 'opc.theme'
-const LIGHT_THEME_COLOR = '#D8321F'
-const DARK_THEME_COLOR = '#14151A'
+const THEME_COLORS: Record<Exclude<Theme, 'system'>, string> = {
+  light: '#D8321F',
+  dark: '#14151A',
+  gruvbox: '#282828',
+  oled: '#000000',
+  sepia: '#FAF0E6',
+}
 
-export type ResolvedTheme = 'light' | 'dark'
+export type ResolvedTheme = 'light' | 'dark' | 'gruvbox' | 'oled' | 'sepia'
 
 /** The preference last applied in this session (authoritative for OS-change handling). */
 let currentPreference: Theme = 'system'
@@ -24,7 +29,15 @@ export function resolveTheme(preference: Theme): ResolvedTheme {
 export function readStoredTheme(): Theme {
   try {
     const value = window.localStorage.getItem(THEME_STORAGE_KEY)
-    if (value === 'light' || value === 'dark' || value === 'system') return value
+    if (
+      value === 'light' ||
+      value === 'dark' ||
+      value === 'system' ||
+      value === 'gruvbox' ||
+      value === 'oled' ||
+      value === 'sepia'
+    )
+      return value
   } catch {
     // localStorage unavailable (private mode / disabled) — fall back to system.
   }
@@ -40,11 +53,12 @@ function storeTheme(preference: Theme): void {
 }
 
 export function applyTheme(preference: Theme): ResolvedTheme {
-  const resolved = resolveTheme(preference)
+  const resolved =
+    preference === 'system' ? resolveTheme('system') : (preference as ResolvedTheme)
   document.documentElement.dataset.theme = resolved
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) {
-    meta.setAttribute('content', resolved === 'dark' ? DARK_THEME_COLOR : LIGHT_THEME_COLOR)
+    meta.setAttribute('content', THEME_COLORS[resolved])
   }
   return resolved
 }

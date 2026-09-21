@@ -84,3 +84,84 @@
   --overlay-ink: rgba(0, 0, 0, 0.75);
   --overlay-fg: #ffffff;
 }
+
+/* Gruvbox — warm dark retro (morhetz palette) */
+:root[data-theme='gruvbox'] {
+  color-scheme: dark;
+
+  --paper: #282828;
+  --surface: #32302f;
+  --surface-2: #3c3836;
+  --ink: #ebdbb2;
+  --ink-2: #d5c4a1;
+  --muted: #a89984;
+  --line: #4f4a48;
+  --control-line: #665c54;
+
+  --brand: #ff6b52;
+  --brand-ink: #1a0f0c;
+  --brand-soft: #3a211d;
+
+  --jade: #689d6a;
+  --amber: #d79921;
+  --slate: #7c6f64;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.55);
+  --overlay-ink: rgba(0, 0, 0, 0.75);
+  --overlay-fg: #fbf1c7;
+}
+
+/* OLED — true black for AMOLED power saving */
+:root[data-theme='oled'] {
+  color-scheme: dark;
+
+  --paper: #000000;
+  --surface: #0d0d0d;
+  --surface-2: #16181c;
+  --ink: #f5f5f5;
+  --ink-2: #c0c4cc;
+  --muted: #8b949e;
+  --line: #1c1e22;
+  --control-line: #484f58;
+
+  --brand: #ff6b52;
+  --brand-ink: #000000;
+  --brand-soft: #1f120e;
+
+  --jade: #3dd9b0;
+  --amber: #e3a83c;
+  --slate: #6b7280;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.65);
+  --overlay-ink: rgba(0, 0, 0, 0.85);
+  --overlay-fg: #ffffff;
+}
+
+/* Sepia — warm paper light, lower blue light */
+:root[data-theme='sepia'] {
+  color-scheme: light;
+
+  --paper: #faf0e6;
+  --surface: #f0e6d3;
+  --surface-2: #e6dcc8;
+  --ink: #3c2f1e;
+  --ink-2: #5a4a33;
+  --muted: #8b7b64;
+  --line: #d4c9b4;
+  --control-line: #b0a090;
+
+  --brand: #d8321f;
+  --brand-ink: #ffffff;
+  --brand-soft: #fbe7e3;
+
+  --jade: #0e7c66;
+  --amber: #8a5a12;
+  --slate: #5b6470;
+
+  --shadow-1: 0 1px 2px rgba(60, 47, 30, 0.08);
+  --shadow-2: 0 6px 20px rgba(60, 47, 30, 0.12);
+  --overlay-ink: rgba(60, 47, 30, 0.85);
+  --overlay-fg: #faf0e6;
+}

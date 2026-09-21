@@ -20,7 +20,7 @@ export async function updateSettings(patch: Partial<Omit<Settings, 'id'>>): Prom
   if (safe.baseCurrency !== undefined && !/^[A-Z]{3}$/.test(safe.baseCurrency)) {
     throw new Error('Base currency must be a 3-letter ISO code')
   }
-  if (safe.theme !== undefined && !['light', 'dark', 'system'].includes(safe.theme)) {
+  if (safe.theme !== undefined && !['light', 'dark', 'system', 'gruvbox', 'oled', 'sepia'].includes(safe.theme)) {
     throw new Error('Unknown theme')
   }
   if (safe.rates !== undefined) {

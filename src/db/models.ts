@@ -10,7 +10,7 @@ export type SocialPlatform =
 
 export type AttachmentKind = 'business_card' | 'product' | 'booth' | 'document' | 'other'
 
-export type Theme = 'light' | 'dark' | 'system'
+export type Theme = 'light' | 'dark' | 'system' | 'gruvbox' | 'oled' | 'sepia'
 
 export interface SocialLink {
   platform: SocialPlatform

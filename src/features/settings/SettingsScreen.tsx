@@ -117,6 +117,9 @@ function SettingsForm({ initial }: { initial: Settings }) {
             { value: 'system', label: 'System' },
             { value: 'light', label: 'Light' },
             { value: 'dark', label: 'Dark' },
+            { value: 'sepia', label: 'Sepia' },
+            { value: 'gruvbox', label: 'Gruvbox' },
+            { value: 'oled', label: 'OLED Black' },
           ]}
         />
         <h2>Currency</h2>
