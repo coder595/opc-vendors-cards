@@ -72,6 +72,7 @@ export function validateVendorDraft(draft: VendorDraft): DraftValidation {
     if (contactName === '') errors[`contacts.${contact.key}.name`] = 'Enter a name'
     return {
       key: contact.key,
+      id: contact.id,
       name: contactName,
       position: blankToUndefined(contact.position),
       phone: blankToUndefined(contact.phone),
@@ -124,6 +125,7 @@ export function validateVendorDraft(draft: VendorDraft): DraftValidation {
 
     return {
       key: product.key,
+      id: product.id,
       name: productName,
       description: blankToUndefined(product.description),
       unit: blankToUndefined(product.unit),

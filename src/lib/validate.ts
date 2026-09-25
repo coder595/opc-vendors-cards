@@ -276,6 +276,7 @@ function parseContact(value: unknown): Contact | null {
     whatsapp: optString(value.whatsapp),
     isPrimary: value.isPrimary,
     cardAttachmentId: isId(value.cardAttachmentId) ? value.cardAttachmentId : undefined,
+    updatedAt: isPositive(value.updatedAt) ? value.updatedAt : (isPositive(value.createdAt) ? value.createdAt : Date.now()),
   }
 }
 
@@ -307,6 +308,7 @@ function parseProduct(value: unknown): Product | null {
     paymentTerms: optString(value.paymentTerms),
     photoAttachmentIds,
     createdAt: value.createdAt,
+    updatedAt: isPositive(value.updatedAt) ? value.updatedAt : (isPositive(value.createdAt) ? value.createdAt : Date.now()),
   }
 }
 
@@ -324,6 +326,7 @@ function parseNote(value: unknown): Note | null {
     done: value.done,
     dueDate: nonNegativeNumber(value.dueDate),
     createdAt: value.createdAt,
+    updatedAt: isPositive(value.updatedAt) ? value.updatedAt : (isPositive(value.createdAt) ? value.createdAt : Date.now()),
   }
 }
 
@@ -338,6 +341,7 @@ function parseCert(value: unknown): Certification | null {
     number: optString(value.number),
     issuer: optString(value.issuer),
     expiry: nonNegativeNumber(value.expiry),
+    updatedAt: isPositive(value.updatedAt) ? value.updatedAt : (isPositive(value.createdAt) ? value.createdAt : Date.now()),
   }
 }
 
@@ -368,6 +372,7 @@ function parseAttachment(value: unknown): ExportedAttachment | null {
     height: value.height,
     bytes: value.bytes,
     createdAt: value.createdAt,
+    updatedAt: isPositive(value.updatedAt) ? value.updatedAt : (isPositive(value.createdAt) ? value.createdAt : Date.now()),
     mime,
     blobB64,
     thumbMime,
@@ -471,7 +476,7 @@ export function validateEnvelope(input: unknown): ValidationResult {
   if (schemaVersion > SCHEMA_VERSION) {
     return fail('unsupported_schema', 'This file was made by a newer version of the app.')
   }
-  if (schemaVersion < SCHEMA_VERSION) {
+  if (schemaVersion < 1) {
     return fail('unsupported_schema', 'This file is too old to import.')
   }
   if (!isText(input.exportedAt)) {

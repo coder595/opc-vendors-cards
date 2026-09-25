@@ -6,13 +6,13 @@ import { validateEnvelope } from '../../src/lib/validate'
 import { makeEnvelope } from './helpers/fixtures'
 
 /**
- * A version-2 probe built on the real production schema, not a parallel
+ * A version-3 probe built on the real production schema, not a parallel
  * test-local one — so this fails if the app's store definitions regress.
  */
 class UpgradeProbeDb extends OpcDb {
   constructor(name: string) {
     super(name)
-    this.version(2)
+    this.version(3)
       .stores({
         vendors: 'id, name, status, country, *tags, updatedAt, city',
         contacts: 'id, vendorId',
@@ -52,13 +52,13 @@ describe('version upgrade', () => {
     })
     v1.close()
 
-    const v2 = new UpgradeProbeDb(name)
-    const row = await v2.vendors.get('a')
-    expect(v2.verno).toBe(2)
+    const v3 = new UpgradeProbeDb(name)
+    const row = await v3.vendors.get('a')
+    expect(v3.verno).toBe(3)
     expect(row?.name).toBe('ACME')
     expect(row?.city).toBe('')
-    expect(await v2.vendors.where('city').equals('').count()).toBe(1)
-    await v2.delete()
+    expect(await v3.vendors.where('city').equals('').count()).toBe(1)
+    await v3.delete()
   })
 
   it('rejects a payload from an older schema version instead of importing it', () => {

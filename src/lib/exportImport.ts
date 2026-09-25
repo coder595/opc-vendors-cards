@@ -27,8 +27,10 @@ export interface ImportSummary {
   mode: ImportMode
   insertedVendors: number
   matchedVendors: number
+  updatedVendors: number
   insertedChildren: number
   skippedChildren: number
+  updatedChildren: number
   importedAttachments: number
   rejected: RejectedRecord[]
 }
@@ -122,6 +124,7 @@ export async function serializeDb(): Promise<ExportEnvelope> {
       height: row.height,
       bytes: row.bytes,
       createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       mime: row.blob.type || 'application/octet-stream',
       blobB64: await blobToBase64(row.blob),
       thumbMime: row.thumb.type || 'application/octet-stream',
@@ -238,7 +241,7 @@ async function bulkPutChunked<T>(table: Table<T, string>, rows: T[]): Promise<vo
   }
 }
 
-async function upsertChildren<T extends { id: string }>(
+async function upsertChildren<T extends { id: string; updatedAt?: number }>(
   table: Table<T, string>,
   rows: T[],
   policy: MergePolicy,
@@ -250,6 +253,14 @@ async function upsertChildren<T extends { id: string }>(
     if (existingIds.has(row.id)) {
       if (policy === 'imported-wins') {
         toPut.push(row)
+      } else if (policy === 'newest-wins') {
+        const existing = await table.get(row.id)
+        if (existing && (existing.updatedAt ?? 0) >= (row.updatedAt ?? 0)) {
+          summary.skippedChildren += 1
+        } else {
+          toPut.push(row)
+          summary.updatedChildren += 1
+        }
       } else {
         summary.skippedChildren += 1
       }
@@ -267,14 +278,16 @@ export async function importData(
   mode: ImportMode,
   options: ImportOptions = {},
 ): Promise<ImportSummary> {
-  const policy = options.policy ?? 'existing-wins'
+  const policy = options.policy ?? 'newest-wins'
   const { data } = envelope
   const summary: ImportSummary = {
     mode,
     insertedVendors: 0,
     matchedVendors: 0,
+    updatedVendors: 0,
     insertedChildren: 0,
     skippedChildren: 0,
+    updatedChildren: 0,
     importedAttachments: 0,
     rejected: [],
   }
@@ -291,6 +304,7 @@ export async function importData(
     height: item.height,
     bytes: item.bytes,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   }))
 
   if (mode === 'replace') {
@@ -355,7 +369,7 @@ export async function importData(
     async () => {
       const existingVendors = await db.vendors.toArray()
       const liveVendors = existingVendors.filter((vendor) => vendor.deletedAt === undefined)
-      const byId = new Map(liveVendors.map((vendor): [string, Vendor] => [vendor.id, vendor]))
+      const byId = new Map(existingVendors.map((vendor): [string, Vendor] => [vendor.id, vendor]))
       const byKey = new Map<string, Vendor>()
       for (const vendor of liveVendors) {
         byKey.set(dedupeKey(vendor), vendor)
@@ -374,11 +388,22 @@ export async function importData(
               ...imported,
               id: matched.id,
               createdAt: matched.createdAt,
-              updatedAt: Date.now(),
             }
             await db.vendors.put(updated)
             byId.set(updated.id, updated)
             byKey.set(dedupeKey(updated), updated)
+          } else if (policy === 'newest-wins') {
+            if ((matched.updatedAt ?? 0) < (imported.updatedAt ?? 0)) {
+              const updated: Vendor = {
+                ...imported,
+                id: matched.id,
+                createdAt: matched.createdAt,
+              }
+              await db.vendors.put(updated)
+              byId.set(updated.id, updated)
+              byKey.set(dedupeKey(updated), updated)
+              summary.updatedVendors += 1
+            }
           }
         } else {
           await db.vendors.put(imported)

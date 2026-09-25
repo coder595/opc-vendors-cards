@@ -23,7 +23,7 @@ function vendor(overrides: Partial<Vendor> & { id: string; name: string }): Vend
 }
 
 function contact(vendorId: string, name: string, position?: string): Contact {
-  return { id: `c-${name}`, vendorId, name, position, isPrimary: false }
+  return { id: `c-${name}`, vendorId, name, position, isPrimary: false, updatedAt: 1 }
 }
 
 function product(vendorId: string, name: string): Product {
@@ -35,6 +35,7 @@ function product(vendorId: string, name: string): Product {
     tiers: [],
     photoAttachmentIds: [],
     createdAt: 1,
+    updatedAt: 1,
   }
 }
 

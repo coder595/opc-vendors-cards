@@ -33,6 +33,7 @@ function bundleToDraft(bundle: VendorBundle): VendorDraft {
     },
     contacts: contacts.map((contact) => ({
       key: contact.id,
+      id: contact.id,
       name: contact.name,
       position: contact.position ?? '',
       phone: contact.phone ?? '',
@@ -44,6 +45,7 @@ function bundleToDraft(bundle: VendorBundle): VendorDraft {
     })),
     products: products.map((product) => ({
       key: product.id,
+      id: product.id,
       name: product.name,
       description: product.description ?? '',
       unit: product.unit ?? '',

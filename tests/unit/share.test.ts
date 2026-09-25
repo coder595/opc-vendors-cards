@@ -20,7 +20,7 @@ describe('vendor card codec', () => {
   it('round-trips a card with CJK and special characters', () => {
     const card = buildVendorCard(
       makeVendor({ name: '柏林金属 "Co"', country: 'China' }),
-      [{ id: 'c1', vendorId: 'v', name: '李伟', isPrimary: true, phone: '+86 138' }],
+      [{ id: 'c1', vendorId: 'v', name: '李伟', isPrimary: true, phone: '+86 138', updatedAt: 1 }],
       [],
     )
     const decoded = decodeVendorCard(encodeVendorCard(card))

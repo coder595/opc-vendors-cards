@@ -17,6 +17,7 @@ export async function addProduct(vendorId: string, input: ProductInput): Promise
     paymentTerms: input.paymentTerms,
     photoAttachmentIds: input.photoAttachmentIds ?? [],
     createdAt: Date.now(),
+    updatedAt: Date.now(),
   }
   await db.products.add(product)
   return product.id
