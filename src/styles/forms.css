@@ -880,3 +880,35 @@
   cursor: pointer;
   display: inline-flex;
 }
+
+.note__pending {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.btn-toast {
+  min-height: var(--tap);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--brand);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--brand);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-toast:hover {
+  background: var(--brand-soft);
+}

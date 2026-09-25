@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
 import { EmailLink, PhoneLink } from '../../components/ContactLinks'
@@ -273,6 +273,14 @@ function NotesPanel({ vendorId, notes }: { vendorId: string; notes: Note[] }) {
   const [isTask, setIsTask] = useState(false)
   const [due, setDue] = useState('')
   const { error, run } = useMutation()
+  const [pendingDelete, setPendingDelete] = useState<Note | null>(null)
+  const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    return () => {
+      if (deleteTimeoutRef.current) clearTimeout(deleteTimeoutRef.current)
+    }
+  }, [])
 
   const add = () => {
     if (text.trim() === '') return
@@ -287,6 +295,20 @@ function NotesPanel({ vendorId, notes }: { vendorId: string; notes: Note[] }) {
         setDue('')
       }),
     )
+  }
+
+  const scheduleDelete = (note: Note) => {
+    clearTimeout(deleteTimeoutRef.current)
+    setPendingDelete(note)
+    deleteTimeoutRef.current = setTimeout(() => {
+      void run(deleteNote(note.id))
+      setPendingDelete(null)
+    }, 5000)
+  }
+
+  const undoDelete = () => {
+    clearTimeout(deleteTimeoutRef.current)
+    setPendingDelete(null)
   }
 
   return (
@@ -317,17 +339,29 @@ function NotesPanel({ vendorId, notes }: { vendorId: string; notes: Note[] }) {
             {note.dueDate ? (
               <span className="mono note__due">{formatDate(note.dueDate)}</span>
             ) : null}
-            <button
-              type="button"
-              className="btn btn--ghost"
-              aria-label={`Delete note: ${note.text}`}
-              onClick={() => void run(deleteNote(note.id))}
-            >
-              Delete
-            </button>
+            {pendingDelete?.id === note.id ? (
+              <span className="mono note__pending">Deleting…</span>
+            ) : (
+              <button
+                type="button"
+                className="btn btn--ghost"
+                aria-label={`Delete note: ${note.text}`}
+                onClick={() => scheduleDelete(note)}
+              >
+                Delete
+              </button>
+            )}
           </li>
         ))}
       </ul>
+      {pendingDelete ? (
+        <p className="toast" role="status" aria-live="polite">
+          Note deleted —
+          <button type="button" className="btn-toast" onClick={undoDelete}>
+            Undo
+          </button>
+        </p>
+      ) : null}
       <div className="add-row">
         <label className="sr-only" htmlFor="new-note">
           New note
@@ -370,6 +404,14 @@ function CertsPanel({ vendorId, certs }: { vendorId: string; certs: Certificatio
   const [issuer, setIssuer] = useState('')
   const [expiry, setExpiry] = useState('')
   const { error, run } = useMutation()
+  const [pendingDelete, setPendingDelete] = useState<Certification | null>(null)
+  const deleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    return () => {
+      if (deleteTimeoutRef.current) clearTimeout(deleteTimeoutRef.current)
+    }
+  }, [])
 
   const add = () => {
     if (name.trim() === '') return
@@ -386,6 +428,20 @@ function CertsPanel({ vendorId, certs }: { vendorId: string; certs: Certificatio
         setExpiry('')
       }),
     )
+  }
+
+  const scheduleDelete = (cert: Certification) => {
+    clearTimeout(deleteTimeoutRef.current)
+    setPendingDelete(cert)
+    deleteTimeoutRef.current = setTimeout(() => {
+      void run(deleteCert(cert.id))
+      setPendingDelete(null)
+    }, 5000)
+  }
+
+  const undoDelete = () => {
+    clearTimeout(deleteTimeoutRef.current)
+    setPendingDelete(null)
   }
 
   return (
@@ -405,17 +461,29 @@ function CertsPanel({ vendorId, certs }: { vendorId: string; certs: Certificatio
               {cert.issuer ? <span className="record__sub"> {cert.issuer}</span> : null}
               {cert.expiry ? <span className="mono">{formatDate(cert.expiry)}</span> : null}
             </span>
-            <button
-              type="button"
-              className="btn btn--ghost"
-              aria-label={`Delete certification: ${cert.name}`}
-              onClick={() => void run(deleteCert(cert.id))}
-            >
-              Delete
-            </button>
+            {pendingDelete?.id === cert.id ? (
+              <span className="mono note__pending">Deleting…</span>
+            ) : (
+              <button
+                type="button"
+                className="btn btn--ghost"
+                aria-label={`Delete certification: ${cert.name}`}
+                onClick={() => scheduleDelete(cert)}
+              >
+                Delete
+              </button>
+            )}
           </li>
         ))}
       </ul>
+      {pendingDelete ? (
+        <p className="toast" role="status" aria-live="polite">
+          Certification deleted —
+          <button type="button" className="btn-toast" onClick={undoDelete}>
+            Undo
+          </button>
+        </p>
+      ) : null}
       <div className="add-row">
         <label className="sr-only" htmlFor="new-cert-name">
           Certification name

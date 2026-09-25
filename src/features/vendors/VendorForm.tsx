@@ -4,12 +4,15 @@ import { RatingField, SelectField, TextAreaField, TextField } from '../../compon
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { getVendorBundle, saveVendorBundle, type VendorBundle } from '../../data/bundle'
 import { STATUSES, VENDOR_TYPES } from '../../db/labels'
+import { db } from '../../db/schema'
 import { validateVendorDraft } from '../../lib/formValidation'
 import { requestPersistentStorage } from '../../lib/storage'
 import { ContactFields } from './ContactFields'
 import { ProductFields } from './ProductFields'
 import { createEmptyDraft, vendorReducer, type PhotoDraft, type VendorDraft } from './formState'
 import { VendorFormContext } from './VendorFormContext'
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 
 function bundleToDraft(bundle: VendorBundle): VendorDraft {
   const { vendor, contacts, products, attachments } = bundle
@@ -86,11 +89,47 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(mode === 'edit')
   const [loadError, setLoadError] = useState('')
+  const [duplicateHint, setDuplicateHint] = useState<{ id: string; date: string } | null>(null)
 
   const photosRef = useRef<PhotoDraft[]>([])
   useEffect(() => {
     photosRef.current = draft.photos
   }, [draft.photos])
+
+  useEffect(() => {
+    const name = draft.name.trim()
+    let active = true
+    const timer = setTimeout(async () => {
+      if (name.length < 2) {
+        if (active) setDuplicateHint(null)
+        return
+      }
+      const needle = name.toLowerCase()
+      const matches = await db.vendors
+        .filter(
+          (v) =>
+            v.deletedAt === undefined &&
+            v.name.toLowerCase().includes(needle),
+        )
+        .toArray()
+      if (!active) return
+      const best = matches.find(
+        (v) => !(mode === 'edit' && v.id === vendorId),
+      )
+      if (best) {
+        setDuplicateHint({
+          id: best.id,
+          date: dateFormatter.format(new Date(best.createdAt)),
+        })
+      } else {
+        setDuplicateHint(null)
+      }
+    }, 500)
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [draft.name, mode, vendorId])
 
   useEffect(() => {
     if (mode !== 'edit' || !vendorId) return
@@ -200,6 +239,12 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             onChange={(name) => dispatch({ type: 'setField', field: 'name', value: name })}
             error={errors['vendor.name']}
           />
+          {duplicateHint ? (
+            <p className="field__hint" role="status">
+              Already met on {duplicateHint.date} —{' '}
+              <a href={`#/vendors/${duplicateHint.id}`}>open instead?</a>
+            </p>
+          ) : null}
           <SelectField
             id="vendor-type"
             label="Type"

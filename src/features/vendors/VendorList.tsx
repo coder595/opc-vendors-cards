@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { EmptyState } from '../../components/EmptyState'
 import { StatusSeal } from '../../components/StatusSeal'
@@ -9,9 +9,54 @@ import {
   applyVendorQuery,
   buildSearchIndex,
   defaultVendorQuery,
+  type VendorFilters,
   type VendorQuery,
   type VendorSort,
 } from './vendorQuery'
+
+function parseHashQuery(): VendorQuery {
+  const hash = window.location.hash
+  const qIndex = hash.indexOf('?')
+  if (qIndex === -1) return defaultVendorQuery
+  const params = new URLSearchParams(hash.slice(qIndex))
+  const filters: VendorFilters = { ...defaultVendorQuery.filters }
+  const statusVal = params.get('status')
+  if (statusVal && (statusVal === 'all' || STATUSES.some((s) => s.value === statusVal))) {
+    filters.status = statusVal as PipelineStatus | 'all'
+  }
+  const countryVal = params.get('country')
+  if (countryVal) filters.country = countryVal
+  const typeVal = params.get('type')
+  if (typeVal && (typeVal === 'all' || VENDOR_TYPES.some((t) => t.value === typeVal))) {
+    filters.type = typeVal as VendorType | 'all'
+  }
+  const minRatingVal = params.get('minRating')
+  if (minRatingVal) filters.minRating = Number(minRatingVal)
+  const fairVal = params.get('fair')
+  if (fairVal) filters.fair = fairVal
+  const tagVal = params.get('tag')
+  if (tagVal) filters.tag = tagVal
+  return {
+    text: params.get('q') ?? '',
+    filters,
+    sort: (params.get('sort') as VendorSort) ?? 'name',
+  }
+}
+
+function syncHash(query: VendorQuery): void {
+  const params = new URLSearchParams()
+  if (query.text) params.set('q', query.text)
+  if (query.filters.status !== 'all') params.set('status', query.filters.status)
+  if (query.filters.country !== 'all') params.set('country', query.filters.country)
+  if (query.filters.type !== 'all') params.set('type', query.filters.type)
+  if (query.filters.minRating > 0) params.set('minRating', String(query.filters.minRating))
+  if (query.filters.fair !== 'all') params.set('fair', query.filters.fair)
+  if (query.filters.tag !== 'all') params.set('tag', query.filters.tag)
+  if (query.sort !== 'name') params.set('sort', query.sort)
+  const base = window.location.hash.split('?')[0] || '#/vendors'
+  const qs = params.toString()
+  history.replaceState(null, '', qs ? `${base}?${qs}` : base)
+}
 
 const VendorRow = memo(function VendorRow({ vendor }: { vendor: Vendor }) {
   return (
@@ -39,8 +84,10 @@ export function VendorList() {
     ])
     return { vendors, contacts, products }
   }, [])
-  const [query, setQuery] = useState<VendorQuery>(defaultVendorQuery)
+  const [query, setQuery] = useState<VendorQuery>(parseHashQuery)
   const [filtersOpen, setFiltersOpen] = useState(false)
+
+  useEffect(() => void syncHash(query), [query])
 
   const index = useMemo(
     () => buildSearchIndex(data?.vendors ?? [], data?.contacts ?? [], data?.products ?? []),
