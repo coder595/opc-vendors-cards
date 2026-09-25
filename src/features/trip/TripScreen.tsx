@@ -5,7 +5,7 @@ import { STATUSES } from '../../db/labels'
 import type { Vendor } from '../../db/models'
 import { db } from '../../db/schema'
 
-const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
+const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 
 function formatDate(ms: number): string {

@@ -31,7 +31,7 @@ export function foldText(value: string): string {
   return value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
-const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
+const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
 
 export function buildSearchIndex(
   vendors: Vendor[],
