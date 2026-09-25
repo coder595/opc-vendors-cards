@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
 import { EmailLink, PhoneLink } from '../../components/ContactLinks'
 import { RatingField, SelectField } from '../../components/Field'
+import { PhotoViewer } from '../../components/PhotoViewer'
 import { StatusSeal } from '../../components/StatusSeal'
 import { Tabs, type TabItem } from '../../components/Tabs'
 import { ATTACHMENT_KIND_LABEL, STATUSES, TYPE_LABEL } from '../../db/labels'
@@ -134,19 +135,24 @@ function OverviewPanel({ vendor }: { vendor: Vendor }) {
 function PeoplePanel({
   contacts,
   attachments,
+  onViewPhoto,
 }: {
   contacts: Contact[]
   attachments: Attachment[]
+  onViewPhoto: (index: number) => void
 }) {
   if (contacts.length === 0) return <p className="panel__empty">No people yet.</p>
   return (
     <ul className="record-list">
       {contacts.map((contact) => {
         const card = attachments.find((item) => item.id === contact.cardAttachmentId)
+        const cardIndex = card ? attachments.indexOf(card) : -1
         return (
           <li key={contact.id} className="record">
             {card ? (
-              <BlobImage blob={card.thumb} alt={`Business card for ${contact.name}`} />
+              <button type="button" className="btn-blob" onClick={() => onViewPhoto(cardIndex)}>
+                <BlobImage blob={card.thumb} alt={`Business card for ${contact.name}`} />
+              </button>
             ) : null}
             <div className="record__body">
               <p className="record__title">
@@ -171,9 +177,11 @@ function PeoplePanel({
 function ProductsPanel({
   products,
   attachments,
+  onViewPhoto,
 }: {
   products: Product[]
   attachments: Attachment[]
+  onViewPhoto: (index: number) => void
 }) {
   const settings = useLiveQuery(() => getSettings(), [])
   if (products.length === 0) return <p className="panel__empty">No products yet.</p>
@@ -244,9 +252,14 @@ function ProductsPanel({
             <div className="record__photos">
               {attachments
                 .filter((item) => product.photoAttachmentIds.includes(item.id))
-                .map((item) => (
-                  <BlobImage key={item.id} blob={item.thumb} alt={product.name} size={56} />
-                ))}
+                .map((item) => {
+                  const idx = attachments.indexOf(item)
+                  return (
+                    <button key={item.id} type="button" className="btn-blob" onClick={() => onViewPhoto(idx)}>
+                      <BlobImage blob={item.thumb} alt={product.name} size={56} />
+                    </button>
+                  )
+                })}
             </div>
           </li>
         )
@@ -452,13 +465,15 @@ function CertsPanel({ vendorId, certs }: { vendorId: string; certs: Certificatio
   )
 }
 
-function FilesPanel({ attachments }: { attachments: Attachment[] }) {
+function FilesPanel({ attachments, onViewPhoto }: { attachments: Attachment[]; onViewPhoto: (index: number) => void }) {
   if (attachments.length === 0) return <p className="panel__empty">No files yet.</p>
   return (
     <ul className="file-grid">
-      {attachments.map((attachment) => (
+      {attachments.map((attachment, idx) => (
         <li key={attachment.id} className="file">
-          <BlobImage blob={attachment.thumb} alt={ATTACHMENT_KIND_LABEL[attachment.kind]} />
+          <button type="button" className="btn-blob" onClick={() => onViewPhoto(idx)}>
+            <BlobImage blob={attachment.thumb} alt={ATTACHMENT_KIND_LABEL[attachment.kind]} />
+          </button>
           <span className="file__kind">{ATTACHMENT_KIND_LABEL[attachment.kind]}</span>
           <span className="mono file__size">{Math.round(attachment.bytes / 1024)} KB</span>
         </li>
@@ -470,6 +485,7 @@ function FilesPanel({ attachments }: { attachments: Attachment[] }) {
 export function VendorDetail({ vendorId }: { vendorId: string }) {
   const [tab, setTab] = useState('overview')
   const { error: mutationError, run } = useMutation()
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   const data = useLiveQuery(async (): Promise<DetailData | null> => {
     const vendor = await db.vendors.get(vendorId)
     if (!vendor || vendor.deletedAt !== undefined) return null
@@ -557,14 +573,22 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
 
       <Tabs items={TABS} active={tab} onChange={setTab} label="Vendor sections">
         {tab === 'overview' ? <OverviewPanel vendor={vendor} /> : null}
-        {tab === 'people' ? <PeoplePanel contacts={contacts} attachments={attachments} /> : null}
+        {tab === 'people' ? <PeoplePanel contacts={contacts} attachments={attachments} onViewPhoto={setViewerIndex} /> : null}
         {tab === 'products' ? (
-          <ProductsPanel products={products} attachments={attachments} />
+          <ProductsPanel products={products} attachments={attachments} onViewPhoto={setViewerIndex} />
         ) : null}
         {tab === 'notes' ? <NotesPanel vendorId={vendor.id} notes={notes} /> : null}
         {tab === 'certs' ? <CertsPanel vendorId={vendor.id} certs={certs} /> : null}
-        {tab === 'files' ? <FilesPanel attachments={attachments} /> : null}
+        {tab === 'files' ? <FilesPanel attachments={attachments} onViewPhoto={setViewerIndex} /> : null}
       </Tabs>
+
+      {viewerIndex !== null ? (
+        <PhotoViewer
+          attachments={attachments}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
+      ) : null}
 
       <p className="detail__updated mono">Updated {formatDate(vendor.updatedAt)}</p>
     </article>
