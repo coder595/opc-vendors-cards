@@ -1,11 +1,7 @@
 import Dexie, { type Table } from 'dexie'
-import type { Attachment, Certification, Contact, Note, Product, Settings, Vendor } from './models'
+import type { Attachment, Certification, Contact, DraftRecord, Note, Product, Settings, Vendor } from './models'
 
-/**
- * Payload schema version. Kept equal to the Dexie schema version on purpose —
- * `SCHEMA_VERSION === db.verno` is asserted in the unit tests.
- */
-export const SCHEMA_VERSION = 2 as const
+export const SCHEMA_VERSION = 3 as const
 
 export class OpcDb extends Dexie {
   vendors!: Table<Vendor, string>
@@ -15,6 +11,7 @@ export class OpcDb extends Dexie {
   certs!: Table<Certification, string>
   attachments!: Table<Attachment, string>
   settings!: Table<Settings, string>
+  drafts!: Table<DraftRecord, string>
 
   constructor(name = 'opc-vendors-cards') {
     super(name)
@@ -53,6 +50,17 @@ export class OpcDb extends Dexie {
       await tx.table('attachments').toCollection().modify((att: Record<string, unknown>) => {
         if (att.updatedAt === undefined) att.updatedAt = (att.createdAt as number) || now
       })
+    })
+
+    this.version(3).stores({
+      vendors: 'id, name, status, country, *tags, updatedAt',
+      contacts: 'id, vendorId',
+      products: 'id, vendorId, name',
+      notes: 'id, vendorId, done, dueDate',
+      certs: 'id, vendorId, expiry',
+      attachments: 'id, vendorId, kind',
+      settings: 'id',
+      drafts: 'id, updatedAt',
     })
   }
 }

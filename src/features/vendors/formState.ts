@@ -80,6 +80,11 @@ export type ScalarField =
 export type VendorAction =
   | { type: 'setField'; field: ScalarField; value: VendorDraft[ScalarField] }
   | { type: 'setFair'; field: keyof FairRef; value: string }
+  | { type: 'addTag'; value: string }
+  | { type: 'removeTag'; value: string }
+  | { type: 'addSocial' }
+  | { type: 'updateSocial'; index: number; patch: Partial<SocialLink> }
+  | { type: 'removeSocial'; index: number }
   | { type: 'addContact'; key: string }
   | { type: 'updateContact'; key: string; patch: Partial<ContactDraft> }
   | { type: 'removeContact'; key: string }
@@ -150,6 +155,18 @@ export function vendorReducer(draft: VendorDraft, action: VendorAction): VendorD
       return { ...draft, [action.field]: action.value } as VendorDraft
     case 'setFair':
       return { ...draft, fair: { ...draft.fair, [action.field]: action.value } as FairRef }
+    case 'addTag':
+      return { ...draft, tags: [...draft.tags, action.value] }
+    case 'removeTag':
+      return { ...draft, tags: draft.tags.filter((t) => t !== action.value) }
+    case 'addSocial':
+      return { ...draft, socials: [...draft.socials, { platform: 'wechat', value: '' }] }
+    case 'updateSocial':
+      return { ...draft, socials: draft.socials.map((s, i) =>
+        i === action.index ? { ...s, ...action.patch } : s,
+      )}
+    case 'removeSocial':
+      return { ...draft, socials: draft.socials.filter((_, i) => i !== action.index) }
     case 'addContact':
       return { ...draft, contacts: [...draft.contacts, createEmptyContact(action.key)] }
     case 'updateContact':

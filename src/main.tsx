@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { UpdateToast } from './components/UpdateToast'
 import { purgeTombstonesOlderThan } from './data/vendors'
 import { initTheme } from './lib/theme'
 import './styles/tokens.css'
@@ -24,6 +25,7 @@ createRoot(rootEl).render(
   <StrictMode>
     <ErrorBoundary>
       <App />
+      <UpdateToast />
     </ErrorBoundary>
   </StrictMode>,
 )

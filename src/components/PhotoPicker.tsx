@@ -12,8 +12,9 @@ interface PhotoPickerProps {
   testId?: string
 }
 
-export function PhotoPicker({ id, label, kind, onAdd, multiple, testId }: PhotoPickerProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+export function PhotoPicker({ id, label, kind, onAdd, testId }: PhotoPickerProps) {
+  const cameraRef = useRef<HTMLInputElement>(null)
+  const galleryRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string>()
 
@@ -47,20 +48,38 @@ export function PhotoPicker({ id, label, kind, onAdd, multiple, testId }: PhotoP
     setBusy(false)
   }
 
+  const triggerCamera = () => cameraRef.current?.click()
+  const triggerGallery = () => galleryRef.current?.click()
+
   return (
     <div className="photo-picker">
       <input
-        ref={inputRef}
-        id={id}
-        data-testid={testId}
+        ref={cameraRef}
+        id={`${id}-camera`}
+        data-testid={testId ? `${testId}-camera` : undefined}
         className="sr-only"
         type="file"
         accept="image/*"
         capture="environment"
-        multiple={multiple}
+        multiple={false}
         tabIndex={-1}
-        aria-label={label}
-        aria-describedby={error ? `${id}-error` : undefined}
+        aria-label={`Take ${label}`}
+        onChange={(event) => {
+          const files = event.target.files ? Array.from(event.target.files) : []
+          event.target.value = ''
+          void handleFiles(files)
+        }}
+      />
+      <input
+        ref={galleryRef}
+        id={`${id}-gallery`}
+        data-testid={testId ? `${testId}-gallery` : undefined}
+        className="sr-only"
+        type="file"
+        accept="image/*"
+        multiple
+        tabIndex={-1}
+        aria-label={`Choose ${label}`}
         onChange={(event) => {
           const files = event.target.files ? Array.from(event.target.files) : []
           event.target.value = ''
@@ -70,10 +89,18 @@ export function PhotoPicker({ id, label, kind, onAdd, multiple, testId }: PhotoP
       <button
         type="button"
         className="btn btn--ghost"
-        onClick={() => inputRef.current?.click()}
+        onClick={triggerCamera}
         disabled={busy}
       >
-        {busy ? 'Processing…' : label}
+        {busy ? 'Processing\u2026' : `Take ${label}`}
+      </button>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={triggerGallery}
+        disabled={busy}
+      >
+        {busy ? 'Processing\u2026' : `Choose ${label}`}
       </button>
       {error ? (
         <p className="field__error" id={`${id}-error`} role="alert">
@@ -97,7 +124,7 @@ export function PhotoThumb({
     <figure className="photo-thumb">
       <img src={photo.previewUrl} alt="" width={72} height={72} />
       <button type="button" className="photo-thumb__remove" aria-label={label} onClick={onRemove}>
-        ×
+        &times;
       </button>
     </figure>
   )

@@ -215,6 +215,49 @@ export interface ExportEnvelope {
   data: ExportData
 }
 
+export interface DraftPhotoRecord {
+  key: string
+  kind: AttachmentKind
+  blob: Blob
+  thumb: Blob
+  width: number
+  height: number
+  bytes: number
+}
+
+export interface DraftRecord {
+  id: 'new' | string
+  vendor: VendorInput
+  contacts: Array<{
+    key: string
+    id?: string
+    name: string
+    position?: string
+    phone?: string
+    email?: string
+    wechat?: string
+    whatsapp?: string
+    isPrimary: boolean
+    cardPhotoKey?: string
+  }>
+  products: Array<{
+    key: string
+    id?: string
+    name: string
+    description?: string
+    unit?: string
+    currency: string
+    price?: number
+    moq?: number
+    tiers: PriceTier[]
+    leadTimeDays?: number
+    paymentTerms?: string
+    photoKeys: string[]
+  }>
+  photos: DraftPhotoRecord[]
+  updatedAt: number
+}
+
 export type ImportMode = 'merge' | 'replace'
 
 export type MergePolicy = 'existing-wins' | 'imported-wins' | 'newest-wins'

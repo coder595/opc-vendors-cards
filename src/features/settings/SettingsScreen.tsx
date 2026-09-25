@@ -28,6 +28,10 @@ function SettingsForm({ initial }: { initial: Settings }) {
   const [base, setBase] = useState(initial.baseCurrency)
   const [theme, setTheme] = useState<Theme>(initial.theme)
   const [rows, setRows] = useState<RateRow[]>(() => toRows(initial.rates))
+  const [travellerName, setTravellerName] = useState(initial.travellerName ?? '')
+  const [defaultEdition, setDefaultEdition] = useState(initial.defaultFair?.edition ?? '')
+  const [defaultHall, setDefaultHall] = useState(initial.defaultFair?.hall ?? '')
+  const [defaultBooth, setDefaultBooth] = useState(initial.defaultFair?.booth ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
   const originalRows = useRef<RateRow[]>(toRows(initial.rates))
@@ -97,7 +101,16 @@ function SettingsForm({ initial }: { initial: Settings }) {
     if (!code || Object.keys(nextErrors).length > 0) return
     setNotice('')
     void run(
-      updateSettings({ baseCurrency: code, rates }).then(() => {
+      updateSettings({
+        baseCurrency: code,
+        rates,
+        travellerName: travellerName.trim() || undefined,
+        defaultFair: {
+          edition: defaultEdition.trim() || undefined,
+          hall: defaultHall.trim() || undefined,
+          booth: defaultBooth.trim() || undefined,
+        },
+      }).then(() => {
         setNotice('Saved.')
       }),
     )
@@ -191,6 +204,36 @@ function SettingsForm({ initial }: { initial: Settings }) {
           </p>
         ) : null}
       </form>
+      <section className="form-section" aria-labelledby="profile-heading">
+        <h2 id="profile-heading">Profile &amp; fair</h2>
+        <TextField
+          id="traveller-name"
+          label="Your name"
+          hint="Stored in exports so merged data shows who captured what."
+          value={travellerName}
+          onChange={setTravellerName}
+        />
+        <TextField
+          id="default-edition"
+          label="Current fair edition"
+          value={defaultEdition}
+          onChange={setDefaultEdition}
+        />
+        <TextField
+          id="default-hall"
+          label="Default hall"
+          mono
+          value={defaultHall}
+          onChange={setDefaultHall}
+        />
+        <TextField
+          id="default-booth"
+          label="Default booth"
+          mono
+          value={defaultBooth}
+          onChange={setDefaultBooth}
+        />
+      </section>
       <section className="form-section" aria-labelledby="sharing-link-heading">
         <h2 id="sharing-link-heading">Sharing &amp; data</h2>
         <p className="field__hint">Export, import, CSV and single-vendor QR sharing.</p>

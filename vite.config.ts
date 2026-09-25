@@ -47,7 +47,7 @@ export default defineConfig({
     react(),
     cspPlugin(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       manifest: {
         name: 'OPC Vendors Cards',
         short_name: 'Vendors',

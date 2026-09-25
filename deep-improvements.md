@@ -116,7 +116,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Test.** Delete → merge older file → still deleted. Delete on A, edit later on B → B's edit revives it on A.
 
-#### A4 · P1 · Notes, certs and inline status/rating changes do not bump the vendor
+#### A4 · P1 · Notes, certs and inline status/rating changes do not bump the vendor ✅ d5225e3
 
 **Evidence.** `src/data/notes.ts` and `certs.ts` write only their own table. Detail-page status/rating changes go through `updateVendor` (which does bump), but adding a note or a cert does not.
 
