@@ -2,6 +2,19 @@
 
 declare const __APP_VERSION__: string
 
+interface BarcodeDetectorOptions {
+  formats: string[]
+}
+
+interface DetectedBarcode {
+  rawValue: string
+}
+
+declare class BarcodeDetector {
+  constructor(options?: BarcodeDetectorOptions)
+  detect(image: ImageBitmapSource): Promise<DetectedBarcode[]>
+}
+
 declare module 'virtual:pwa-register/react' {
   import type { Dispatch, SetStateAction } from 'react'
 

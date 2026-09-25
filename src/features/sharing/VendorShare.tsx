@@ -4,18 +4,34 @@ import { StatusSeal } from '../../components/StatusSeal'
 import { getVendorBundle } from '../../data/bundle'
 import { STATUS_LABEL, TYPE_LABEL } from '../../db/labels'
 import { formatMoney } from '../../lib/currency'
-import { buildVendorCard, encodeVendorCard, payloadFitsQr, renderQrToCanvas } from '../../lib/share'
+import { buildVendorCard, encodeVendorCardUrl, payloadFitsQr, renderQrToCanvas } from '../../lib/share'
 
 export function VendorShare({ vendorId }: { vendorId: string }) {
   const bundle = useLiveQuery(async () => (await getVendorBundle(vendorId)) ?? null, [vendorId])
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [status, setStatus] = useState('')
+  const [code, setCode] = useState('')
+  const [includePrices, setIncludePrices] = useState(() => {
+    const stored = localStorage.getItem('opc.share.prices')
+    return stored !== null ? stored === 'true' : false
+  })
+  const [includeStatus, setIncludeStatus] = useState(() => {
+    const stored = localStorage.getItem('opc.share.status')
+    return stored !== null ? stored === 'true' : false
+  })
 
   const card = useMemo(
     () => (bundle ? buildVendorCard(bundle.vendor, bundle.contacts, bundle.products) : null),
     [bundle],
   )
-  const code = useMemo(() => (card ? encodeVendorCard(card) : ''), [card])
+
+  useEffect(() => {
+    if (!card) return
+    encodeVendorCardUrl(card, location.origin)
+      .then(setCode)
+      .catch(() => setStatus('Could not generate share URL'))
+  }, [card])
+
   const fits = code !== '' && payloadFitsQr(code)
 
   useEffect(() => {
@@ -50,9 +66,9 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(code)
-      setStatus('Code copied.')
+      setStatus('URL copied.')
     } catch {
-      setStatus('Copy failed — select the code manually.')
+      setStatus('Copy failed — select the URL manually.')
     }
   }
 
@@ -63,12 +79,14 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
       </p>
       <article className="share-card">
         <header className="share-card__head">
-          <StatusSeal status={bundle.vendor.status} rating={bundle.vendor.rating} size="md" />
+          {includeStatus ? (
+            <StatusSeal status={bundle.vendor.status} rating={bundle.vendor.rating} size="md" />
+          ) : null}
           <div>
             <h1>{bundle.vendor.name}</h1>
             <p className="detail__meta">
               <span>{TYPE_LABEL[bundle.vendor.type]}</span>
-              <span>{STATUS_LABEL[bundle.vendor.status]}</span>
+              {includeStatus ? <span>{STATUS_LABEL[bundle.vendor.status]}</span> : null}
               {bundle.vendor.country ? <span className="mono">{bundle.vendor.country}</span> : null}
             </p>
           </div>
@@ -105,10 +123,10 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
             {bundle.products.slice(0, 5).map((product) => (
               <li key={product.id} className="tier-list__row">
                 <span>{product.name}</span>
-                {product.price !== undefined ? (
+                {includePrices && product.price !== undefined ? (
                   <span className="mono">{formatMoney(product.price, product.currency)}</span>
                 ) : null}
-                {product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
+                {includePrices && product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
               </li>
             ))}
           </ul>
@@ -118,7 +136,7 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
             <>
               <canvas ref={canvasRef} role="img" aria-label={`QR code for ${bundle.vendor.name}`} />
               <p className="field__hint">
-                Scan or copy the code to add this vendor on another device.
+                Scan or copy the URL to add this vendor on another device.
               </p>
             </>
           ) : (
@@ -128,6 +146,31 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
           )}
         </div>
         <p className="share-card__footer">OPC Vendors Cards</p>
+
+        <div className="share-card__toggles">
+          <label className="field checkbox">
+            <input
+              type="checkbox"
+              checked={includePrices}
+              onChange={(e) => {
+                setIncludePrices(e.target.checked)
+                localStorage.setItem('opc.share.prices', String(e.target.checked))
+              }}
+            />
+            Include prices
+          </label>
+          <label className="field checkbox">
+            <input
+              type="checkbox"
+              checked={includeStatus}
+              onChange={(e) => {
+                setIncludeStatus(e.target.checked)
+                localStorage.setItem('opc.share.status', String(e.target.checked))
+              }}
+            />
+            Include status &amp; rating
+          </label>
+        </div>
       </article>
 
       <div className="share__actions button-row">
@@ -136,7 +179,7 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
         </a>
         {fits ? (
           <button type="button" className="btn btn--ghost" onClick={() => void copyCode()}>
-            Copy code
+            Copy URL
           </button>
         ) : null}
         <button type="button" className="btn btn--primary" onClick={() => window.print()}>

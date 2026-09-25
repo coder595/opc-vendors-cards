@@ -3,10 +3,11 @@ import type { Contact, ExportEnvelope, Product, Vendor } from '../db/models'
 import { APP_ID, APP_VERSION } from './app'
 import { SCHEMA_VERSION } from '../db/schema'
 
-const PREFIX = 'OCV1.'
+const PREFIX_V1 = 'OCV1.'
+const PREFIX_V2 = 'OCV2.'
 /** QR v40 at EC level M holds 2331 bytes; keep density low for camera reliability. */
 const MAX_QR_BYTES = 1200
-const MAX_DECODE_CHARS = Math.ceil(MAX_QR_BYTES * 1.4)
+const MAX_DECODE_CHARS = 5000
 
 export interface VendorCardData {
   name: string
@@ -94,22 +95,81 @@ function base64UrlToBytes(value: string): Uint8Array {
   return bytes
 }
 
-/** Encodes a compact vendor card as a self-contained QR string (no server). */
-export function encodeVendorCard(card: VendorCardData): string {
-  return PREFIX + bytesToBase64Url(new TextEncoder().encode(JSON.stringify(card)))
+async function readAll(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+  const reader = stream.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.byteLength
+    chunks.push(value)
+  }
+  const out = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    out.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return out
 }
 
-export function decodeVendorCard(code: string): VendorCardData | null {
-  if (!code.startsWith(PREFIX) || code.length > MAX_DECODE_CHARS) return null
+async function deflateRaw(data: Uint8Array): Promise<Uint8Array> {
+  const copy = new Uint8Array(data)
+  const stream = new Blob([copy]).stream().pipeThrough(new CompressionStream('deflate-raw'))
+  return readAll(stream)
+}
+
+async function inflateRaw(data: Uint8Array): Promise<Uint8Array> {
+  const copy = new Uint8Array(data)
+  const stream = new Blob([copy]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+  return readAll(stream)
+}
+
+function validateParsed(parsed: unknown): VendorCardData | null {
+  if (typeof parsed !== 'object' || parsed === null) return null
+  const card = parsed as Partial<VendorCardData>
+  if (typeof card.name !== 'string' || card.name.trim() === '') return null
+  if (!Array.isArray(card.contacts) || !Array.isArray(card.products)) return null
+  if (card.tags !== undefined && !Array.isArray(card.tags)) return null
+  return card as VendorCardData
+}
+
+/** Encodes a compact vendor card as a self-contained OCV1 string (no server). */
+export function encodeVendorCard(card: VendorCardData): string {
+  return PREFIX_V1 + bytesToBase64Url(new TextEncoder().encode(JSON.stringify(card)))
+}
+
+export async function encodeVendorCardUrl(card: VendorCardData, origin: string): Promise<string> {
+  const json = JSON.stringify(card)
+  const compressed = await deflateRaw(new TextEncoder().encode(json))
+  return `${origin}/#/import?c=${PREFIX_V2}${bytesToBase64Url(compressed)}`
+}
+
+export async function decodeVendorCard(code: string): Promise<VendorCardData | null> {
+  if (code.length > MAX_DECODE_CHARS) return null
+
+  let payload = code
+  const cParam = code.match(/[?&]c=([^&]+)/)
+  if (cParam && cParam[1]) {
+    try {
+      payload = decodeURIComponent(cParam[1])
+    } catch {
+      return null
+    }
+  }
+
   try {
-    const json = new TextDecoder().decode(base64UrlToBytes(code.slice(PREFIX.length)))
-    const parsed = JSON.parse(json) as unknown
-    if (typeof parsed !== 'object' || parsed === null) return null
-    const card = parsed as Partial<VendorCardData>
-    if (typeof card.name !== 'string' || card.name.trim() === '') return null
-    if (!Array.isArray(card.contacts) || !Array.isArray(card.products)) return null
-    if (card.tags !== undefined && !Array.isArray(card.tags)) return null
-    return card as VendorCardData
+    if (payload.startsWith(PREFIX_V2)) {
+      const compressed = base64UrlToBytes(payload.slice(PREFIX_V2.length))
+      const decompressed = await inflateRaw(compressed)
+      return validateParsed(JSON.parse(new TextDecoder().decode(decompressed)))
+    }
+    if (payload.startsWith(PREFIX_V1)) {
+      const json = new TextDecoder().decode(base64UrlToBytes(payload.slice(PREFIX_V1.length)))
+      return validateParsed(JSON.parse(json))
+    }
+    return null
   } catch {
     return null
   }

@@ -12,6 +12,8 @@ const cases: [string, Route][] = [
   ['#/people', { name: 'people' }],
   ['#/trip', { name: 'trip' }],
   ['#/me', { name: 'me' }],
+  ['#/import', { name: 'import' }],
+  ['#/import?c=OCV2.abc', { name: 'import' }],
   ['#/nonsense', { name: 'vendors' }],
   ['', { name: 'vendors' }],
   ['#main', { name: 'vendors' }],

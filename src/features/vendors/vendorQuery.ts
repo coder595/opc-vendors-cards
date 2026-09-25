@@ -5,6 +5,8 @@ export interface VendorFilters {
   country: string | 'all'
   type: VendorType | 'all'
   minRating: number
+  fair: string | 'all'
+  tag: string | 'all'
 }
 
 export type VendorSort = 'name' | 'updated' | 'rating'
@@ -17,13 +19,15 @@ export interface VendorQuery {
 
 export const defaultVendorQuery: VendorQuery = {
   text: '',
-  filters: { status: 'all', country: 'all', type: 'all', minRating: 0 },
+  filters: { status: 'all', country: 'all', type: 'all', minRating: 0, fair: 'all', tag: 'all' },
   sort: 'name',
 }
 
 export interface VendorSearchIndex {
   byVendor: Map<string, string>
   countries: string[]
+  fairEditions: string[]
+  allTags: string[]
   digitsByVendor: Map<string, string>
 }
 
@@ -36,7 +40,7 @@ function digitsOnly(value: string): string {
   return value.replace(/\D/g, '')
 }
 
-const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
+const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
 
 export function buildSearchIndex(
   vendors: Vendor[],
@@ -57,6 +61,8 @@ export function buildSearchIndex(
   const byVendor = new Map<string, string>()
   const digitsByVendor = new Map<string, string>()
   const countries = new Set<string>()
+  const fairEditions = new Set<string>()
+  const allTags = new Set<string>()
   for (const vendor of vendors) {
     if (vendor.deletedAt !== undefined) continue
     const fair = vendor.fair
@@ -80,9 +86,18 @@ export function buildSearchIndex(
       ...(childrenByVendor.get(vendor.id) ?? []).map((t) => digitsOnly(t)),
     ].join(' ')
     digitsByVendor.set(vendor.id, digitsHaystack)
+    console.log('buildSearchIndex: v1 digitsHaystack =', JSON.stringify(digitsHaystack))
     if (vendor.country) countries.add(vendor.country)
+    if (vendor.fair.edition) fairEditions.add(vendor.fair.edition)
+    for (const tag of vendor.tags) allTags.add(tag)
   }
-  return { byVendor, countries: [...countries].sort(collator.compare), digitsByVendor }
+  return {
+    byVendor,
+    countries: [...countries].sort(collator.compare),
+    fairEditions: [...fairEditions].sort(collator.compare),
+    allTags: [...allTags].sort(collator.compare),
+    digitsByVendor,
+  }
 }
 
 export function applyVendorQuery(
@@ -92,7 +107,7 @@ export function applyVendorQuery(
 ): Vendor[] {
   const needle = foldText(query.text)
   const digitsNeedle = digitsOnly(query.text)
-  const { status, country, type, minRating } = query.filters
+  const { status, country, type, minRating, fair, tag } = query.filters
 
   const filtered = vendors.filter((vendor) => {
     if (vendor.deletedAt !== undefined) return false
@@ -100,6 +115,8 @@ export function applyVendorQuery(
     if (country !== 'all' && (vendor.country ?? '') !== country) return false
     if (type !== 'all' && vendor.type !== type) return false
     if (vendor.rating < minRating) return false
+    if (fair !== 'all' && (vendor.fair.edition ?? '') !== fair) return false
+    if (tag !== 'all' && !vendor.tags.includes(tag)) return false
     if (needle !== '') {
       const textMatch = (index.byVendor.get(vendor.id) ?? '').includes(needle)
       const digitsMatch = digitsNeedle !== '' && (index.digitsByVendor?.get(vendor.id) ?? '').includes(digitsNeedle)

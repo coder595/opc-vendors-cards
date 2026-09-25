@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TextField } from '../../components/Field'
 import type { ExportEnvelope, ImportMode } from '../../db/models'
 import { db } from '../../db/schema'
@@ -28,6 +28,9 @@ function ExportPanel() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const markExported = () =>
+    localStorage.setItem('opc.lastExportAt', Date.now().toString())
+
   const runExport = async (task: () => Promise<string>) => {
     setBusy(true)
     setError('')
@@ -45,6 +48,7 @@ function ExportPanel() {
     runExport(async () => {
       const blob = await buildExportBlob(await serializeDb())
       downloadBlob(blob, exportFilename())
+      markExported()
       return 'Export downloaded.'
     })
 
@@ -61,6 +65,7 @@ function ExportPanel() {
         products,
       )
       downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), csvFilename())
+      markExported()
       return 'CSV downloaded.'
     })
 
@@ -68,6 +73,7 @@ function ExportPanel() {
     runExport(async () => {
       const blob = await buildExportBlob(await serializeDb())
       const shared = await shareFile(blob, exportFilename())
+      if (shared) markExported()
       return shared ? 'Shared.' : 'Sharing is not available here — use Download.'
     })
 
@@ -76,24 +82,24 @@ function ExportPanel() {
       <h2 id="export-heading">Export</h2>
       <p className="field__hint">One gzipped file with every vendor, contact, product and photo.</p>
       <div className="button-row">
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={() => void exportJson()}
-          disabled={busy}
-        >
-          Download export
-        </button>
         {canShareFiles() ? (
           <button
             type="button"
-            className="btn btn--ghost"
+            className="btn btn--primary"
             onClick={() => void shareJson()}
             disabled={busy}
           >
             Share file
           </button>
         ) : null}
+        <button
+          type="button"
+          className={canShareFiles() ? 'btn btn--ghost' : 'btn btn--primary'}
+          onClick={() => void exportJson()}
+          disabled={busy}
+        >
+          Download export
+        </button>
         <button
           type="button"
           className="btn btn--ghost"
@@ -113,7 +119,48 @@ function ExportPanel() {
           {error}
         </p>
       ) : null}
+      <StorageInfo />
     </section>
+  )
+}
+
+function StorageInfo() {
+  const [info, setInfo] = useState<{ used: string; quota: string } | null>(null)
+
+  useEffect(() => {
+    if (!('storage' in navigator) || !('estimate' in navigator.storage)) return
+    navigator.storage.estimate().then((est) => {
+      if (est.usage === undefined || est.quota === undefined) return
+      const fmt = (b: number) => {
+        if (b < 1024) return `${b} B`
+        if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`
+        return `${(b / (1024 * 1024)).toFixed(1)} MB`
+      }
+      setInfo({ used: fmt(est.usage), quota: fmt(est.quota) })
+    })
+  }, [])
+
+  const lastExport = localStorage.getItem('opc.lastExportAt')
+  const lastExportLabel = lastExport
+    ? new Date(Number(lastExport)).toLocaleDateString()
+    : 'Never'
+
+  return (
+    <details className="storage-info">
+      <summary>Storage &amp; backups</summary>
+      <dl>
+        {info ? (
+          <>
+            <dt>Used</dt>
+            <dd>{info.used}</dd>
+            <dt>Quota</dt>
+            <dd>{info.quota}</dd>
+          </>
+        ) : null}
+        <dt>Last export</dt>
+        <dd>{lastExportLabel}</dd>
+      </dl>
+    </details>
   )
 }
 
@@ -286,8 +333,8 @@ function ImportCode() {
   const [summary, setSummary] = useState<ImportSummary | null>(null)
   const [error, setError] = useState('')
 
-  const readCode = () => {
-    const decoded = decodeVendorCard(code.trim())
+  const readCode = async () => {
+    const decoded = await decodeVendorCard(code.trim())
     if (!decoded) {
       setError('That card code could not be read.')
       setCard(null)
@@ -318,10 +365,10 @@ function ImportCode() {
   return (
     <section className="form-section" aria-labelledby="code-heading">
       <h2 id="code-heading">Add a vendor from a card code</h2>
-      <p className="field__hint">Paste the code shown under a shared vendor's QR.</p>
-      <TextField id="card-code" label="Card code" mono value={code} onChange={setCode} />
+      <p className="field__hint">Paste the URL or code shown under a shared vendor's QR.</p>
+      <TextField id="card-code" label="Card URL or code" mono value={code} onChange={setCode} />
       <div className="button-row">
-        <button type="button" className="btn btn--ghost" onClick={readCode}>
+        <button type="button" className="btn btn--ghost" onClick={() => void readCode()}>
           Read code
         </button>
         {card ? (

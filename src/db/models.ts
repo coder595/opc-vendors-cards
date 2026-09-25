@@ -38,6 +38,7 @@ export interface Vendor {
   socials: SocialLink[]
   tags: string[]
   fair: FairRef
+  revisit?: boolean
   createdAt: number
   updatedAt: number
   deletedAt?: number
@@ -137,6 +138,7 @@ export interface VendorInput {
   socials?: SocialLink[]
   tags?: string[]
   fair?: FairRef
+  revisit?: boolean
 }
 
 export interface ContactInput {

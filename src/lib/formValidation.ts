@@ -60,7 +60,7 @@ function productHasContent(product: VendorDraft['products'][number]): boolean {
   )
 }
 
-export function validateVendorDraft(draft: VendorDraft): DraftValidation {
+export function validateVendorDraft(draft: VendorDraft, defaultCurrency = 'USD'): DraftValidation {
   const errors: Record<string, string> = {}
 
   const name = draft.name.trim()
@@ -89,7 +89,7 @@ export function validateVendorDraft(draft: VendorDraft): DraftValidation {
     if (productName === '') errors[`products.${product.key}.name`] = 'Enter a product name'
 
     const currencyRaw = product.currency.trim().toUpperCase()
-    let currency = 'USD'
+    let currency = defaultCurrency
     if (currencyRaw !== '') {
       if (CURRENCY_RE.test(currencyRaw)) currency = currencyRaw
       else errors[`products.${product.key}.currency`] = 'Use a 3-letter code'

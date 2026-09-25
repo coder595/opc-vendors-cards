@@ -6,12 +6,16 @@ import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { getVendorBundle, saveVendorBundle, type VendorBundle } from '../../data/bundle'
 import { loadDraft, saveDraft, deleteDraft } from '../../data/drafts'
 import { STATUSES, VENDOR_TYPES } from '../../db/labels'
+import { db } from '../../db/schema'
+import { parseCardText } from '../../lib/cardParser'
 import { validateVendorDraft } from '../../lib/formValidation'
 import { requestPersistentStorage } from '../../lib/storage'
 import { ContactFields } from './ContactFields'
 import { ProductFields } from './ProductFields'
 import { createEmptyDraft, vendorReducer, type PhotoDraft, type VendorDraft } from './formState'
 import { VendorFormContext } from './VendorFormContext'
+
+const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 
 function bundleToDraft(bundle: VendorBundle): VendorDraft {
   const { vendor, contacts, products, attachments } = bundle
@@ -33,6 +37,7 @@ function bundleToDraft(bundle: VendorBundle): VendorDraft {
       booth: vendor.fair.booth ?? '',
       note: vendor.fair.note ?? '',
     },
+    revisit: vendor.revisit ?? false,
     contacts: contacts.map((contact) => ({
       key: contact.id,
       id: contact.id,
@@ -90,6 +95,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(mode === 'edit')
   const [loadError, setLoadError] = useState('')
+  const [duplicateHint, setDuplicateHint] = useState<{ id: string; date: string } | null>(null)
   const [draftBanner, setDraftBanner] = useState('')
 
   const photosRef = useRef<PhotoDraft[]>([])
@@ -100,6 +106,41 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   useEffect(() => {
     photosRef.current = draft.photos
   }, [draft.photos])
+
+  useEffect(() => {
+    const name = draft.name.trim()
+    let active = true
+    const timer = setTimeout(async () => {
+      if (name.length < 2) {
+        if (active) setDuplicateHint(null)
+        return
+      }
+      const needle = name.toLowerCase()
+      const matches = await db.vendors
+        .filter(
+          (v) =>
+            v.deletedAt === undefined &&
+            v.name.toLowerCase().includes(needle),
+        )
+        .toArray()
+      if (!active) return
+      const best = matches.find(
+        (v) => !(mode === 'edit' && v.id === vendorId),
+      )
+      if (best) {
+        setDuplicateHint({
+          id: best.id,
+          date: dateFormatter.format(new Date(best.createdAt)),
+        })
+      } else {
+        setDuplicateHint(null)
+      }
+    }, 500)
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [draft.name, mode, vendorId])
 
   useEffect(() => {
     if (mode !== 'edit' || !vendorId) return
@@ -143,6 +184,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             booth: saved.vendor.fair?.booth ?? '',
             note: saved.vendor.fair?.note ?? '',
           },
+          revisit: saved.vendor.revisit ?? false,
           contacts: saved.contacts.map((c) => ({
             key: c.key,
             id: c.id,
@@ -372,6 +414,69 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             onChange={(name) => dispatch({ type: 'setField', field: 'name', value: name })}
             error={errors['vendor.name']}
           />
+          {duplicateHint ? (
+            <p className="field__hint" role="status">
+              Already met on {duplicateHint.date} —{' '}
+              <a href={`#/vendors/${duplicateHint.id}`}>open instead?</a>
+            </p>
+          ) : null}
+          <details className="card-paste">
+            <summary>Paste card text</summary>
+            <div className="card-paste__body">
+              <label className="sr-only" htmlFor="card-paste-text">
+                Business card text
+              </label>
+              <textarea
+                id="card-paste-text"
+                rows={4}
+                placeholder="Paste business card text here…"
+              />
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => {
+                  const ta = document.getElementById('card-paste-text') as HTMLTextAreaElement | null
+                  if (!ta || !ta.value.trim()) return
+                  const parsed = parseCardText(ta.value)
+                  if (parsed.company && draft.name.trim() === '') {
+                    dispatch({ type: 'setField', field: 'name', value: parsed.company })
+                  }
+                  if (parsed.phones.length > 0) {
+                    const phone = parsed.phones[0]
+                    if (draft.contacts.length === 0) {
+                      dispatch({ type: 'addContact', key: crypto.randomUUID() })
+                    }
+                    for (const contact of draft.contacts) {
+                      if (contact.name === '' && contact.phone === '') {
+                        dispatch({ type: 'updateContact', key: contact.key, patch: { phone } })
+                      }
+                    }
+                  }
+                  if (parsed.emails.length > 0) {
+                    const email = parsed.emails[0]
+                    for (const contact of draft.contacts) {
+                      if (contact.email === '') {
+                        dispatch({ type: 'updateContact', key: contact.key, patch: { email } })
+                      }
+                    }
+                  }
+                  if (parsed.wechat) {
+                    for (const contact of draft.contacts) {
+                      if (contact.wechat === '') {
+                        dispatch({ type: 'updateContact', key: contact.key, patch: { wechat: parsed.wechat } })
+                      }
+                    }
+                  }
+                  if (parsed.urls.length > 0 && parsed.urls[0] && draft.website === '') {
+                    dispatch({ type: 'setField', field: 'website', value: parsed.urls[0] })
+                  }
+                  ta.value = ''
+                }}
+              >
+                Fill fields
+              </button>
+            </div>
+          </details>
           <SelectField
             id="vendor-type"
             label="Type"

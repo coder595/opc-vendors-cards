@@ -69,6 +69,7 @@ export interface VendorDraft {
   socials: SocialLink[]
   tags: string[]
   fair: FairRef
+  revisit: boolean
   contacts: ContactDraft[]
   products: ProductDraft[]
   photos: PhotoDraft[]
@@ -143,6 +144,7 @@ export function createEmptyDraft(): VendorDraft {
     socials: [],
     tags: [],
     fair: { edition: '', hall: '', booth: '', note: '' },
+    revisit: false,
     contacts: [],
     products: [],
     photos: [],

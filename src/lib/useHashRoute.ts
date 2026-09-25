@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react'
 export type Route =
   | { name: 'vendors' }
   | { name: 'vendorNew' }
+  | { name: 'vendorsQuick' }
   | { name: 'vendorDetail'; id: string }
   | { name: 'vendorEdit'; id: string }
   | { name: 'vendorShare'; id: string }
@@ -10,6 +11,7 @@ export type Route =
   | { name: 'people' }
   | { name: 'trip' }
   | { name: 'me' }
+  | { name: 'import' }
 
 const DEFAULT_HASH = '#/vendors'
 
@@ -41,6 +43,7 @@ export function parseHash(hash: string): Route {
       const segment = parts[1]
       if (!segment) return { name: 'vendors' }
       if (segment === 'new') return { name: 'vendorNew' }
+      if (segment === 'quick') return { name: 'vendorsQuick' }
       if (parts[2] === 'edit') return { name: 'vendorEdit', id: segment }
       if (parts[2] === 'share') return { name: 'vendorShare', id: segment }
       return { name: 'vendorDetail', id: segment }
@@ -53,6 +56,8 @@ export function parseHash(hash: string): Route {
       return { name: 'trip' }
     case 'me':
       return { name: 'me' }
+    case 'import':
+      return { name: 'import' }
     default:
       return { name: 'vendors' }
   }

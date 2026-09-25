@@ -2,11 +2,12 @@ import { STATUS_LABEL, TYPE_LABEL } from '../db/labels'
 import type { Contact, Product, Vendor } from '../db/models'
 
 const DANGEROUS_PREFIX = /^[=+\-@\t\r\n]/
+const PHONE_SHAPE = /^\+?[\d\s().-]{6,}$/
 
 /** Quotes and formula-guards a single CSV cell (architecture.md §9). */
 export function csvCell(value: string | number | undefined | null): string {
   const raw = value === undefined || value === null ? '' : String(value)
-  const guarded = DANGEROUS_PREFIX.test(raw) ? `'${raw}` : raw
+  const guarded = DANGEROUS_PREFIX.test(raw) && !PHONE_SHAPE.test(raw) ? `'${raw}` : raw
   if (/[",\r\n]/.test(guarded)) return `"${guarded.replace(/"/g, '""')}"`
   return guarded
 }
