@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import type { SocialPlatform } from '../../db/models'
 import { RatingField, SelectField, TextAreaField, TextField } from '../../components/Field'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { getVendorBundle, saveVendorBundle, type VendorBundle } from '../../data/bundle'
@@ -280,6 +281,90 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             value={draft.fair.booth ?? ''}
             onChange={(value) => dispatch({ type: 'setFair', field: 'booth', value })}
           />
+          <TextField
+            id="fair-note"
+            label="Fair note"
+            value={draft.fair.note ?? ''}
+            onChange={(value) => dispatch({ type: 'setFair', field: 'note', value })}
+          />
+        </section>
+
+        <section className="form-section" aria-labelledby="tags-heading">
+          <h2 id="tags-heading">Tags</h2>
+          <div className="chip-row" role="group" aria-label="Tags">
+            {draft.tags.map((tag) => (
+              <span key={tag} className="chip">
+                {tag}
+                <button
+                  type="button"
+                  className="chip__remove"
+                  aria-label={`Remove tag ${tag}`}
+                  onClick={() => dispatch({ type: 'removeTag', value: tag })}
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
+          <input
+            id="vendor-tags"
+            aria-label="Add a tag"
+            placeholder="Add a tag and press Enter"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ',') {
+                event.preventDefault()
+                const value = (event.target as HTMLInputElement).value.trim()
+                if (value && !draft.tags.includes(value)) {
+                  dispatch({ type: 'addTag', value })
+                }
+                (event.target as HTMLInputElement).value = ''
+              }
+            }}
+          />
+        </section>
+
+        <section className="form-section" aria-labelledby="socials-heading">
+          <h2 id="socials-heading">Social links</h2>
+          {draft.socials.map((social, index) => (
+            <div key={index} className="social-row">
+              <SelectField
+                id={`social-${index}-platform`}
+                label="Platform"
+                value={social.platform}
+                onChange={(value) =>
+                  dispatch({ type: 'updateSocial', index, patch: { platform: value as SocialPlatform } })
+                }
+                options={[
+                  { value: 'wechat', label: 'WeChat' },
+                  { value: 'whatsapp', label: 'WhatsApp' },
+                  { value: 'alibaba', label: 'Alibaba' },
+                  { value: 'linkedin', label: 'LinkedIn' },
+                  { value: 'instagram', label: 'Instagram' },
+                  { value: 'facebook', label: 'Facebook' },
+                  { value: 'other', label: 'Other' },
+                ]}
+              />
+              <TextField
+                id={`social-${index}-value`}
+                label="Handle or URL"
+                value={social.value}
+                onChange={(value) =>
+                  dispatch({ type: 'updateSocial', index, patch: { value } })
+                }
+              />
+              <button
+                type="button"
+                className="btn btn--ghost"
+                aria-label={`Remove ${social.platform}`}
+                onClick={() => dispatch({ type: 'removeSocial', index })}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button type="button" className="btn btn--ghost" onClick={() => dispatch({ type: 'addSocial' })}>
+            Add social link
+          </button>
         </section>
 
         <ContactFields />
