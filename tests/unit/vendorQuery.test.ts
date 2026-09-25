@@ -47,13 +47,24 @@ const vendors = [
     status: 'quoted',
     rating: 5,
     tags: ['led'],
+    fair: { edition: '140th Canton Fair', hall: 'A', booth: '11.2' },
   }),
   vendor({ id: 'v2', name: '柏林金属', country: 'Germany', status: 'lead', rating: 3 }),
   vendor({ id: 'v3', name: 'Acme', country: 'China', status: 'ordered', rating: 4 }),
 ]
-const contacts = [contact('v2', 'Li Wei', 'Sales')]
+const contacts = [
+  contact('v2', 'Li Wei', 'Sales'),
+  contact('v1', 'Zhang Min', 'Sales'),
+]
 const products = [product('v3', 'Laser Cutter')]
-const index = buildSearchIndex(vendors, contacts, products)
+// Add phone/wechat to v1's contact — use direct db models
+const contactsExtended = contacts.map((c) => {
+  if (c.vendorId === 'v1' && c.name === 'Zhang Min') {
+    return { ...c, phone: '+86 138-0013 8000', wechat: 'zhangmin_wx', email: 'zm@cafe.example' }
+  }
+  return c
+})
+const index = buildSearchIndex(vendors, contactsExtended, products)
 
 function query(overrides: Partial<VendorQuery> = {}): VendorQuery {
   return { ...defaultVendorQuery, ...overrides }
@@ -140,6 +151,26 @@ describe('buildSearchIndex + applyVendorQuery', () => {
       'v1',
       'v2',
     ])
+  })
+
+  it('C1: matches a booth number', () => {
+    expect(ids(applyVendorQuery(vendors, index, query({ text: '11.2' })))).toEqual(['v1'])
+  })
+
+  it('C1: matches a phone number by digits-only', () => {
+    expect(ids(applyVendorQuery(vendors, index, query({ text: '8613800138000' })))).toEqual(['v1'])
+  })
+
+  it('C1: matches a WeChat ID', () => {
+    expect(ids(applyVendorQuery(vendors, index, query({ text: 'zhangmin_wx' })))).toEqual(['v1'])
+  })
+
+  it('C1: matches a fair edition', () => {
+    expect(ids(applyVendorQuery(vendors, index, query({ text: '140th' })))).toEqual(['v1'])
+  })
+
+  it('C1: matches an email', () => {
+    expect(ids(applyVendorQuery(vendors, index, query({ text: 'zm@cafe.example' })))).toEqual(['v1'])
   })
 
   it('scans 500 vendors in under 100 ms', () => {
