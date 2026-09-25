@@ -90,7 +90,7 @@ describe('buildSearchIndex + applyVendorQuery', () => {
     const result = applyVendorQuery(
       vendors,
       index,
-      query({ filters: { status: 'quoted', country: 'China', type: 'all', minRating: 0 } }),
+      query({ filters: { status: 'quoted', country: 'China', type: 'all', minRating: 0, fair: 'all', tag: 'all' } }),
     )
     expect(ids(result)).toEqual(['v1'])
   })
@@ -99,7 +99,7 @@ describe('buildSearchIndex + applyVendorQuery', () => {
     const result = applyVendorQuery(
       vendors,
       index,
-      query({ filters: { status: 'all', country: 'Germany', type: 'all', minRating: 0 } }),
+      query({ filters: { status: 'all', country: 'Germany', type: 'all', minRating: 0, fair: 'all', tag: 'all' } }),
     )
     expect(ids(result)).toEqual(['v2'])
   })
@@ -108,7 +108,7 @@ describe('buildSearchIndex + applyVendorQuery', () => {
     const result = applyVendorQuery(
       vendors,
       index,
-      query({ filters: { status: 'all', country: 'all', type: 'all', minRating: 5 } }),
+      query({ filters: { status: 'all', country: 'all', type: 'all', minRating: 5, fair: 'all', tag: 'all' } }),
     )
     expect(ids(result)).toEqual(['v1'])
   })

@@ -5,6 +5,8 @@ export interface VendorFilters {
   country: string | 'all'
   type: VendorType | 'all'
   minRating: number
+  fair: string | 'all'
+  tag: string | 'all'
 }
 
 export type VendorSort = 'name' | 'updated' | 'rating'
@@ -17,13 +19,15 @@ export interface VendorQuery {
 
 export const defaultVendorQuery: VendorQuery = {
   text: '',
-  filters: { status: 'all', country: 'all', type: 'all', minRating: 0 },
+  filters: { status: 'all', country: 'all', type: 'all', minRating: 0, fair: 'all', tag: 'all' },
   sort: 'name',
 }
 
 export interface VendorSearchIndex {
   byVendor: Map<string, string>
   countries: string[]
+  fairEditions: string[]
+  allTags: string[]
 }
 
 /** Case- and diacritic-insensitive fold; CJK passes through unchanged. */
@@ -51,6 +55,8 @@ export function buildSearchIndex(
 
   const byVendor = new Map<string, string>()
   const countries = new Set<string>()
+  const fairEditions = new Set<string>()
+  const allTags = new Set<string>()
   for (const vendor of vendors) {
     if (vendor.deletedAt !== undefined) continue
     const haystack = [
@@ -64,8 +70,15 @@ export function buildSearchIndex(
     ].join(' ')
     byVendor.set(vendor.id, foldText(haystack))
     if (vendor.country) countries.add(vendor.country)
+    if (vendor.fair.edition) fairEditions.add(vendor.fair.edition)
+    for (const tag of vendor.tags) allTags.add(tag)
   }
-  return { byVendor, countries: [...countries].sort(collator.compare) }
+  return {
+    byVendor,
+    countries: [...countries].sort(collator.compare),
+    fairEditions: [...fairEditions].sort(collator.compare),
+    allTags: [...allTags].sort(collator.compare),
+  }
 }
 
 export function applyVendorQuery(
@@ -74,7 +87,7 @@ export function applyVendorQuery(
   query: VendorQuery,
 ): Vendor[] {
   const needle = foldText(query.text)
-  const { status, country, type, minRating } = query.filters
+  const { status, country, type, minRating, fair, tag } = query.filters
 
   const filtered = vendors.filter((vendor) => {
     if (vendor.deletedAt !== undefined) return false
@@ -82,6 +95,8 @@ export function applyVendorQuery(
     if (country !== 'all' && (vendor.country ?? '') !== country) return false
     if (type !== 'all' && vendor.type !== type) return false
     if (vendor.rating < minRating) return false
+    if (fair !== 'all' && (vendor.fair.edition ?? '') !== fair) return false
+    if (tag !== 'all' && !vendor.tags.includes(tag)) return false
     if (needle !== '' && !(index.byVendor.get(vendor.id) ?? '').includes(needle)) return false
     return true
   })

@@ -10,6 +10,14 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
   const bundle = useLiveQuery(async () => (await getVendorBundle(vendorId)) ?? null, [vendorId])
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [status, setStatus] = useState('')
+  const [includePrices, setIncludePrices] = useState(() => {
+    const stored = localStorage.getItem('opc.share.prices')
+    return stored !== null ? stored === 'true' : false
+  })
+  const [includeStatus, setIncludeStatus] = useState(() => {
+    const stored = localStorage.getItem('opc.share.status')
+    return stored !== null ? stored === 'true' : false
+  })
 
   const card = useMemo(
     () => (bundle ? buildVendorCard(bundle.vendor, bundle.contacts, bundle.products) : null),
@@ -63,12 +71,14 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
       </p>
       <article className="share-card">
         <header className="share-card__head">
-          <StatusSeal status={bundle.vendor.status} rating={bundle.vendor.rating} size="md" />
+          {includeStatus ? (
+            <StatusSeal status={bundle.vendor.status} rating={bundle.vendor.rating} size="md" />
+          ) : null}
           <div>
             <h1>{bundle.vendor.name}</h1>
             <p className="detail__meta">
               <span>{TYPE_LABEL[bundle.vendor.type]}</span>
-              <span>{STATUS_LABEL[bundle.vendor.status]}</span>
+              {includeStatus ? <span>{STATUS_LABEL[bundle.vendor.status]}</span> : null}
               {bundle.vendor.country ? <span className="mono">{bundle.vendor.country}</span> : null}
             </p>
           </div>
@@ -105,10 +115,10 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
             {bundle.products.slice(0, 5).map((product) => (
               <li key={product.id} className="tier-list__row">
                 <span>{product.name}</span>
-                {product.price !== undefined ? (
+                {includePrices && product.price !== undefined ? (
                   <span className="mono">{formatMoney(product.price, product.currency)}</span>
                 ) : null}
-                {product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
+                {includePrices && product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
               </li>
             ))}
           </ul>
@@ -128,6 +138,31 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
           )}
         </div>
         <p className="share-card__footer">OPC Vendors Cards</p>
+
+        <div className="share-card__toggles">
+          <label className="field checkbox">
+            <input
+              type="checkbox"
+              checked={includePrices}
+              onChange={(e) => {
+                setIncludePrices(e.target.checked)
+                localStorage.setItem('opc.share.prices', String(e.target.checked))
+              }}
+            />
+            Include prices
+          </label>
+          <label className="field checkbox">
+            <input
+              type="checkbox"
+              checked={includeStatus}
+              onChange={(e) => {
+                setIncludeStatus(e.target.checked)
+                localStorage.setItem('opc.share.status', String(e.target.checked))
+              }}
+            />
+            Include status &amp; rating
+          </label>
+        </div>
       </article>
 
       <div className="share__actions button-row">
