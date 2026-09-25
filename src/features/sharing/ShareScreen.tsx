@@ -76,24 +76,24 @@ function ExportPanel() {
       <h2 id="export-heading">Export</h2>
       <p className="field__hint">One gzipped file with every vendor, contact, product and photo.</p>
       <div className="button-row">
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={() => void exportJson()}
-          disabled={busy}
-        >
-          Download export
-        </button>
         {canShareFiles() ? (
           <button
             type="button"
-            className="btn btn--ghost"
+            className="btn btn--primary"
             onClick={() => void shareJson()}
             disabled={busy}
           >
             Share file
           </button>
         ) : null}
+        <button
+          type="button"
+          className={canShareFiles() ? 'btn btn--ghost' : 'btn btn--primary'}
+          onClick={() => void exportJson()}
+          disabled={busy}
+        >
+          Download export
+        </button>
         <button
           type="button"
           className="btn btn--ghost"
