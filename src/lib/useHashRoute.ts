@@ -10,6 +10,7 @@ export type Route =
   | { name: 'people' }
   | { name: 'trip' }
   | { name: 'me' }
+  | { name: 'import' }
 
 const DEFAULT_HASH = '#/vendors'
 
@@ -53,6 +54,8 @@ export function parseHash(hash: string): Route {
       return { name: 'trip' }
     case 'me':
       return { name: 'me' }
+    case 'import':
+      return { name: 'import' }
     default:
       return { name: 'vendors' }
   }

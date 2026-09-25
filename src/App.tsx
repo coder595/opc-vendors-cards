@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { getSettings } from './data/settings'
 import { PeopleScreen } from './features/people/PeopleScreen'
 import { SettingsScreen } from './features/settings/SettingsScreen'
+import { ImportCardScreen } from './features/sharing/ImportCardScreen'
 import { ShareScreen } from './features/sharing/ShareScreen'
 import { VendorShare } from './features/sharing/VendorShare'
 import { TripScreen } from './features/trip/TripScreen'
@@ -56,6 +57,7 @@ const TITLES: Record<Route['name'], string> = {
   people: 'People',
   trip: 'Trip',
   me: 'Settings',
+  import: 'Import vendor card',
 }
 
 function NavIcon({ paths }: { paths: string[] }) {
@@ -163,6 +165,8 @@ export default function App() {
           <VendorDetail key={route.id} vendorId={route.id} />
         ) : route.name === 'vendorShare' ? (
           <VendorShare key={route.id} vendorId={route.id} />
+        ) : route.name === 'import' ? (
+          <ImportCardScreen />
         ) : route.name === 'share' ? (
           <ShareScreen />
         ) : route.name === 'vendors' ? (

@@ -4,12 +4,13 @@ import { StatusSeal } from '../../components/StatusSeal'
 import { getVendorBundle } from '../../data/bundle'
 import { STATUS_LABEL, TYPE_LABEL } from '../../db/labels'
 import { formatMoney } from '../../lib/currency'
-import { buildVendorCard, encodeVendorCard, payloadFitsQr, renderQrToCanvas } from '../../lib/share'
+import { buildVendorCard, encodeVendorCardUrl, payloadFitsQr, renderQrToCanvas } from '../../lib/share'
 
 export function VendorShare({ vendorId }: { vendorId: string }) {
   const bundle = useLiveQuery(async () => (await getVendorBundle(vendorId)) ?? null, [vendorId])
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [status, setStatus] = useState('')
+  const [code, setCode] = useState('')
   const [includePrices, setIncludePrices] = useState(() => {
     const stored = localStorage.getItem('opc.share.prices')
     return stored !== null ? stored === 'true' : false
@@ -23,7 +24,14 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
     () => (bundle ? buildVendorCard(bundle.vendor, bundle.contacts, bundle.products) : null),
     [bundle],
   )
-  const code = useMemo(() => (card ? encodeVendorCard(card) : ''), [card])
+
+  useEffect(() => {
+    if (!card) return
+    encodeVendorCardUrl(card, location.origin)
+      .then(setCode)
+      .catch(() => setStatus('Could not generate share URL'))
+  }, [card])
+
   const fits = code !== '' && payloadFitsQr(code)
 
   useEffect(() => {
@@ -58,9 +66,9 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(code)
-      setStatus('Code copied.')
+      setStatus('URL copied.')
     } catch {
-      setStatus('Copy failed — select the code manually.')
+      setStatus('Copy failed — select the URL manually.')
     }
   }
 
@@ -128,7 +136,7 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
             <>
               <canvas ref={canvasRef} role="img" aria-label={`QR code for ${bundle.vendor.name}`} />
               <p className="field__hint">
-                Scan or copy the code to add this vendor on another device.
+                Scan or copy the URL to add this vendor on another device.
               </p>
             </>
           ) : (
@@ -171,7 +179,7 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
         </a>
         {fits ? (
           <button type="button" className="btn btn--ghost" onClick={() => void copyCode()}>
-            Copy code
+            Copy URL
           </button>
         ) : null}
         <button type="button" className="btn btn--primary" onClick={() => window.print()}>

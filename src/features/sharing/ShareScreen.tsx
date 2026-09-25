@@ -333,8 +333,8 @@ function ImportCode() {
   const [summary, setSummary] = useState<ImportSummary | null>(null)
   const [error, setError] = useState('')
 
-  const readCode = () => {
-    const decoded = decodeVendorCard(code.trim())
+  const readCode = async () => {
+    const decoded = await decodeVendorCard(code.trim())
     if (!decoded) {
       setError('That card code could not be read.')
       setCard(null)
@@ -365,10 +365,10 @@ function ImportCode() {
   return (
     <section className="form-section" aria-labelledby="code-heading">
       <h2 id="code-heading">Add a vendor from a card code</h2>
-      <p className="field__hint">Paste the code shown under a shared vendor's QR.</p>
-      <TextField id="card-code" label="Card code" mono value={code} onChange={setCode} />
+      <p className="field__hint">Paste the URL or code shown under a shared vendor's QR.</p>
+      <TextField id="card-code" label="Card URL or code" mono value={code} onChange={setCode} />
       <div className="button-row">
-        <button type="button" className="btn btn--ghost" onClick={readCode}>
+        <button type="button" className="btn btn--ghost" onClick={() => void readCode()}>
           Read code
         </button>
         {card ? (

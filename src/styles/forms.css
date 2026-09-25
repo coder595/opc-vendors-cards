@@ -740,6 +740,48 @@
   font-size: var(--fs-xs);
 }
 
+.import-card {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.import-card h1 {
+  font-size: var(--fs-2xl);
+  margin-bottom: var(--sp-4);
+}
+
+.import-card__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.import-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.import-card__info h2 {
+  font-size: var(--fs-xl);
+  margin: 0;
+}
+
+.scanner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.scanner__video {
+  width: 100%;
+  max-width: 360px;
+  border-radius: var(--r-lg);
+  border: 2px solid var(--line);
+}
+
 .detail__actions {
   display: flex;
   flex-wrap: wrap;
