@@ -42,14 +42,15 @@ test('captures a vendor with 2 reps, 3 products and 4 photos offline', async ({
   await productNames.nth(1).fill('Saw')
   await productNames.nth(2).fill('Laser')
 
-  const photoInput = page.getByTestId('vendor-photo-input')
-  await expect(photoInput).toHaveAttribute('capture', 'environment')
+  const cameraInput = page.getByTestId('vendor-photo-input-camera')
+  const galleryInput = page.getByTestId('vendor-photo-input-gallery')
+  await expect(cameraInput).toHaveAttribute('capture', 'environment')
   const files = Array.from({ length: 4 }, (_, index) => ({
     name: `photo-${index}.jpg`,
     mimeType: 'image/jpeg',
     buffer: photoBuffer,
   }))
-  await photoInput.setInputFiles(files)
+  await galleryInput.setInputFiles(files)
   await expect(page.locator('.photo-thumb')).toHaveCount(4)
 
   await page.getByRole('button', { name: 'Save vendor' }).click()

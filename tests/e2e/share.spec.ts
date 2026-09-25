@@ -21,7 +21,7 @@ test('exports on one device and imports on another with photos intact', async ({
   await page.getByLabel('Currency', { exact: true }).fill('CNY')
   await page.getByLabel('Price', { exact: true }).fill('720')
   await page
-    .getByTestId('vendor-photo-input')
+    .getByTestId('vendor-photo-input-gallery')
     .setInputFiles([{ name: 'p.jpg', mimeType: 'image/jpeg', buffer: photoBuffer }])
   await expect(page.locator('.photo-thumb')).toHaveCount(1)
   await page.getByRole('button', { name: 'Save vendor' }).click()

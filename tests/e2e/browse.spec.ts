@@ -16,6 +16,7 @@ test('searches, filters by status and country, and opens a detail', async ({ pag
   await expect(page.getByRole('link', { name: /Berlin Metal/ })).toHaveCount(0)
 
   await page.getByLabel('Search').fill('')
+  await page.getByRole('button', { name: /^Filters/ }).click()
   await page.getByLabel('Status').selectOption('quoted')
   await page.getByLabel('Country').selectOption('China')
   await expect(page.getByRole('link', { name: /Guangzhou Lighting/ })).toBeVisible()
