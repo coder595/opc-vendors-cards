@@ -225,7 +225,7 @@ function parseRates(value: unknown): Record<string, number> | null {
   return out
 }
 
-function parseVendor(value: unknown): Vendor | null {
+export function parseVendor(value: unknown): Vendor | null {
   if (!isObject(value)) return null
   if (!isId(value.id) || !isText(value.name) || value.name.trim() === '') return null
   if (typeof value.type !== 'string' || !VENDOR_TYPES.has(value.type as VendorType)) return null
@@ -261,7 +261,7 @@ function parseVendor(value: unknown): Vendor | null {
   }
 }
 
-function parseContact(value: unknown): Contact | null {
+export function parseContact(value: unknown): Contact | null {
   if (!isObject(value)) return null
   if (!isId(value.id) || !isId(value.vendorId)) return null
   if (!isText(value.name) || value.name.trim() === '') return null
@@ -281,7 +281,7 @@ function parseContact(value: unknown): Contact | null {
   }
 }
 
-function parseProduct(value: unknown): Product | null {
+export function parseProduct(value: unknown): Product | null {
   if (!isObject(value)) return null
   if (!isId(value.id) || !isId(value.vendorId)) return null
   if (!isText(value.name) || value.name.trim() === '') return null
@@ -313,7 +313,7 @@ function parseProduct(value: unknown): Product | null {
   }
 }
 
-function parseNote(value: unknown): Note | null {
+export function parseNote(value: unknown): Note | null {
   if (!isObject(value)) return null
   if (!isId(value.id) || !isId(value.vendorId)) return null
   if (!isText(value.text)) return null
@@ -331,7 +331,7 @@ function parseNote(value: unknown): Note | null {
   }
 }
 
-function parseCert(value: unknown): Certification | null {
+export function parseCert(value: unknown): Certification | null {
   if (!isObject(value)) return null
   if (!isId(value.id) || !isId(value.vendorId)) return null
   if (!isText(value.name) || value.name.trim() === '') return null
@@ -346,7 +346,7 @@ function parseCert(value: unknown): Certification | null {
   }
 }
 
-function parseAttachment(value: unknown): ExportedAttachment | null {
+export function parseAttachment(value: unknown): ExportedAttachment | null {
   if (!isObject(value)) return null
   if (!isId(value.id) || !isId(value.vendorId)) return null
   if (typeof value.kind !== 'string' || !ATTACHMENT_KINDS.has(value.kind as AttachmentKind)) {
@@ -395,7 +395,7 @@ function isBase64(value: unknown): value is string {
   )
 }
 
-function parseSettings(value: unknown): Settings | null {
+export function parseSettings(value: unknown): Settings | null {
   if (!isObject(value) || value.id !== 'app') return null
   const baseCurrency =
     typeof value.baseCurrency === 'string' && CURRENCY_RE.test(value.baseCurrency)

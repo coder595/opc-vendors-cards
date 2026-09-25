@@ -5,11 +5,14 @@ import { db } from '../../db/schema'
 import { buildVendorCsv, csvFilename } from '../../lib/csv'
 import {
   buildExportBlob,
+  estimateExportSize,
   exportFilename,
+  exportNdjsonStream,
   importData,
   parseImport,
   previewImport,
   serializeDb,
+  type ExportSizeEstimate,
   type ImportPreview,
   type ImportSummary,
 } from '../../lib/exportImport'
@@ -27,6 +30,13 @@ function ExportPanel() {
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [format, setFormat] = useState<1 | 2>(2)
+  const [includePhotos, setIncludePhotos] = useState(true)
+  const [sizeEstimate, setSizeEstimate] = useState<ExportSizeEstimate | null>(null)
+
+  useEffect(() => {
+    estimateExportSize({ format, includePhotos }).then(setSizeEstimate)
+  }, [format, includePhotos])
 
   const markExported = () =>
     localStorage.setItem('opc.lastExportAt', Date.now().toString())
@@ -46,7 +56,16 @@ function ExportPanel() {
 
   const exportJson = () =>
     runExport(async () => {
-      const blob = await buildExportBlob(await serializeDb())
+      let blob: Blob
+      if (format === 2) {
+        const chunks: Uint8Array[] = []
+        for await (const chunk of exportNdjsonStream({ format, includePhotos })) {
+          chunks.push(chunk)
+        }
+        blob = new Blob(chunks as BlobPart[], { type: 'application/gzip' })
+      } else {
+        blob = await buildExportBlob(await serializeDb())
+      }
       downloadBlob(blob, exportFilename())
       markExported()
       return 'Export downloaded.'
@@ -71,7 +90,16 @@ function ExportPanel() {
 
   const shareJson = () =>
     runExport(async () => {
-      const blob = await buildExportBlob(await serializeDb())
+      let blob: Blob
+      if (format === 2) {
+        const chunks: Uint8Array[] = []
+        for await (const chunk of exportNdjsonStream({ format, includePhotos })) {
+          chunks.push(chunk)
+        }
+        blob = new Blob(chunks as BlobPart[], { type: 'application/gzip' })
+      } else {
+        blob = await buildExportBlob(await serializeDb())
+      }
       const shared = await shareFile(blob, exportFilename())
       if (shared) markExported()
       return shared ? 'Shared.' : 'Sharing is not available here — use Download.'
@@ -80,7 +108,42 @@ function ExportPanel() {
   return (
     <section className="form-section" aria-labelledby="export-heading">
       <h2 id="export-heading">Export</h2>
-      <p className="field__hint">One gzipped file with every vendor, contact, product and photo.</p>
+      <p className="field__hint">All your data in one gzipped file for backup or transfer.</p>
+
+      <fieldset className="field">
+        <legend>Export options</legend>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={!includePhotos}
+            onChange={(event) => setIncludePhotos(!event.target.checked)}
+          />
+          Without photos
+        </label>
+        <label className="checkbox">
+          <input
+            type="radio"
+            name="export-format"
+            checked={format === 2}
+            onChange={() => setFormat(2)}
+          />
+          NDJSON (v2, streaming, smaller)
+        </label>
+        <label className="checkbox">
+          <input
+            type="radio"
+            name="export-format"
+            checked={format === 1}
+            onChange={() => setFormat(1)}
+          />
+          JSON (v1, compatible with older versions)
+        </label>
+      </fieldset>
+
+      {sizeEstimate ? (
+        <p className="field__hint">Estimated size: {sizeEstimate.text}</p>
+      ) : null}
+
       <div className="button-row">
         {canShareFiles() ? (
           <button
