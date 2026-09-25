@@ -101,7 +101,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Test.** Newer imported vendor wins; older imported vendor loses; child-level recency works independently of the parent; a v1 file still imports.
 
-#### A3 · P0 · Deleting a vendor is impossible in the UI, and deletes would resurrect on merge anyway
+#### A3 · P0 · Deleting a vendor is impossible in the UI, and deletes would resurrect on merge anyway ✅ 5ef7898
 
 **Evidence.** `deleteVendor` exists in `src/data/vendors.ts` but is not called anywhere in `src/features` — there is no delete button. The model has `deletedAt` (soft delete) and every query filters it, but nothing ever sets it; `deleteVendor` hard-deletes. A hard delete leaves no tombstone, so merging any older file brings the vendor back (reproduced).
 
