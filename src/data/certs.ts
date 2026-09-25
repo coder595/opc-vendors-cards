@@ -10,6 +10,7 @@ export async function addCert(vendorId: string, input: CertInput): Promise<strin
     number: input.number,
     issuer: input.issuer,
     expiry: input.expiry,
+    updatedAt: Date.now(),
   }
   await db.certs.add(cert)
   return cert.id

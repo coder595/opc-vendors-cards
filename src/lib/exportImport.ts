@@ -122,6 +122,7 @@ export async function serializeDb(): Promise<ExportEnvelope> {
       height: row.height,
       bytes: row.bytes,
       createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       mime: row.blob.type || 'application/octet-stream',
       blobB64: await blobToBase64(row.blob),
       thumbMime: row.thumb.type || 'application/octet-stream',
@@ -291,6 +292,7 @@ export async function importData(
     height: item.height,
     bytes: item.bytes,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   }))
 
   if (mode === 'replace') {

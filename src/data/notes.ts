@@ -11,6 +11,7 @@ export async function addNote(vendorId: string, input: NoteInput): Promise<strin
     done: input.done ?? false,
     dueDate: input.dueDate,
     createdAt: Date.now(),
+    updatedAt: Date.now(),
   }
   await db.notes.add(note)
   return note.id

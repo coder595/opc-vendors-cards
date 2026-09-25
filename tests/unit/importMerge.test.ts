@@ -9,7 +9,7 @@ import { makeEnvelope, makeVendor } from './helpers/fixtures'
 import { resetDb } from './helpers/db'
 
 function makeContact(overrides: Partial<Contact> & { vendorId: string; name: string }): Contact {
-  return { id: crypto.randomUUID(), isPrimary: false, ...overrides }
+  return { id: crypto.randomUUID(), isPrimary: false, ...overrides, updatedAt: overrides.updatedAt ?? Date.now() }
 }
 
 describe('merge import', () => {
@@ -149,7 +149,7 @@ describe('merge import', () => {
   it('skips an existing child by id under the default policy', async () => {
     const vendorId = await createVendor({ name: 'ACME' })
     const contactId = await addContact(vendorId, { name: 'Existing' })
-    const imported = { id: contactId, vendorId, name: 'Imported', isPrimary: true }
+    const imported = { id: contactId, vendorId, name: 'Imported', isPrimary: true, updatedAt: 1 }
 
     const summary = await importData(makeEnvelope([], { contacts: [imported] }), 'merge')
 
@@ -175,5 +175,41 @@ describe('merge import', () => {
     expect(summary.insertedChildren).toBe(0)
     expect(summary.rejected.some((item) => item.table === 'contacts')).toBe(true)
     expect(await db.contacts.count()).toBe(0)
+  })
+it('A1: stable child ids prevent duplicates on re-import', async () => {
+    await importData(makeEnvelope([makeVendor({ id: 'v1', name: 'ACME', updatedAt: 100 })], {
+      contacts: [makeContact({ id: 'c1', vendorId: 'v1', name: 'Li Wei' })],
+      products: [{ id: 'p1', vendorId: 'v1', name: 'Drill', currency: 'USD', tiers: [], photoAttachmentIds: [], createdAt: 1, updatedAt: 1 }],
+    }), 'merge')
+
+    await importData(makeEnvelope([makeVendor({ id: 'v1', name: 'ACME', updatedAt: 200 })], {
+      contacts: [makeContact({ id: 'c1', vendorId: 'v1', name: 'Li Wei' })],
+      products: [{ id: 'p1', vendorId: 'v1', name: 'Drill', currency: 'USD', tiers: [], photoAttachmentIds: [], createdAt: 1, updatedAt: 1 }],
+    }), 'merge')
+
+    const contacts = await db.contacts.toArray()
+    const products = await db.products.toArray()
+    expect(contacts).toHaveLength(1)
+    expect(products).toHaveLength(1)
+  })
+
+  it('A2: a newer imported vendor with ordered status wins under newest-wins', async () => {
+    await db.vendors.add(makeVendor({ id: 'v1', name: 'ACME', status: 'lead', updatedAt: 100 }))
+
+    const imported = makeVendor({ id: 'v1', name: 'ACME', status: 'ordered', updatedAt: 200 })
+
+    await importData(makeEnvelope([imported]), 'merge', { policy: 'newest-wins' })
+
+    expect((await db.vendors.get('v1'))?.status).toBe('ordered')
+  })
+
+  it('A2: an older imported vendor loses under newest-wins', async () => {
+    await db.vendors.add(makeVendor({ id: 'v1', name: 'ACME', status: 'ordered', updatedAt: 200 }))
+
+    const imported = makeVendor({ id: 'v1', name: 'ACME', status: 'lead', updatedAt: 100 })
+
+    await importData(makeEnvelope([imported]), 'merge', { policy: 'newest-wins' })
+
+    expect((await db.vendors.get('v1'))?.status).toBe('ordered')
   })
 })

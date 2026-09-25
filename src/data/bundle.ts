@@ -20,11 +20,13 @@ export interface BundlePhotoInput {
 
 export interface BundleContactInput extends ContactInput {
   key: string
+  id?: string
   cardPhotoKey?: string
 }
 
 export interface BundleProductInput extends ProductInput {
   key: string
+  id?: string
   photoKeys?: string[]
 }
 
@@ -55,9 +57,22 @@ export async function saveVendorBundle(
   const now = Date.now()
 
   const attachmentIdByKey = new Map<string, string>()
+  let existingAttachmentCount = 0
+  if (existingVendorId) {
+    const existingAttachments = await db.attachments.where('vendorId').equals(vendorId).toArray()
+    existingAttachmentCount = existingAttachments.length
+    for (const a of existingAttachments) {
+      attachmentIdByKey.set(a.id, a.id)
+    }
+  }
+  for (const photo of draft.photos) {
+    if (!attachmentIdByKey.has(photo.key)) {
+      attachmentIdByKey.set(photo.key, crypto.randomUUID())
+    }
+  }
+
   const attachments: Attachment[] = draft.photos.map((photo) => {
-    const id = crypto.randomUUID()
-    attachmentIdByKey.set(photo.key, id)
+    const id = attachmentIdByKey.get(photo.key)!
     return {
       id,
       vendorId,
@@ -68,11 +83,12 @@ export async function saveVendorBundle(
       height: photo.image.height,
       bytes: photo.image.bytes,
       createdAt: now,
+      updatedAt: now,
     }
   })
 
   const contacts: Contact[] = draft.contacts.map((contact) => ({
-    id: crypto.randomUUID(),
+    id: contact.id ?? crypto.randomUUID(),
     vendorId,
     name: requireText(contact.name, 'Contact name'),
     position: contact.position,
@@ -84,10 +100,11 @@ export async function saveVendorBundle(
     cardAttachmentId: contact.cardPhotoKey
       ? attachmentIdByKey.get(contact.cardPhotoKey)
       : undefined,
+    updatedAt: now,
   }))
 
   const products: Product[] = draft.products.map((product) => ({
-    id: crypto.randomUUID(),
+    id: product.id ?? crypto.randomUUID(),
     vendorId,
     name: requireText(product.name, 'Product name'),
     description: product.description,
@@ -102,6 +119,7 @@ export async function saveVendorBundle(
       .map((key) => attachmentIdByKey.get(key))
       .filter((id): id is string => id !== undefined),
     createdAt: now,
+    updatedAt: now,
   }))
 
   const vendor: Vendor = {
@@ -125,12 +143,37 @@ export async function saveVendorBundle(
   await db.transaction('rw', [db.vendors, db.contacts, db.products, db.attachments], async () => {
     if (existingVendorId) {
       const existing = await db.vendors.get(existingVendorId)
-      if (existing) vendor.createdAt = existing.createdAt
-      // ponytail: replace-children strategy — revisit if children gain refs.
-      await db.contacts.where('vendorId').equals(vendorId).delete()
-      await db.products.where('vendorId').equals(vendorId).delete()
+      if (existing) {
+        vendor.createdAt = existing.createdAt
+        vendor.updatedAt = now
+      }
+
+      const incomingContactIds = new Set(contacts.map((c) => c.id))
+      const existingContactIds = new Set(
+        (await db.contacts.where('vendorId').equals(vendorId).toArray()).map((c) => c.id),
+      )
+      const removedContactIds = [...existingContactIds].filter((id) => !incomingContactIds.has(id))
+      if (removedContactIds.length > 0) await db.contacts.bulkDelete(removedContactIds)
+
+      const incomingProductIds = new Set(products.map((p) => p.id))
+      const existingProductIds = new Set(
+        (await db.products.where('vendorId').equals(vendorId).toArray()).map((p) => p.id),
+      )
+      const removedProductIds = [...existingProductIds].filter((id) => !incomingProductIds.has(id))
+      if (removedProductIds.length > 0) await db.products.bulkDelete(removedProductIds)
+    }
+
+    if (attachments.length > 0 && existingVendorId) {
+      const keptIds = new Set(attachments.map((a) => a.id))
+      const existingIds = new Set(
+        (await db.attachments.where('vendorId').equals(vendorId).toArray()).map((a) => a.id),
+      )
+      const removedAttachmentIds = [...existingIds].filter((id) => !keptIds.has(id))
+      if (removedAttachmentIds.length > 0) await db.attachments.bulkDelete(removedAttachmentIds)
+    } else if (existingVendorId && attachments.length === 0 && existingAttachmentCount > 0) {
       await db.attachments.where('vendorId').equals(vendorId).delete()
     }
+
     await db.vendors.put(vendor)
     if (contacts.length > 0) await db.contacts.bulkPut(contacts)
     if (products.length > 0) await db.products.bulkPut(products)

@@ -160,6 +160,7 @@ export function cardToEnvelope(card: VendorCardData): ExportEnvelope {
         wechat: contact.wechat,
         whatsapp: contact.whatsapp,
         isPrimary: contact.isPrimary,
+        updatedAt: Date.now(),
       })),
       products: (card.products ?? []).map((product) => ({
         id: crypto.randomUUID(),
@@ -173,6 +174,7 @@ export function cardToEnvelope(card: VendorCardData): ExportEnvelope {
         leadTimeDays: product.leadTimeDays,
         photoAttachmentIds: [],
         createdAt: now,
+        updatedAt: Date.now(),
       })),
       notes: [],
       certs: [],

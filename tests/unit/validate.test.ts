@@ -13,6 +13,7 @@ function attachment(overrides: Partial<ExportedAttachment> = {}): ExportedAttach
     height: 10,
     bytes: 5,
     createdAt: 1,
+    updatedAt: 1,
     mime: 'image/jpeg',
     blobB64: 'AQIDBAU=',
     thumbMime: 'image/jpeg',
@@ -54,7 +55,7 @@ describe('validateEnvelope', () => {
   })
 
   it('rejects a file made by a newer schema version', () => {
-    const result = validateEnvelope({ ...makeEnvelope(), schemaVersion: 2 })
+    const result = validateEnvelope({ ...makeEnvelope(), schemaVersion: 3 })
     expect(result).toMatchObject({ ok: false, error: { code: 'unsupported_schema' } })
   })
 
@@ -152,6 +153,7 @@ describe('validateEnvelope', () => {
       tiers: [],
       photoAttachmentIds: [],
       createdAt: 1,
+      updatedAt: 1,
     }
     const result = validateEnvelope(makeEnvelope([], { products: [product] }))
     expect(result.ok).toBe(true)

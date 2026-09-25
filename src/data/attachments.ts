@@ -12,6 +12,7 @@ export async function addAttachment(vendorId: string, input: NewAttachment): Pro
     height: input.height,
     bytes: input.bytes,
     createdAt: Date.now(),
+    updatedAt: Date.now(),
   }
   await db.attachments.add(attachment)
   return attachment.id

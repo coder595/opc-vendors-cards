@@ -54,6 +54,7 @@ export interface Contact {
   whatsapp?: string
   isPrimary: boolean
   cardAttachmentId?: string
+  updatedAt: number
 }
 
 export interface PriceTier {
@@ -75,6 +76,7 @@ export interface Product {
   paymentTerms?: string
   photoAttachmentIds: string[]
   createdAt: number
+  updatedAt: number
 }
 
 export interface Note {
@@ -85,6 +87,7 @@ export interface Note {
   done: boolean
   dueDate?: number
   createdAt: number
+  updatedAt: number
 }
 
 export interface Certification {
@@ -94,6 +97,7 @@ export interface Certification {
   number?: string
   issuer?: string
   expiry?: number
+  updatedAt: number
 }
 
 export interface Attachment {
@@ -106,6 +110,7 @@ export interface Attachment {
   height: number
   bytes: number
   createdAt: number
+  updatedAt: number
 }
 
 export interface Settings {
@@ -212,4 +217,4 @@ export interface ExportEnvelope {
 
 export type ImportMode = 'merge' | 'replace'
 
-export type MergePolicy = 'existing-wins' | 'imported-wins'
+export type MergePolicy = 'existing-wins' | 'imported-wins' | 'newest-wins'

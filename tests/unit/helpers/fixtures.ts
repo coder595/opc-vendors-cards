@@ -20,7 +20,7 @@ export function makeEnvelope(
   data: Partial<ExportData> = {},
 ): ExportEnvelope {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: new Date(0).toISOString(),
     app: { id: 'opc-vendors-cards', version: 'test' },
     data: {

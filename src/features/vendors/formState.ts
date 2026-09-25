@@ -24,6 +24,7 @@ export interface PhotoDraft {
 
 export interface ContactDraft {
   key: string
+  id?: string
   name: string
   position: string
   phone: string
@@ -42,6 +43,7 @@ export interface TierDraft {
 
 export interface ProductDraft {
   key: string
+  id?: string
   name: string
   description: string
   unit: string

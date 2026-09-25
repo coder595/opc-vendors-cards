@@ -14,6 +14,7 @@ export async function addContact(vendorId: string, input: ContactInput): Promise
     whatsapp: input.whatsapp,
     isPrimary: input.isPrimary ?? false,
     cardAttachmentId: input.cardAttachmentId,
+    updatedAt: Date.now(),
   }
   await db.contacts.add(contact)
   return contact.id

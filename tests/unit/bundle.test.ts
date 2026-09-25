@@ -85,4 +85,36 @@ describe('saveVendorBundle', () => {
     expect(await db.contacts.count()).toBe(0)
     expect(await db.attachments.count()).toBe(0)
   })
+
+  it('A1 keeps child ids stable across a no-op re-save', async () => {
+    const vendorId = await saveVendorBundle(draft())
+    const before = await getVendorBundle(vendorId)
+    const contactIdsBefore = before!.contacts.map((c) => c.id).sort()
+    const productIdsBefore = before!.products.map((p) => p.id).sort()
+    const attachmentIdsBefore = before!.attachments.map((a) => a.id).sort()
+
+    const reDraft = draft()
+    reDraft.contacts = reDraft.contacts.map((c, i) => ({
+      ...c,
+      id: before!.contacts[i]?.id,
+    }))
+    reDraft.products = reDraft.products.map((p, i) => ({
+      ...p,
+      id: before!.products[i]?.id,
+    }))
+    reDraft.photos = reDraft.photos.map((ph, i) => ({
+      ...ph,
+      key: before!.attachments[i]?.id ?? ph.key,
+    }))
+    await saveVendorBundle(reDraft, vendorId)
+
+    const after = await getVendorBundle(vendorId)
+    const contactIdsAfter = after!.contacts.map((c) => c.id).sort()
+    const productIdsAfter = after!.products.map((p) => p.id).sort()
+    const attachmentIdsAfter = after!.attachments.map((a) => a.id).sort()
+
+    expect(contactIdsAfter).toEqual(contactIdsBefore)
+    expect(productIdsAfter).toEqual(productIdsBefore)
+    expect(attachmentIdsAfter).toEqual(attachmentIdsBefore)
+  })
 })
