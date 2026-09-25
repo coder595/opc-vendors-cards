@@ -71,7 +71,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 ### A. Data integrity and the sync protocol
 
-#### A1 · P0 · Editing a vendor regenerates every child id → duplicates on every re-import
+#### A1 · P0 · Editing a vendor regenerates every child id → duplicates on every re-import ✅ 0d81ee3
 
 **Evidence.** `src/data/bundle.ts` lines 59, 75, 90 assign `crypto.randomUUID()` to every attachment, contact and product on *every* save, even though `VendorForm.bundleToDraft` loads the existing ids into the draft `key` fields. On edit, the transaction deletes all children and re-inserts them with new ids. Merge (`exportImport.ts` `upsertChildren`) dedupes children only by id. Reproduced: two merges of the same vendor → 2 contacts, 2 products.
 
