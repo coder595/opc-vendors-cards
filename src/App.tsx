@@ -10,6 +10,7 @@ import { TripScreen } from './features/trip/TripScreen'
 import { VendorDetail } from './features/vendors/VendorDetail'
 import { VendorForm } from './features/vendors/VendorForm'
 import { VendorList } from './features/vendors/VendorList'
+import { QuickAddScreen } from './features/vendors/QuickAddScreen'
 import { setThemePreference, watchSystemTheme } from './lib/theme'
 import { useHashRoute, type Route } from './lib/useHashRoute'
 
@@ -50,6 +51,7 @@ const NAV: NavItem[] = [
 const TITLES: Record<Route['name'], string> = {
   vendors: 'Vendors',
   vendorNew: 'New vendor',
+  vendorsQuick: 'Quick add',
   vendorDetail: 'Vendor',
   vendorEdit: 'Edit vendor',
   vendorShare: 'Share vendor',
@@ -82,6 +84,7 @@ function NavIcon({ paths }: { paths: string[] }) {
 function activeNav(route: Route): string {
   if (
     route.name === 'vendorNew' ||
+    route.name === 'vendorsQuick' ||
     route.name === 'vendorDetail' ||
     route.name === 'vendorEdit' ||
     route.name === 'vendorShare'
@@ -93,7 +96,7 @@ function activeNav(route: Route): string {
 export default function App() {
   const route = useHashRoute()
   const active = activeNav(route)
-  const onForm = route.name === 'vendorNew' || route.name === 'vendorEdit'
+  const onForm = route.name === 'vendorNew' || route.name === 'vendorEdit' || route.name === 'vendorsQuick'
   const routeKey = route.name + ('id' in route ? `:${route.id}` : '')
   const mainRef = useRef<HTMLElement>(null)
   const firstRender = useRef(true)
@@ -138,9 +141,14 @@ export default function App() {
           <span className="wordmark__sub">Trade fair notebook</span>
         </div>
         {onForm ? null : (
-          <a className="btn btn--primary" href="#/vendors/new">
-            Add vendor
-          </a>
+          <div className="form-head__actions">
+            <a className="btn btn--ghost" href="#/vendors/quick">
+              Quick add
+            </a>
+            <a className="btn btn--primary" href="#/vendors/new">
+              Add vendor
+            </a>
+          </div>
         )}
       </header>
       <nav className="nav" aria-label="Primary">
@@ -159,6 +167,8 @@ export default function App() {
       <main id="main" className="main" ref={mainRef} tabIndex={-1}>
         {route.name === 'vendorNew' ? (
           <VendorForm key="new" mode="new" />
+        ) : route.name === 'vendorsQuick' ? (
+          <QuickAddScreen key="quick" />
         ) : route.name === 'vendorEdit' ? (
           <VendorForm key={`${route.id}-edit`} mode="edit" vendorId={route.id} />
         ) : route.name === 'vendorDetail' ? (
