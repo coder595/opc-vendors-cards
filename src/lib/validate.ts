@@ -254,6 +254,7 @@ function parseVendor(value: unknown): Vendor | null {
     socials,
     tags,
     fair,
+    revisit: value.revisit === true,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
     deletedAt: isPositive(value.deletedAt) ? value.deletedAt : undefined,

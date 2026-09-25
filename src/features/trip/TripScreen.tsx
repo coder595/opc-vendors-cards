@@ -45,7 +45,21 @@ export function TripScreen() {
     const booths = vendors
       .filter((vendor) => boothKey(vendor) !== '')
       .sort((a, b) => collator.compare(boothKey(a), boothKey(b)))
-    return { vendors, vendorById, statusCounts, countries, tasks, booths }
+    const toRevisit = vendors
+      .filter((vendor) => vendor.revisit)
+      .sort((a, b) => {
+        const hallCmp = collator.compare(a.fair.hall ?? '', b.fair.hall ?? '')
+        if (hallCmp !== 0) return hallCmp
+        return collator.compare(a.fair.booth ?? '', b.fair.booth ?? '')
+      })
+    const revisitByHall = new Map<string, Vendor[]>()
+    for (const vendor of toRevisit) {
+      const hall = vendor.fair.hall ?? ''
+      const group = revisitByHall.get(hall) ?? []
+      group.push(vendor)
+      revisitByHall.set(hall, group)
+    }
+    return { vendors, vendorById, statusCounts, countries, tasks, booths, revisitByHall }
   }, [data])
 
   if (data === undefined) {
@@ -58,7 +72,7 @@ export function TripScreen() {
 
   if (summary === null) return null
 
-  const { vendors, vendorById, statusCounts, countries, tasks, booths } = summary
+  const { vendors, vendorById, statusCounts, countries, tasks, booths, revisitByHall } = summary
 
   if (vendors.length === 0) {
     return (
@@ -170,6 +184,32 @@ export function TripScreen() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className="trip__section" aria-labelledby="trip-revisit-heading">
+        <h2 id="trip-revisit-heading">To revisit</h2>
+        {revisitByHall.size === 0 ? (
+          <p className="panel__empty">No vendors flagged for revisit.</p>
+        ) : (
+          [...revisitByHall.entries()]
+            .sort(([a], [b]) => collator.compare(a, b))
+            .map(([hall, vendors]) => (
+              <div key={hall}>
+                <h3 className="trip__hall">{hall || 'No hall'}</h3>
+                <ul className="trip__list">
+                  {vendors.map((vendor) => (
+                    <li key={vendor.id} className="trip__row">
+                      <a href={`#/vendors/${vendor.id}`}>{vendor.name}</a>
+                      <span className="mono">
+                        {[vendor.fair.hall, vendor.fair.booth].filter(Boolean).join(' ')}
+                      </span>
+                      <StatusSeal status={vendor.status} size="sm" />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
         )}
       </section>
     </section>

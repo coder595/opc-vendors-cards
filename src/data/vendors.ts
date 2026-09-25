@@ -18,6 +18,7 @@ export async function createVendor(input: VendorInput): Promise<string> {
     socials: input.socials ?? [],
     tags: input.tags ?? [],
     fair: input.fair ?? {},
+    revisit: input.revisit,
     createdAt: now,
     updatedAt: now,
   }

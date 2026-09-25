@@ -118,6 +118,7 @@ export async function saveVendorBundle(
     socials: draft.vendor.socials ?? [],
     tags: draft.vendor.tags ?? [],
     fair: draft.vendor.fair ?? {},
+    revisit: draft.vendor.revisit,
     createdAt: now,
     updatedAt: now,
   }

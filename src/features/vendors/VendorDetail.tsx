@@ -15,6 +15,7 @@ import { getSettings } from '../../data/settings'
 import { updateVendor } from '../../data/vendors'
 import { convertToBase, formatMoney } from '../../lib/currency'
 import { safeHref } from '../../lib/safeHref'
+import { buildVcard } from '../../lib/vcard'
 import { LIMITS } from '../../lib/validate'
 import { useMutation } from './useMutation'
 
@@ -135,10 +136,12 @@ function OverviewPanel({ vendor }: { vendor: Vendor }) {
 function PeoplePanel({
   contacts,
   attachments,
+  vendor,
   onViewPhoto,
 }: {
   contacts: Contact[]
   attachments: Attachment[]
+  vendor: Vendor
   onViewPhoto: (index: number) => void
 }) {
   if (contacts.length === 0) return <p className="panel__empty">No people yet.</p>
@@ -147,6 +150,18 @@ function PeoplePanel({
       {contacts.map((contact) => {
         const card = attachments.find((item) => item.id === contact.cardAttachmentId)
         const cardIndex = card ? attachments.indexOf(card) : -1
+
+        const handleSaveContact = () => {
+          const vcard = buildVcard(contact, vendor)
+          const blob = new Blob([vcard], { type: 'text/vcard' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${contact.name.replace(/\s+/g, '_')}.vcf`
+          a.click()
+          URL.revokeObjectURL(url)
+        }
+
         return (
           <li key={contact.id} className="record">
             {card ? (
@@ -166,6 +181,9 @@ function PeoplePanel({
                 {contact.whatsapp ? <PhoneLink phone={contact.whatsapp} whatsapp /> : null}
                 {contact.wechat ? <span>WeChat {contact.wechat}</span> : null}
               </p>
+              <button type="button" className="btn btn--ghost" onClick={handleSaveContact}>
+                Save contact
+              </button>
             </div>
           </li>
         )
@@ -629,6 +647,16 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
             </p>
           ) : null}
           <div className="detail__actions">
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={vendor.revisit ?? false}
+                onChange={() =>
+                  void run(updateVendor(vendor.id, { revisit: !(vendor.revisit ?? false) }))
+                }
+              />
+              Revisit
+            </label>
             <a className="btn btn--ghost" href={`#/vendors/${vendor.id}/edit`}>
               Edit
             </a>
@@ -641,7 +669,7 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
 
       <Tabs items={TABS} active={tab} onChange={setTab} label="Vendor sections">
         {tab === 'overview' ? <OverviewPanel vendor={vendor} /> : null}
-        {tab === 'people' ? <PeoplePanel contacts={contacts} attachments={attachments} onViewPhoto={setViewerIndex} /> : null}
+        {tab === 'people' ? <PeoplePanel vendor={vendor} contacts={contacts} attachments={attachments} onViewPhoto={setViewerIndex} /> : null}
         {tab === 'products' ? (
           <ProductsPanel products={products} attachments={attachments} onViewPhoto={setViewerIndex} />
         ) : null}
