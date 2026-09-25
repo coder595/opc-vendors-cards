@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { EmptyState } from '../../components/EmptyState'
 import { StatusSeal } from '../../components/StatusSeal'
@@ -86,8 +86,18 @@ export function VendorList() {
   }, [])
   const [query, setQuery] = useState<VendorQuery>(parseHashQuery)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => localStorage.getItem('opc.backupBannerDismissed') === 'true',
+  )
 
   useEffect(() => void syncHash(query), [query])
+
+  const dismissBanner = useCallback(() => {
+    localStorage.setItem('opc.backupBannerDismissed', 'true')
+    setBannerDismissed(true)
+  }, [])
+
+  const now = useState(() => Date.now())[0]
 
   const index = useMemo(
     () => buildSearchIndex(data?.vendors ?? [], data?.contacts ?? [], data?.products ?? []),
@@ -118,6 +128,14 @@ export function VendorList() {
     (query.filters.fair !== 'all' ? 1 : 0) +
     (query.filters.tag !== 'all' ? 1 : 0)
   const hasFilters = query.text !== '' || activeFilterCount > 0
+
+  const activeVendors = data.vendors.filter((v) => v.deletedAt === undefined).length
+  const showBackupBanner = !bannerDismissed && activeVendors > 0 && (() => {
+    const lastExport = localStorage.getItem('opc.lastExportAt')
+    if (!lastExport) return true
+    const twoDays = 2 * 24 * 60 * 60 * 1000
+    return now - Number(lastExport) > twoDays
+  })()
 
   return (
     <section aria-labelledby="vendors-heading">
@@ -268,6 +286,23 @@ export function VendorList() {
       <p className="list-count" role="status">
         {results.length} vendor{results.length === 1 ? '' : 's'}
       </p>
+
+      {showBackupBanner ? (
+        <div className="banner banner--warning" role="status">
+          <span>Back up your vendors — export or share your data.</span>
+          <a href="#/share" className="banner__action">
+            Back up now →
+          </a>
+          <button
+            type="button"
+            className="banner__dismiss"
+            onClick={dismissBanner}
+            aria-label="Dismiss backup reminder"
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
 
       {results.length === 0 ? (
         <p className="empty__body">No vendors match these filters.</p>
