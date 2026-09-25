@@ -36,6 +36,51 @@ export async function getVendor(id: string): Promise<Vendor | undefined> {
   return db.vendors.get(id)
 }
 
+export async function softDeleteVendor(id: string): Promise<void> {
+  const now = Date.now()
+  await db.vendors.update(id, { deletedAt: now, updatedAt: now })
+}
+
+export async function restoreVendor(id: string): Promise<void> {
+  await db.vendors.update(id, { deletedAt: undefined, updatedAt: Date.now() })
+}
+
+export async function getDeletedVendors(): Promise<Vendor[]> {
+  return db.vendors
+    .filter((vendor) => vendor.deletedAt !== undefined)
+    .reverse()
+    .sortBy('deletedAt')
+}
+
+export async function purgeTombstonesOlderThan(ageMs: number): Promise<void> {
+  const cutoff = Date.now() - ageMs
+  const tombstones = await db.vendors
+    .filter((vendor) => vendor.deletedAt !== undefined && vendor.deletedAt < cutoff)
+    .toArray()
+
+  if (tombstones.length === 0) return
+
+  const ids = tombstones.map((v) => v.id)
+  await db.transaction(
+    'rw',
+    [db.vendors, db.contacts, db.products, db.notes, db.certs, db.attachments],
+    async () => {
+      await Promise.all([
+        db.contacts.where('vendorId').anyOf(ids).delete(),
+        db.products.where('vendorId').anyOf(ids).delete(),
+        db.notes.where('vendorId').anyOf(ids).delete(),
+        db.certs.where('vendorId').anyOf(ids).delete(),
+        db.attachments.where('vendorId').anyOf(ids).delete(),
+      ])
+      await db.vendors.bulkDelete(ids)
+    },
+  )
+}
+
+export async function touchVendor(vendorId: string): Promise<void> {
+  await db.vendors.update(vendorId, { updatedAt: Date.now() })
+}
+
 /** Deletes a vendor and every child row referencing it, in one transaction. */
 export async function deleteVendor(id: string): Promise<void> {
   await db.transaction(

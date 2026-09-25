@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { purgeTombstonesOlderThan } from './data/vendors'
 import { initTheme } from './lib/theme'
 import './styles/tokens.css'
 import './styles/base.css'
@@ -10,6 +11,9 @@ import './styles/print.css'
 
 // Apply the mirrored theme before first paint (CSP forbids an inline script).
 initTheme()
+
+// Purge tombstones older than 90 days on app start.
+purgeTombstonesOlderThan(90 * 24 * 60 * 60 * 1000)
 
 const rootEl = document.getElementById('root')
 if (!rootEl) {

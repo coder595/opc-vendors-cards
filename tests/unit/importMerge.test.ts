@@ -212,4 +212,38 @@ it('A1: stable child ids prevent duplicates on re-import', async () => {
 
     expect((await db.vendors.get('v1'))?.status).toBe('ordered')
   })
+
+  it('A3: tombstone from import with newer updatedAt wins under newest-wins', async () => {
+    await db.vendors.add(makeVendor({ id: 'v1', name: 'ACME', status: 'lead', updatedAt: 100 }))
+
+    const tombstone = makeVendor({ id: 'v1', name: 'ACME', status: 'lead', updatedAt: 200, deletedAt: 200 })
+
+    await importData(makeEnvelope([tombstone]), 'merge', { policy: 'newest-wins' })
+
+    const vendor = await db.vendors.get('v1')
+    expect(vendor?.deletedAt).toBe(200)
+  })
+
+  it('A3: local edit after delete revives the vendor under newest-wins', async () => {
+    await db.vendors.add(makeVendor({ id: 'v1', name: 'ACME', status: 'ordered', updatedAt: 300, deletedAt: 300 }))
+
+    const live = makeVendor({ id: 'v1', name: 'ACME', status: 'ordered', updatedAt: 400 })
+
+    await importData(makeEnvelope([live]), 'merge', { policy: 'newest-wins' })
+
+    const vendor = await db.vendors.get('v1')
+    expect(vendor?.deletedAt).toBeUndefined()
+    expect(vendor?.status).toBe('ordered')
+  })
+
+  it('A3: older file does not resurrect a deleted vendor', async () => {
+    await db.vendors.add(makeVendor({ id: 'v1', name: 'ACME', status: 'lead', updatedAt: 200, deletedAt: 200 }))
+
+    const old = makeVendor({ id: 'v1', name: 'ACME', status: 'lead', updatedAt: 100 })
+
+    await importData(makeEnvelope([old]), 'merge', { policy: 'newest-wins' })
+
+    const vendor = await db.vendors.get('v1')
+    expect(vendor?.deletedAt).toBe(200)
+  })
 })

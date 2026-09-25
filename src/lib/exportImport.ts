@@ -369,7 +369,7 @@ export async function importData(
     async () => {
       const existingVendors = await db.vendors.toArray()
       const liveVendors = existingVendors.filter((vendor) => vendor.deletedAt === undefined)
-      const byId = new Map(liveVendors.map((vendor): [string, Vendor] => [vendor.id, vendor]))
+      const byId = new Map(existingVendors.map((vendor): [string, Vendor] => [vendor.id, vendor]))
       const byKey = new Map<string, Vendor>()
       for (const vendor of liveVendors) {
         byKey.set(dedupeKey(vendor), vendor)

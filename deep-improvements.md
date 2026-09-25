@@ -86,7 +86,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Test.** `tests/unit/bundle.test.ts`: create → edit (same content) → assert contact/product/attachment ids unchanged. `tests/unit/importMerge.test.ts`: export, edit, export, merge both into a clean DB → exactly one of each child.
 
-#### A2 · P0 · Merge ignores which side is newer
+#### A2 · P0 · Merge ignores which side is newer ✅ b662f86
 
 **Evidence.** `exportImport.ts` line 251/372: the default policy `existing-wins` keeps the local vendor regardless of `updatedAt`; `imported-wins` overwrites regardless and stamps `updatedAt: Date.now()` (line 377), destroying the real edit time. Children have no `updatedAt` at all, so no recency decision is possible for them. Reproduced: a newer imported status is dropped.
 

@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SelectField, TextField } from '../../components/Field'
 import { getSettings, updateSettings } from '../../data/settings'
+import { deleteVendor as permanentDeleteVendor, getDeletedVendors, restoreVendor } from '../../data/vendors'
 import type { Settings, Theme } from '../../db/models'
 import { COMMON_CURRENCIES, normalizeCurrencyCode } from '../../lib/currency'
 import { setThemePreference } from '../../lib/theme'
@@ -206,6 +207,86 @@ function SettingsForm({ initial }: { initial: Settings }) {
   )
 }
 
+function RecentlyDeletedSection() {
+  const vendors = useLiveQuery(() => getDeletedVendors(), [])
+  const { error, run } = useMutation()
+  const confirmRef = useRef<HTMLDialogElement>(null)
+  const [pendingId, setPendingId] = useState<string | null>(null)
+
+  const handleRestore = useCallback((id: string) => {
+    void run(restoreVendor(id))
+  }, [run])
+
+  const askPermanentDelete = useCallback((id: string) => {
+    setPendingId(id)
+    confirmRef.current?.showModal()
+  }, [])
+
+  const confirmPermanentDelete = useCallback(() => {
+    if (pendingId) {
+      void run(permanentDeleteVendor(pendingId).then(() => {
+        setPendingId(null)
+      }))
+    }
+  }, [pendingId, run])
+
+  if (!vendors || vendors.length === 0) return null
+
+  return (
+    <section className="form-section" aria-labelledby="deleted-heading">
+      <h2 id="deleted-heading">Recently deleted</h2>
+      <p className="field__hint">These vendors will be permanently removed after 90 days.</p>
+      {error ? <p className="field__error" role="alert">{error}</p> : null}
+      <ul className="record-list">
+        {vendors.map((vendor) => (
+          <li key={vendor.id} className="record">
+            <div className="record__body">
+              <p className="record__title">{vendor.name}</p>
+              <p className="record__meta mono">
+                Deleted {new Date(vendor.deletedAt!).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="record__actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => handleRestore(vendor.id)}
+              >
+                Restore
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => askPermanentDelete(vendor.id)}
+              >
+                Delete permanently
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <dialog ref={confirmRef} className="dialog">
+        <form method="dialog">
+          <h2 className="dialog__title">Delete permanently?</h2>
+          <p className="dialog__body">
+            All data including contacts, products and photos will be removed. This cannot be undone.
+          </p>
+          <div className="dialog__actions">
+            <button type="submit" className="btn btn--ghost">Cancel</button>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={confirmPermanentDelete}
+            >
+              Delete permanently
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </section>
+  )
+}
+
 export function SettingsScreen() {
   const settings = useLiveQuery(() => getSettings(), [])
   if (!settings) {
@@ -215,5 +296,10 @@ export function SettingsScreen() {
       </p>
     )
   }
-  return <SettingsForm initial={settings} />
+  return (
+    <>
+      <SettingsForm initial={settings} />
+      <RecentlyDeletedSection />
+    </>
+  )
 }

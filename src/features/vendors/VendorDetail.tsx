@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
 import { EmailLink, PhoneLink } from '../../components/ContactLinks'
@@ -11,7 +11,7 @@ import { db } from '../../db/schema'
 import { addCert, deleteCert } from '../../data/certs'
 import { addNote, deleteNote, updateNote } from '../../data/notes'
 import { getSettings } from '../../data/settings'
-import { updateVendor } from '../../data/vendors'
+import { softDeleteVendor, updateVendor } from '../../data/vendors'
 import { convertToBase, formatMoney } from '../../lib/currency'
 import { safeHref } from '../../lib/safeHref'
 import { LIMITS } from '../../lib/validate'
@@ -470,6 +470,19 @@ function FilesPanel({ attachments }: { attachments: Attachment[] }) {
 export function VendorDetail({ vendorId }: { vendorId: string }) {
   const [tab, setTab] = useState('overview')
   const { error: mutationError, run } = useMutation()
+  const deleteDialogRef = useRef<HTMLDialogElement>(null)
+  const [deleteError, setDeleteError] = useState('')
+
+  const handleDelete = useCallback(() => {
+    setDeleteError('')
+    void run(
+      softDeleteVendor(vendorId).then(() => {
+        window.location.hash = '#/vendors'
+      }, () => {
+        setDeleteError('Could not delete the vendor.')
+      }),
+    )
+  }, [vendorId, run])
   const data = useLiveQuery(async (): Promise<DetailData | null> => {
     const vendor = await db.vendors.get(vendorId)
     if (!vendor || vendor.deletedAt !== undefined) return null
@@ -551,7 +564,38 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
             <a className="btn btn--ghost" href={`#/vendors/${vendor.id}/share`}>
               Share
             </a>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => deleteDialogRef.current?.showModal()}
+            >
+              Delete
+            </button>
           </div>
+          <dialog ref={deleteDialogRef} className="dialog">
+            <form method="dialog">
+              <h2 className="dialog__title">Delete {vendor.name}?</h2>
+              <p className="dialog__body">
+                This vendor will be hidden and can be restored from Settings within 90 days.
+                Children (contacts, products, photos) are preserved.
+              </p>
+              {deleteError ? (
+                <p className="field__error" role="alert">{deleteError}</p>
+              ) : null}
+              <div className="dialog__actions">
+                <button type="submit" className="btn btn--ghost">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={handleDelete}
+                >
+                  Delete
+                </button>
+              </div>
+            </form>
+          </dialog>
         </div>
       </header>
 
