@@ -7,12 +7,13 @@ describe('dexie schema', () => {
   beforeEach(resetDb)
   afterEach(resetDb)
 
-  it('declares all seven stores', () => {
+  it('declares all eight stores', () => {
     const names = db.tables.map((table) => table.name).sort()
     expect(names).toEqual([
       'attachments',
       'certs',
       'contacts',
+      'drafts',
       'notes',
       'products',
       'settings',

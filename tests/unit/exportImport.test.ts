@@ -53,7 +53,7 @@ describe('export / import round-trip', () => {
     await updateSettings({ baseCurrency: 'CNY', rates: { CNY: 7.2 } })
 
     const envelope = await serializeDb()
-    expect(envelope.schemaVersion).toBe(2)
+    expect(envelope.schemaVersion).toBe(3)
     expect(envelope.data.vendors).toHaveLength(1)
 
     const exportBlob = await buildExportBlob(envelope)

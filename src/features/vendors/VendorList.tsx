@@ -40,6 +40,7 @@ export function VendorList() {
     return { vendors, contacts, products }
   }, [])
   const [query, setQuery] = useState<VendorQuery>(defaultVendorQuery)
+  const draftCount = useLiveQuery(() => db.drafts.count(), []) ?? 0
 
   const index = useMemo(
     () => buildSearchIndex(data?.vendors ?? [], data?.contacts ?? [], data?.products ?? []),
@@ -175,6 +176,12 @@ export function VendorList() {
       <p className="list-count" role="status">
         {results.length} vendor{results.length === 1 ? '' : 's'}
       </p>
+
+      {draftCount > 0 ? (
+        <p className="form-summary">
+          <a href="#/vendors/new">{draftCount} unsaved vendor{draftCount === 1 ? '' : 's'}</a>
+        </p>
+      ) : null}
 
       {results.length === 0 ? (
         <p className="empty__body">No vendors match these filters.</p>

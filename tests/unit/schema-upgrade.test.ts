@@ -12,7 +12,7 @@ import { makeEnvelope } from './helpers/fixtures'
 class UpgradeProbeDb extends OpcDb {
   constructor(name: string) {
     super(name)
-    this.version(3)
+    this.version(4)
       .stores({
         vendors: 'id, name, status, country, *tags, updatedAt, city',
         contacts: 'id, vendorId',
@@ -54,7 +54,7 @@ describe('version upgrade', () => {
 
     const v3 = new UpgradeProbeDb(name)
     const row = await v3.vendors.get('a')
-    expect(v3.verno).toBe(3)
+    expect(v3.verno).toBe(4)
     expect(row?.name).toBe('ACME')
     expect(row?.city).toBe('')
     expect(await v3.vendors.where('city').equals('').count()).toBe(1)

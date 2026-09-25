@@ -55,7 +55,7 @@ describe('validateEnvelope', () => {
   })
 
   it('rejects a file made by a newer schema version', () => {
-    const result = validateEnvelope({ ...makeEnvelope(), schemaVersion: 3 })
+    const result = validateEnvelope({ ...makeEnvelope(), schemaVersion: 4 })
     expect(result).toMatchObject({ ok: false, error: { code: 'unsupported_schema' } })
   })
 

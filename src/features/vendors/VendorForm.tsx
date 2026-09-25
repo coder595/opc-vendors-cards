@@ -4,6 +4,7 @@ import type { SocialPlatform } from '../../db/models'
 import { RatingField, SelectField, TextAreaField, TextField } from '../../components/Field'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { getVendorBundle, saveVendorBundle, type VendorBundle } from '../../data/bundle'
+import { loadDraft, saveDraft, deleteDraft } from '../../data/drafts'
 import { STATUSES, VENDOR_TYPES } from '../../db/labels'
 import { validateVendorDraft } from '../../lib/formValidation'
 import { requestPersistentStorage } from '../../lib/storage'
@@ -89,8 +90,13 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(mode === 'edit')
   const [loadError, setLoadError] = useState('')
+  const [draftBanner, setDraftBanner] = useState('')
 
   const photosRef = useRef<PhotoDraft[]>([])
+  const draftId = mode === 'edit' && vendorId ? vendorId : 'new'
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const isDirtyRef = useRef(false)
+
   useEffect(() => {
     photosRef.current = draft.photos
   }, [draft.photos])
@@ -116,6 +122,158 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   }, [mode, vendorId])
 
   useEffect(() => {
+    if (mode !== 'new') return
+    loadDraft('new').then((saved) => {
+      if (saved) {
+        const restored: VendorDraft = {
+          name: saved.vendor.name,
+          type: saved.vendor.type ?? 'supplier',
+          status: saved.vendor.status ?? 'lead',
+          rating: saved.vendor.rating ?? 3,
+          country: saved.vendor.country ?? '',
+          city: saved.vendor.city ?? '',
+          address: saved.vendor.address ?? '',
+          website: saved.vendor.website ?? '',
+          description: saved.vendor.description ?? '',
+          socials: saved.vendor.socials ?? [],
+          tags: saved.vendor.tags ?? [],
+          fair: {
+            edition: saved.vendor.fair?.edition ?? '',
+            hall: saved.vendor.fair?.hall ?? '',
+            booth: saved.vendor.fair?.booth ?? '',
+            note: saved.vendor.fair?.note ?? '',
+          },
+          contacts: saved.contacts.map((c) => ({
+            key: c.key,
+            id: c.id,
+            name: c.name,
+            position: c.position ?? '',
+            phone: c.phone ?? '',
+            email: c.email ?? '',
+            wechat: c.wechat ?? '',
+            whatsapp: c.whatsapp ?? '',
+            isPrimary: c.isPrimary,
+            cardPhotoKey: c.cardPhotoKey,
+          })),
+          products: saved.products.map((p) => ({
+            key: p.key,
+            id: p.id,
+            name: p.name,
+            description: p.description ?? '',
+            unit: p.unit ?? '',
+            currency: p.currency,
+            price: p.price !== undefined ? String(p.price) : '',
+            moq: p.moq !== undefined ? String(p.moq) : '',
+            leadTimeDays: p.leadTimeDays !== undefined ? String(p.leadTimeDays) : '',
+            paymentTerms: p.paymentTerms ?? '',
+            tiers: p.tiers.map((t) => ({
+              key: crypto.randomUUID(),
+              minQty: String(t.minQty),
+              unitPrice: String(t.unitPrice),
+            })),
+            photoKeys: p.photoKeys,
+          })),
+          photos: saved.photos.map((ph) => ({
+            key: ph.key,
+            kind: ph.kind,
+            image: { blob: ph.blob, thumb: ph.thumb, width: ph.width, height: ph.height, bytes: ph.bytes },
+            previewUrl: URL.createObjectURL(ph.thumb),
+          })),
+        }
+        dispatch({ type: 'load', draft: restored })
+        setDraftBanner(`Unsaved vendor from ${new Date(saved.updatedAt).toLocaleTimeString()} — `)
+      }
+    })
+  }, [mode])
+
+  const discardDraft = useCallback(() => {
+    void deleteDraft(draftId).then(() => {
+      setDraftBanner('')
+    })
+  }, [draftId])
+
+  useEffect(() => {
+    isDirtyRef.current = draft.name !== '' || draft.contacts.some((c) => c.name !== '') || draft.photos.length > 0
+  }, [draft])
+
+  useEffect(() => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
+    if (!isDirtyRef.current) return
+    autosaveTimerRef.current = setTimeout(() => {
+      void saveDraft({
+        id: draftId,
+        vendor: {
+          name: draft.name,
+          type: draft.type,
+          status: draft.status,
+          rating: draft.rating,
+          country: draft.country || undefined,
+          city: draft.city || undefined,
+          address: draft.address || undefined,
+          website: draft.website || undefined,
+          description: draft.description || undefined,
+          socials: draft.socials,
+          tags: draft.tags,
+          fair: {
+            edition: draft.fair.edition || undefined,
+            hall: draft.fair.hall || undefined,
+            booth: draft.fair.booth || undefined,
+            note: draft.fair.note || undefined,
+          },
+        },
+        contacts: draft.contacts.map((c) => ({
+          key: c.key,
+          id: c.id,
+          name: c.name,
+          position: c.position || undefined,
+          phone: c.phone || undefined,
+          email: c.email || undefined,
+          wechat: c.wechat || undefined,
+          whatsapp: c.whatsapp || undefined,
+          isPrimary: c.isPrimary,
+          cardPhotoKey: c.cardPhotoKey,
+        })),
+        products: draft.products.map((p) => ({
+          key: p.key,
+          id: p.id,
+          name: p.name,
+          description: p.description || undefined,
+          unit: p.unit || undefined,
+          currency: p.currency || 'USD',
+          price: p.price ? Number(p.price) : undefined,
+          moq: p.moq ? Number(p.moq) : undefined,
+          tiers: [],
+          leadTimeDays: p.leadTimeDays ? Number(p.leadTimeDays) : undefined,
+          paymentTerms: p.paymentTerms || undefined,
+          photoKeys: p.photoKeys,
+        })),
+        photos: draft.photos.map((ph) => ({
+          key: ph.key,
+          kind: ph.kind,
+          blob: ph.image.blob,
+          thumb: ph.image.thumb,
+          width: ph.image.width,
+          height: ph.image.height,
+          bytes: ph.image.bytes,
+        })),
+        updatedAt: Date.now(),
+      })
+    }, 800)
+    return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current) }
+  }, [draft, draftId])
+
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        event.preventDefault()
+        event.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [])
+
+  useEffect(() => {
     return () => {
       for (const photo of photosRef.current) URL.revokeObjectURL(photo.previewUrl)
     }
@@ -139,6 +297,8 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
     setSaving(true)
     try {
       await saveVendorBundle(result.bundle, mode === 'edit' ? vendorId : undefined)
+      void deleteDraft(draftId)
+      setDraftBanner('')
       void requestPersistentStorage()
       window.location.hash = mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'
     } catch {
@@ -190,6 +350,15 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         {summary ? (
           <p className="form-summary" role="alert">
             {summary}
+          </p>
+        ) : null}
+
+        {draftBanner ? (
+          <p className="form-summary" role="status">
+            {draftBanner}
+            <button type="button" className="btn btn--ghost" onClick={discardDraft}>
+              Discard
+            </button>
           </p>
         ) : null}
 
