@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { TextField } from '../../components/Field'
 import type { ExportEnvelope, ImportMode } from '../../db/models'
 import { db } from '../../db/schema'
-import { buildVendorCsv, csvFilename } from '../../lib/csv'
+import { getSettings } from '../../data/settings'
+import { buildProductCsv, buildVendorCsv, csvFilename } from '../../lib/csv'
 import {
   buildExportBlob,
   estimateExportSize,
@@ -95,6 +96,26 @@ function ExportPanel() {
       return 'CSV downloaded.'
     })
 
+  const exportProductsCsv = () =>
+    runExport(async () => {
+      const [vendors, products, settings] = await Promise.all([
+        db.vendors.toArray(),
+        db.products.toArray(),
+        getSettings(),
+      ])
+      const csv = buildProductCsv(
+        vendors.filter((vendor) => vendor.deletedAt === undefined),
+        products,
+        settings.baseCurrency,
+        settings.rates,
+      )
+      downloadBlob(
+        new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+        csvFilename(new Date(), 'products'),
+      )
+      return 'Products CSV downloaded.'
+    })
+
   const shareJson = () =>
     runExport(async () => {
       let blob: Blob
@@ -177,6 +198,14 @@ function ExportPanel() {
           disabled={busy}
         >
           Export CSV
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={() => void exportProductsCsv()}
+          disabled={busy}
+        >
+          Products CSV
         </button>
       </div>
       {status ? (

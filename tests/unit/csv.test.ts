@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildVendorCsv, csvCell, csvFilename, toCsv } from '../../src/lib/csv'
+import { buildProductCsv, buildVendorCsv, csvCell, csvFilename, toCsv } from '../../src/lib/csv'
 import { makeVendor } from './helpers/fixtures'
 
 describe('csvCell', () => {
@@ -51,5 +51,52 @@ describe('csvFilename', () => {
 describe('toCsv', () => {
   it('joins rows with CRLF', () => {
     expect(toCsv([['a', 'b'], ['c']])).toBe('a,b\r\nc')
+  })
+})
+
+describe('buildProductCsv', () => {
+  const vendor = makeVendor({
+    name: 'Acme',
+    rating: 4,
+    tags: ['led', 'panel'],
+    fair: { edition: 'Canton 138', hall: '9.1', booth: 'B12' },
+  })
+  const product = {
+    id: 'p1',
+    vendorId: vendor.id,
+    name: 'LED panel 60x60',
+    unit: 'pc',
+    currency: 'CNY',
+    price: 72,
+    moq: 500,
+    tiers: [
+      { minQty: 1000, unitPrice: 68 },
+      { minQty: 5000, unitPrice: 64 },
+    ],
+    leadTimeDays: 25,
+    photoAttachmentIds: [],
+    createdAt: 1,
+    updatedAt: 1,
+  }
+
+  it('emits one row per product with base-currency price and tier breaks', () => {
+    const csv = buildProductCsv([vendor], [product], 'USD', { CNY: 7.2 })
+    const [header, row] = csv.replace('﻿', '').split('\r\n')
+    expect(header).toContain('Price (USD)')
+    expect(row).toBe(
+      'Acme,9.1,B12,LED panel 60x60,pc,CNY,72,10.00,500,1000: 68; 5000: 64,25,,4,led; panel',
+    )
+  })
+
+  it('leaves the base price empty when no rate exists and skips orphans', () => {
+    const orphan = { ...product, id: 'p2', vendorId: 'gone' }
+    const csv = buildProductCsv([vendor], [product, orphan], 'EUR', {})
+    const rows = csv.split('\r\n')
+    expect(rows).toHaveLength(2)
+    expect(rows[1]).toContain(',CNY,72,,500,')
+  })
+
+  it('names the file by kind', () => {
+    expect(csvFilename(new Date(2026, 9, 1), 'products')).toBe('opc-products-2026-10-01.csv')
   })
 })

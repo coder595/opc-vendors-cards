@@ -1,5 +1,6 @@
 import { STATUS_LABEL, TYPE_LABEL } from '../db/labels'
 import type { Contact, Product, Vendor } from '../db/models'
+import { convertToBase, type RateMap } from './currency'
 
 const DANGEROUS_PREFIX = /^[=+\-@\t\r\n]/
 const PHONE_SHAPE = /^\+?[\d\s().-]{6,}$/
@@ -91,9 +92,62 @@ export function buildVendorCsv(
   return `\uFEFF${toCsv(rows)}`
 }
 
-export function csvFilename(date = new Date()): string {
+/** One row per product, for supplier price-comparison sheets (D6). */
+export function buildProductCsv(
+  vendors: Vendor[],
+  products: Product[],
+  base: string,
+  rates: RateMap,
+): string {
+  const vendorById = new Map(vendors.map((vendor) => [vendor.id, vendor]))
+  const rows: (string | number | undefined)[][] = [
+    [
+      'Vendor',
+      'Hall',
+      'Booth',
+      'Product',
+      'Unit',
+      'Currency',
+      'Price',
+      `Price (${base})`,
+      'MOQ',
+      'Tier breaks',
+      'Lead time (days)',
+      'Payment terms',
+      'Vendor rating',
+      'Tags',
+    ],
+  ]
+  for (const product of products) {
+    const vendor = vendorById.get(product.vendorId)
+    if (!vendor) continue
+    const basePrice =
+      product.price === undefined
+        ? null
+        : convertToBase(product.price, product.currency, base, rates)
+    rows.push([
+      vendor.name,
+      vendor.fair.hall,
+      vendor.fair.booth,
+      product.name,
+      product.unit,
+      product.currency,
+      product.price,
+      basePrice === null ? undefined : basePrice.toFixed(2),
+      product.moq,
+      product.tiers.map((tier) => `${tier.minQty}: ${tier.unitPrice}`).join('; '),
+      product.leadTimeDays,
+      product.paymentTerms,
+      vendor.rating,
+      vendor.tags.join('; '),
+    ])
+  }
+  return `\uFEFF${toCsv(rows)}`
+}
+
+export function csvFilename(date = new Date(), kind: 'vendors' | 'products' = 'vendors'): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
-  return `opc-vendors-${year}-${month}-${day}.csv`
+  return `opc-${kind}-${year}-${month}-${day}.csv`
 }
