@@ -15,6 +15,7 @@ import { getSettings } from '../../data/settings'
 import { softDeleteVendor, updateVendor } from '../../data/vendors'
 import { convertToBase, formatMoney } from '../../lib/currency'
 import { safeHref } from '../../lib/safeHref'
+import { downloadBlob } from '../../lib/share'
 import { buildVcard } from '../../lib/vcard'
 import { LIMITS } from '../../lib/validate'
 import { useMutation } from './useMutation'
@@ -152,14 +153,10 @@ function PeoplePanel({
         const cardIndex = card ? attachments.indexOf(card) : -1
 
         const handleSaveContact = () => {
-          const vcard = buildVcard(contact, vendor)
-          const blob = new Blob([vcard], { type: 'text/vcard' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `${contact.name.replace(/\s+/g, '_')}.vcf`
-          a.click()
-          URL.revokeObjectURL(url)
+          downloadBlob(
+            new Blob([buildVcard(contact, vendor)], { type: 'text/vcard' }),
+            `${contact.name.replace(/\s+/g, '_')}.vcf`,
+          )
         }
 
         return (
