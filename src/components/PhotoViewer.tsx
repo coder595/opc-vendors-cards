@@ -33,15 +33,8 @@ export function PhotoViewer({ attachments, initialIndex, onClose, onDelete }: Ph
   useEffect(() => {
     clearAll()
     dialogRef.current?.showModal()
-    const escHandler = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', escHandler)
-    return () => {
-      window.removeEventListener('keydown', escHandler)
-      clearAll()
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    return clearAll
+  }, [])
 
   useEffect(() => {
     const arrowHandler = (event: KeyboardEvent) => {
@@ -71,11 +64,15 @@ export function PhotoViewer({ attachments, initialIndex, onClose, onDelete }: Ph
       ref={dialogRef}
       className="photo-viewer"
       aria-label={`Photo ${index + 1} of ${attachments.length}`}
+      onCancel={(event) => {
+        event.preventDefault()
+        handleClose()
+      }}
     >
       <div className="photo-viewer__inner" role="presentation" onClick={handleBackdrop}>
         <div className="photo-viewer__head">
           <span className="mono">{ATTACHMENT_KIND_LABEL[attachment.kind]}</span>
-          <span className="mono">{index + 1} / {attachments.length}</span>
+          <span className="mono" aria-live="polite">{index + 1} / {attachments.length}</span>
           <button type="button" className="btn btn--ghost" onClick={handleClose} aria-label="Close">
             &times;
           </button>
