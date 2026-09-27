@@ -151,7 +151,8 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         if (bundle) dispatch({ type: 'load', draft: bundleToDraft(bundle) })
         else setLoadError('Vendor not found.')
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error(err)
         if (active) setLoadError('The vendor could not be loaded.')
       })
       .finally(() => {
@@ -347,7 +348,8 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
       setDraftBanner('')
       void requestPersistentStorage()
       window.location.hash = mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'
-    } catch {
+    } catch (err) {
+      console.error(err)
       setSummary('The vendor could not be saved. Try again.')
     } finally {
       setSaving(false)

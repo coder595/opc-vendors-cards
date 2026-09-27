@@ -53,7 +53,8 @@ function ExportPanel() {
     setStatus('')
     try {
       setStatus(await task())
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Export failed. Your data is unchanged.')
     } finally {
       setBusy(false)
@@ -264,7 +265,8 @@ function ImportPanel() {
       setRejected(result.rejected)
       setWarnings(result.warnings)
       setPreview(await previewImport(result.envelope))
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Could not read that file.')
     }
   }
@@ -280,7 +282,8 @@ function ImportPanel() {
       })
       setSummary(result)
       setRejected((prev) => [...prev, ...result.rejected])
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Import failed. The database was not changed.')
     } finally {
       setBusy(false)
@@ -426,7 +429,8 @@ function ImportCode() {
       setSummary(await importData(result.envelope, 'merge'))
       setCard(null)
       setCode('')
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Could not add the vendor.')
     }
   }
