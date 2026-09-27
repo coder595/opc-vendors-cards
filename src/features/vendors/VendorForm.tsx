@@ -164,8 +164,9 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
 
   useEffect(() => {
     if (mode !== 'new') return
+    let active = true
     loadDraft('new').then((saved) => {
-      if (saved) {
+      if (saved && active) {
         const restored: VendorDraft = {
           name: saved.vendor.name,
           type: saved.vendor.type ?? 'supplier',
@@ -226,6 +227,9 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         setDraftBanner(`Unsaved vendor from ${new Date(saved.updatedAt).toLocaleTimeString()} — `)
       }
     })
+    return () => {
+      active = false
+    }
   }, [mode])
 
   const discardDraft = useCallback(() => {
