@@ -328,7 +328,7 @@
   margin-bottom: var(--sp-4);
 }
 
-.list-filters {
+.list-filters:not([hidden]) {
   display: contents;
 }
 
