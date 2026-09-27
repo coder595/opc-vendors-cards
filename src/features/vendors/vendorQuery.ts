@@ -86,7 +86,6 @@ export function buildSearchIndex(
       ...(childrenByVendor.get(vendor.id) ?? []).map((t) => digitsOnly(t)),
     ].join(' ')
     digitsByVendor.set(vendor.id, digitsHaystack)
-    console.log('buildSearchIndex: v1 digitsHaystack =', JSON.stringify(digitsHaystack))
     if (vendor.country) countries.add(vendor.country)
     if (vendor.fair.edition) fairEditions.add(vendor.fair.edition)
     for (const tag of vendor.tags) allTags.add(tag)
