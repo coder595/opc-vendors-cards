@@ -15,6 +15,7 @@ import type {
 } from '../db/models'
 import { APP_ID, APP_VERSION } from './app'
 import {
+  decodedBytes,
   LIMITS,
   parseAttachment,
   parseCert,
@@ -550,6 +551,7 @@ export function ndjsonToEnvelope(text: string): ValidationResult {
 
   const remaining = text.slice(firstNewline + 1)
   const lines = remaining ? remaining.split('\n') : []
+  let totalAttachmentBytes = 0
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!.trim()
     if (!line) continue
@@ -573,6 +575,11 @@ export function ndjsonToEnvelope(text: string): ValidationResult {
         break
       case 'attachment':
         attachments.push(result.record)
+        totalAttachmentBytes +=
+          decodedBytes(result.record.blobB64) + decodedBytes(result.record.thumbB64)
+        if (totalAttachmentBytes > LIMITS.maxTotalAttachmentBytes) {
+          return fail('too_many_records', 'Attachment payload is too large.')
+        }
         break
       case 'settings':
         settings = result.record

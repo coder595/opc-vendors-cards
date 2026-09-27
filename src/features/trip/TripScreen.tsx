@@ -4,6 +4,7 @@ import { StatusSeal } from '../../components/StatusSeal'
 import { STATUSES } from '../../db/labels'
 import type { Vendor } from '../../db/models'
 import { db } from '../../db/schema'
+import { ProductCompare } from './ProductCompare'
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
 const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
@@ -133,6 +134,8 @@ export function TripScreen() {
           ))}
         </ul>
       </section>
+
+      <ProductCompare />
 
       <section className="trip__section" aria-labelledby="trip-tasks-heading">
         <h2 id="trip-tasks-heading">Open tasks</h2>

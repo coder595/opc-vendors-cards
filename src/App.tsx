@@ -1,18 +1,27 @@
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getSettings } from './data/settings'
 import { PeopleScreen } from './features/people/PeopleScreen'
-import { SettingsScreen } from './features/settings/SettingsScreen'
-import { ImportCardScreen } from './features/sharing/ImportCardScreen'
 import { ShareScreen } from './features/sharing/ShareScreen'
-import { VendorShare } from './features/sharing/VendorShare'
-import { TripScreen } from './features/trip/TripScreen'
 import { VendorDetail } from './features/vendors/VendorDetail'
 import { VendorForm } from './features/vendors/VendorForm'
 import { VendorList } from './features/vendors/VendorList'
 import { QuickAddScreen } from './features/vendors/QuickAddScreen'
 import { setThemePreference, watchSystemTheme } from './lib/theme'
 import { useHashRoute, type Route } from './lib/useHashRoute'
+
+const SettingsScreen = lazy(() =>
+  import('./features/settings/SettingsScreen').then((m) => ({ default: m.SettingsScreen })),
+)
+const ImportCardScreen = lazy(() =>
+  import('./features/sharing/ImportCardScreen').then((m) => ({ default: m.ImportCardScreen })),
+)
+const VendorShare = lazy(() =>
+  import('./features/sharing/VendorShare').then((m) => ({ default: m.VendorShare })),
+)
+const TripScreen = lazy(() =>
+  import('./features/trip/TripScreen').then((m) => ({ default: m.TripScreen })),
+)
 
 type NavItem = {
   href: string
@@ -96,7 +105,8 @@ function activeNav(route: Route): string {
 export default function App() {
   const route = useHashRoute()
   const active = activeNav(route)
-  const onForm = route.name === 'vendorNew' || route.name === 'vendorEdit' || route.name === 'vendorsQuick'
+  const onForm =
+    route.name === 'vendorNew' || route.name === 'vendorEdit' || route.name === 'vendorsQuick'
   const routeKey = route.name + ('id' in route ? `:${route.id}` : '')
   const mainRef = useRef<HTMLElement>(null)
   const firstRender = useRef(true)
@@ -142,7 +152,7 @@ export default function App() {
         </div>
         {onForm ? null : (
           <div className="form-head__actions">
-            <a className="btn btn--ghost" href="#/vendors/quick">
+            <a className="btn btn--ghost appbar__quick" href="#/vendors/quick">
               Quick add
             </a>
             <a className="btn btn--primary" href="#/vendors/new">
@@ -151,6 +161,12 @@ export default function App() {
           </div>
         )}
       </header>
+      {onForm ? null : (
+        // Phone thumb zone: the fair-speed capture action sits above the tab bar.
+        <a className="btn btn--primary fab" href="#/vendors/quick">
+          Quick add
+        </a>
+      )}
       <nav className="nav" aria-label="Primary">
         {NAV.map((item) => (
           <a
@@ -165,31 +181,39 @@ export default function App() {
         ))}
       </nav>
       <main id="main" className="main" ref={mainRef} tabIndex={-1}>
-        {route.name === 'vendorNew' ? (
-          <VendorForm key="new" mode="new" />
-        ) : route.name === 'vendorsQuick' ? (
-          <QuickAddScreen key="quick" />
-        ) : route.name === 'vendorEdit' ? (
-          <VendorForm key={`${route.id}-edit`} mode="edit" vendorId={route.id} />
-        ) : route.name === 'vendorDetail' ? (
-          <VendorDetail key={route.id} vendorId={route.id} />
-        ) : route.name === 'vendorShare' ? (
-          <VendorShare key={route.id} vendorId={route.id} />
-        ) : route.name === 'import' ? (
-          <ImportCardScreen />
-        ) : route.name === 'share' ? (
-          <ShareScreen />
-        ) : route.name === 'vendors' ? (
-          <VendorList />
-        ) : route.name === 'people' ? (
-          <PeopleScreen />
-        ) : route.name === 'trip' ? (
-          <TripScreen />
-        ) : route.name === 'me' ? (
-          <SettingsScreen />
-        ) : (
-          <VendorList />
-        )}
+        <Suspense
+          fallback={
+            <p className="form-summary" role="status">
+              Loading…
+            </p>
+          }
+        >
+          {route.name === 'vendorNew' ? (
+            <VendorForm key="new" mode="new" />
+          ) : route.name === 'vendorsQuick' ? (
+            <QuickAddScreen key="quick" />
+          ) : route.name === 'vendorEdit' ? (
+            <VendorForm key={`${route.id}-edit`} mode="edit" vendorId={route.id} />
+          ) : route.name === 'vendorDetail' ? (
+            <VendorDetail key={route.id} vendorId={route.id} />
+          ) : route.name === 'vendorShare' ? (
+            <VendorShare key={route.id} vendorId={route.id} />
+          ) : route.name === 'import' ? (
+            <ImportCardScreen />
+          ) : route.name === 'share' ? (
+            <ShareScreen />
+          ) : route.name === 'vendors' ? (
+            <VendorList />
+          ) : route.name === 'people' ? (
+            <PeopleScreen />
+          ) : route.name === 'trip' ? (
+            <TripScreen />
+          ) : route.name === 'me' ? (
+            <SettingsScreen />
+          ) : (
+            <VendorList />
+          )}
+        </Suspense>
       </main>
     </div>
   )

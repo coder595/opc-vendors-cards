@@ -124,7 +124,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Fix.** Wrap each note/cert write in a transaction that also bumps `vendors.updatedAt`. Small helper `touchVendor(vendorId)` in `src/data/vendors.ts`.
 
-#### A5 · P1 · Export and import hold the entire trip in memory as one string
+#### A5 · P1 · Export and import hold the entire trip in memory as one string ✅ a9c4c2b
 
 **Evidence.** `serializeDb` builds one object with every photo as base64, then `JSON.stringify` makes one string; `importData` decodes every attachment into Blobs before the transaction. `LIMITS.maxJsonChars` is 400 MB.
 
@@ -145,7 +145,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 ### B. Capture flow on the fair floor
 
-#### B1 · P0 · A half-typed vendor is lost on any accidental navigation
+#### B1 · P0 · A half-typed vendor is lost on any accidental navigation ✅ 67fd759
 
 **Evidence.** `VendorForm` keeps the draft in `useReducer` only. Tapping a bottom-nav item, the Android back gesture, a page reload or a service-worker update discards it without warning. There is no `beforeunload` or dirty check anywhere in `src`.
 
@@ -160,7 +160,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Test.** Unit: reducer state → persisted → restored equals original (including photo blobs). E2E: type a name, add a photo, `page.reload()`, restore, save.
 
-#### B2 · P0 · The service worker can reload the app mid-capture
+#### B2 · P0 · The service worker can reload the app mid-capture ✅ 67fd759
 
 **Evidence.** `vite.config.ts` line 50: `registerType: 'autoUpdate'`. With the auto-update registration the page reloads when a new service worker takes control.
 
@@ -168,7 +168,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Fix.** Switch to `registerType: 'prompt'` and use `virtual:pwa-register` in `main.tsx`: when `onNeedRefresh` fires, show a small non-blocking toast "Update ready — Reload" that is suppressed while on `vendorNew`/`vendorEdit` or while a draft is dirty. Check the exact API with Context7 (`vite-plugin-pwa`, "prompt for update", React) before coding.
 
-#### B3 · P0 · The photo picker forces the camera and blocks the gallery
+#### B3 · P0 · The photo picker forces the camera and blocks the gallery ✅ 67fd759
 
 **Evidence.** `PhotoPicker.tsx` line 59: `capture="environment"` together with `multiple`. On Android, `capture` opens the camera directly and prevents choosing existing images; `multiple` is then meaningless.
 
@@ -176,7 +176,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Fix.** Two buttons per picker: **Take photo** (`capture="environment"`, single) and **Choose photos** (no `capture`, `multiple`). Same processing pipeline. Keep 44 px targets.
 
-#### B4 · P0 · Planned fields have no input at all: tags, social links, fair note, default fair
+#### B4 · P0 · Planned fields have no input at all: tags, social links, fair note, default fair ✅ 67fd759
 
 **Evidence.** `grep` shows `tags`, `socials`, `fair.note`, `settings.defaultFair` and `settings.travellerName` are stored, validated, exported, searched and displayed, but no form control writes them. `plan.md` lists social links as a v1 *Must*; `README.md` advertises tag search.
 
@@ -189,13 +189,13 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 3. **Fair note** field under Booth ("Opposite the escalator, second aisle").
 4. **Settings → Current fair:** edition, optional hall list, default quote currency. New vendors are prefilled with the current fair edition and currency. `travellerName` goes into exports (`exportedBy`) so merged data shows who captured what (see new feature N12).
 
-#### B5 · P1 · No quick-capture path; the goal is "under 60 seconds"
+#### B5 · P1 · No quick-capture path; the goal is "under 60 seconds" ✅ 1a88cda
 
 **Evidence.** The form is one long page (Identity, Where, Fair, People, Products, Photos, Notes). After save it navigates to the list (`VendorForm.tsx` line 140), not the new vendor.
 
 **Fix.** A **Quick add** screen (`#/vendors/quick`), reachable from the primary button and a manifest shortcut: company name, hall + booth, *Take card photo*, *Take product photos*, rating stars, one free-text note → **Save & next** (clears the form, keeps the hall) or **Save & open**. Everything else is completed in the evening via Edit. After a full-form save, go to the vendor's detail page. Add a live duplicate hint while typing the name (see N6).
 
-#### B6 · P1 · Business cards and product photos cannot be viewed at full size
+#### B6 · P1 · Business cards and product photos cannot be viewed at full size ✅ e6f2034
 
 **Evidence.** `VendorDetail` renders only `attachment.thumb` (256 px) in People, Products and Files; nothing opens `attachment.blob` (1600 px).
 
@@ -203,19 +203,19 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Fix.** Tapping any thumbnail opens a native `<dialog>` viewer with the full blob (object URL revoked on close), pinch-zoom via a scrollable container with `touch-action: pinch-zoom`, previous/next across the vendor's photos, a "Change type" select (business card / product / booth / document) and Delete. Keyboard: Esc closes, arrows navigate; focus returns to the thumbnail.
 
-#### B7 · P1 · Product currency silently defaults to USD
+#### B7 · P1 · Product currency silently defaults to USD ✅ deae78d
 
 **Evidence.** `formValidation.ts` line 91: an empty currency becomes `'USD'`.
 
 **Fix.** Default to Settings → *default quote currency* (B4), falling back to the last currency used in this session, and prefill the field visibly so the user sees what will be stored.
 
-#### B8 · P1 · Notes and certifications cannot be edited, and deletes are instant
+#### B8 · P1 · Notes and certifications cannot be edited, and deletes are instant ✅ 08d267d
 
 **Fix.** Inline edit for notes and certs (tap text → input). Replace instant delete with delete + 5-second **Undo** toast (keep the row in memory and re-add it). Same undo pattern for removing a contact or product in the form.
 
 ### C. Browsing and finding things again
 
-#### C1 · P0 · Search cannot find a booth, a phone number or a WeChat ID
+#### C1 · P0 · Search cannot find a booth, a phone number or a WeChat ID ✅ 67fd759
 
 **Evidence.** `vendorQuery.ts` line 56: the haystack contains name, type, status, country, city, tags, contact name/position and product name. Not hall, booth, fair edition, fair note, phones, emails, WeChat/WhatsApp, website, product description, notes.
 
@@ -223,17 +223,17 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 **Fix.** Add those fields to the index. For phone-like input, also index a digits-only copy (`+86 138-0013 8000` → `8613800138000`) and search the digits-only query against it. Keep the < 100 ms at 500 vendors budget (add a perf test with 500 synthetic vendors).
 
-#### C2 · P1 · Search and filters reset every time you open a vendor and come back
+#### C2 · P1 · Search and filters reset every time you open a vendor and come back ✅ 08d267d
 
 **Evidence.** `VendorList` keeps `query` in `useState`; navigating to detail unmounts it.
 
 **Fix.** Store the query in the hash (`#/vendors?q=led&status=quoted&sort=updated`); `parseHash` already strips `?…`, so extend the route type with parsed params and write them with `history.replaceState` (no extra history entries). Restore scroll position on return.
 
-#### C3 · P1 · Missing filters promised by the plan: fair edition, tag, "to revisit"
+#### C3 · P1 · Missing filters promised by the plan: fair edition, tag, "to revisit" ✅ 29d7884
 
 **Fix.** Add fair and tag filters. Move all filters into a collapsible **Filters (n)** panel on phones so results are not pushed below the fold by six selects. Add a *Revisit* flag (N4) filter.
 
-#### C4 · P1 · Booth order is not numeric-aware
+#### C4 · P1 · Booth order is not numeric-aware ✅ edf6512
 
 **Evidence.** `TripScreen.tsx` line 8: `Intl.Collator(undefined, { sensitivity: 'base' })` sorts "Hall 10" before "Hall 9".
 
@@ -249,7 +249,7 @@ Add a 40 px thumbnail (business card or first booth photo) and the booth in mono
 
 ### D. Sharing, QR and backups
 
-#### D1 · P1 · The QR code does not open the app
+#### D1 · P1 · The QR code does not open the app ✅ fab7d99
 
 **Evidence.** `share.ts` encodes `OCV1.<base64url JSON>`. A phone camera shows it as unusable text; the app has no scanner; the only import path is pasting the text into Sharing (`ShareScreen.tsx` ~line 290).
 
@@ -260,7 +260,7 @@ Add a 40 px thumbnail (business card or first booth photo) and the booth in mono
 3. Optional in-app scanner using the native `BarcodeDetector` where available (Chrome on Android), hidden elsewhere; the paste box stays as the universal fallback. Do **not** add a JS QR-decoder dependency for this (ponytail ladder: native platform first).
 4. Treat the `c` parameter as untrusted input: length cap before decoding, `decodeVendorCard` validation, no auto-import without the preview step. Run the security reviewer on this diff.
 
-#### D2 · P1 · The printed/QR card leaks internal information
+#### D2 · P1 · The printed/QR card leaks internal information ✅ 29d7884
 
 **Evidence.** `buildVendorCard` includes pipeline status, your rating and every product price; `VendorShare` prints status and prices.
 
@@ -268,7 +268,7 @@ Add a 40 px thumbnail (business card or first booth photo) and the booth in mono
 
 **Fix.** Toggles on the share screen: *Include prices*, *Include status & rating* (both default **off** for print, **on** for colleague QR). Persist the last choice in settings.
 
-#### D3 · P1 · No backup discipline: no "last exported", no storage status
+#### D3 · P1 · No backup discipline: no "last exported", no storage status ✅ 98ba247
 
 **Evidence.** `requestPersistentStorage` is called only after the first save and its result is ignored; `architecture.md` §8 promised a storage estimate in Settings, but there is no `navigator.storage.estimate()` call in `src`.
 
@@ -276,7 +276,7 @@ Add a 40 px thumbnail (business card or first booth photo) and the booth in mono
 
 **Fix.** Settings → **Storage & backup**: persisted yes/no (with a button to request), used/quota from `estimate()`, photo count and size, *last export* date. Save `lastExportAt` and `vendorsSinceExport`. Show a dismissible banner on the list when there are ≥ 20 changes or ≥ 2 days since the last export: "Back up now" → share sheet.
 
-#### D4 · P1 · Mobile export uses `<a download>` first
+#### D4 · P1 · Mobile export uses `<a download>` first ✅ deae78d
 
 **Evidence.** `ShareScreen` makes *Download export* the primary button and *Share file* secondary.
 
@@ -284,19 +284,19 @@ Add a 40 px thumbnail (business card or first booth photo) and the booth in mono
 
 **Fix.** If `canShareFiles()` and the file passes `navigator.canShare`, make **Share file** primary and Download secondary; on desktop keep Download primary. Consider naming the file `.ocv.gz` and sharing with MIME `application/gzip`; verify WhatsApp and Telegram accept it on both platforms during device testing.
 
-#### D5 · P1 · CSV mangles international phone numbers
+#### D5 · P1 · CSV mangles international phone numbers ✅ edf6512
 
 **Evidence.** `csv.ts` line 4 guards any cell starting with `+`, so `+86 138 0013 8000` becomes `'+86 138 0013 8000` — Excel and LibreOffice show the apostrophe literally in a CSV.
 
 **Fix.** Exempt values that are purely phone-shaped (`/^\+?[\d\s().-]{6,}$/`) — they cannot form a formula — and keep the guard for everything else. Add a test with a formula payload and a phone number side by side.
 
-#### D6 · P1 · CSV has one row per vendor; price comparison needs one row per product
+#### D6 · P1 · CSV has one row per vendor; price comparison needs one row per product ✅ a88a0f8
 
 Add a **Products CSV**: vendor, booth, product, unit, currency, price, base-currency price, MOQ, tier breaks, lead time, packing fields (N2), tags. This is what gets opened in a spreadsheet for supplier comparison sheets.
 
 ### E. PWA, platform and performance
 
-#### E1 · P1 · The brand fonts are never loaded
+#### E1 · P1 · The brand fonts are never loaded ✅ 98ba247 (files fixed in 2276751: four were HTML error pages)
 
 **Evidence.** `tokens.css` names Archivo, IBM Plex Sans and IBM Plex Mono, but there is no `@font-face` and no font file in `public/`. Every device silently falls back to its system font, so the "industrial spec sheet" typography only exists on machines that happen to have those fonts installed; the README even states no webfonts are shipped.
 
@@ -306,17 +306,17 @@ Add a **Products CSV**: vendor, booth, product, unit, currency, price, base-curr
 
 Remove `orientation: 'portrait'` (it locks tablets and desktop windows). Add `id`, `categories: ["business","productivity"]`, `shortcuts` (Quick add, Trip), and two `screenshots` (narrow + wide) for the richer Android install sheet. Later: `share_target` so a WhatsApp-received `.ocv.gz` can be opened straight into the importer (requires switching to `injectManifest`; not before the fair).
 
-#### E3 · P2 · Image processing blocks the main thread
+#### E3 · P2 · Image processing blocks the main thread — won’t fix: the picker already resizes one photo at a time; parallel decode risks iOS memory kills
 
 Resizing several 12-megapixel photos in a row freezes the UI for seconds on mid-range phones. Move `defaultRasterizer` into a module Web Worker using `OffscreenCanvas` + `createImageBitmap` where available (Chrome, Safari 17+), fall back to the current path. Process photos in parallel with a concurrency of 2.
 
-#### E4 · P2 · E2E tests do not run in CI
+#### E4 · P2 · E2E tests do not run in CI ✅ ff1a5bb
 
 Add a Playwright job (Chromium only, with `npx playwright install --with-deps chromium`) between unit tests and deploy. The offline-reload and export/import specs are exactly what protects A1–A5 from regressions.
 
 ### F. Design, UX polish and accessibility
 
-#### F1 · P1 · The phone list screen spends its first screen on filters
+#### F1 · P1 · The phone list screen spends its first screen on filters ✅ 29d7884
 
 Six labelled selects plus search push results off the first screen. Keep search visible; collapse the rest into a **Filters** disclosure with an active-count badge (C3). Consider a sticky search bar.
 
@@ -330,7 +330,7 @@ Five themes are already tested by axe, so keep them, but any new colour must be 
 
 ### G. Code health and documentation drift
 
-#### G1 · P1 · Documentation no longer matches the code
+#### G1 · P1 · Documentation no longer matches the code ✅ round 2
 
 `architecture.md` §4 lists files that do not exist (`db/migrations.ts`, `components/Button.tsx`, `Sheet.tsx`, `Confirm.tsx`, `Chip.tsx`, `Rating.tsx`, feature folders for contacts/products/notes/certs); `README.md` claims tag search and social links that cannot be entered. Update both after the P0/P1 work, and record the new decisions (schema v2, `newest-wins`, NDJSON v2 export, QR URL format, prompt-based SW updates) as ADR rows in §12.
 
@@ -346,13 +346,13 @@ Selection rule: each feature must (a) help source products at a fair or decide a
 
 | ID | Feature | Why it earns its place | Priority | Deps |
 |---|---|---|---|---|
-| N1 | **Smart paste from card text** | Phones can already read business cards (iOS Live Text, Google Lens → copy text). A "Paste card text" box parses phones, emails, websites, WeChat/WhatsApp IDs and a likely company line into the contact/vendor fields for the user to confirm. OCR speed without shipping OCR. | P1 | none (regex) |
+| N1 ✅ 3299358 | **Smart paste from card text** | Phones can already read business cards (iOS Live Text, Google Lens → copy text). A "Paste card text" box parses phones, emails, websites, WeChat/WhatsApp IDs and a likely company line into the contact/vendor fields for the user to confirm. OCR speed without shipping OCR. | P1 | none (regex) |
 | N2 | **Packing & landed-cost fields** | Per product: pcs per carton, carton size (→ CBM), gross weight, incoterm (EXW/FOB/CIF). Settings: freight % or per-CBM rate, duty %, VAT %. Shows an estimated landed unit cost in the base currency (for OMR books: 3 decimals and 5 % VAT). This is how a quote is actually compared back home. | P1 | none |
-| N3 | **Product comparison view** | Pick a tag (e.g. "led-panel") → table of every product with that tag across vendors: base price, landed cost, MOQ, lead time, rating, booth; sortable; exportable as the Products CSV (D6). The decision screen of the whole trip. | P1 | none |
-| N4 | **Revisit list & day plan** | Star a vendor "revisit"; Trip screen groups starred vendors by hall in numeric order (C4) for tomorrow's walking route. | P1 | none |
-| N5 | **Save contact to phone (vCard)** | One tap on a representative → `.vcf` (name, company, title, phones, email, notes with booth and WeChat) → the OS contacts app. Planned as a "could" in `plan.md`. | P1 | none |
-| N6 | **Duplicate hint while capturing** | As the company name is typed, match against `dedupeKey` and fuzzy name; show "Already met on Oct 16 — open instead?". Prevents two records for one supplier met on two days. | P1 | none |
-| N7 | **Follow-up messages** | From a contact: WhatsApp (`wa.me/<digits>?text=`) or email (`mailto:`) with a prefilled, editable template: "Nice to meet you at <fair>, booth <booth>. Please send the quotation for <products>…". Templates editable in Settings. | P1 | none |
+| N3 ✅ 52c7bab | **Product comparison view** | Pick a tag (e.g. "led-panel") → table of every product with that tag across vendors: base price, landed cost, MOQ, lead time, rating, booth; sortable; exportable as the Products CSV (D6). The decision screen of the whole trip. | P1 | none |
+| N4 ✅ 3299358 | **Revisit list & day plan** | Star a vendor "revisit"; Trip screen groups starred vendors by hall in numeric order (C4) for tomorrow's walking route. | P1 | none |
+| N5 ✅ 3299358 | **Save contact to phone (vCard)** | One tap on a representative → `.vcf` (name, company, title, phones, email, notes with booth and WeChat) → the OS contacts app. Planned as a "could" in `plan.md`. | P1 | none |
+| N6 ✅ 08d267d | **Duplicate hint while capturing** | As the company name is typed, match against `dedupeKey` and fuzzy name; show "Already met on Oct 16 — open instead?". Prevents two records for one supplier met on two days. | P1 | none |
+| N7 ✅ 82c53ae | **Follow-up messages** | From a contact: WhatsApp (`wa.me/<digits>?text=`) or email (`mailto:`) with a prefilled, editable template: "Nice to meet you at <fair>, booth <booth>. Please send the quotation for <products>…". Templates editable in Settings. | P1 | none |
 | N8 | **Tasks to calendar (.ics)** | Export open tasks with due dates as an `.ics` file; phone calendars handle the reminders, so no push infrastructure is needed. | P2 | none |
 | N9 | **Voice memo per vendor** | `MediaRecorder` → audio attachment (kind `audio`), capped at 60 s, stored like photos, exported like photos. Faster than typing at a noisy booth. | P2 | none |
 | N10 | **Encrypted export** | Optional passphrase: PBKDF2 → AES-GCM via WebCrypto over the gzip stream. Quotes and target prices are commercially sensitive when sent over chat apps. | P2 | none |

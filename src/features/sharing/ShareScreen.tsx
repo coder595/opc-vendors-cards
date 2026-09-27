@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { TextField } from '../../components/Field'
 import type { ExportEnvelope, ImportMode } from '../../db/models'
 import { db } from '../../db/schema'
-import { buildVendorCsv, csvFilename } from '../../lib/csv'
+import { getSettings } from '../../data/settings'
+import { buildProductCsv, buildVendorCsv, csvFilename } from '../../lib/csv'
 import {
   buildExportBlob,
   estimateExportSize,
@@ -35,7 +36,13 @@ function ExportPanel() {
   const [sizeEstimate, setSizeEstimate] = useState<ExportSizeEstimate | null>(null)
 
   useEffect(() => {
-    estimateExportSize({ format, includePhotos }).then(setSizeEstimate)
+    let cancelled = false
+    estimateExportSize({ format, includePhotos }).then((estimate) => {
+      if (!cancelled) setSizeEstimate(estimate)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [format, includePhotos])
 
   const markExported = () =>
@@ -47,7 +54,8 @@ function ExportPanel() {
     setStatus('')
     try {
       setStatus(await task())
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Export failed. Your data is unchanged.')
     } finally {
       setBusy(false)
@@ -86,6 +94,26 @@ function ExportPanel() {
       downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), csvFilename())
       markExported()
       return 'CSV downloaded.'
+    })
+
+  const exportProductsCsv = () =>
+    runExport(async () => {
+      const [vendors, products, settings] = await Promise.all([
+        db.vendors.toArray(),
+        db.products.toArray(),
+        getSettings(),
+      ])
+      const csv = buildProductCsv(
+        vendors.filter((vendor) => vendor.deletedAt === undefined),
+        products,
+        settings.baseCurrency,
+        settings.rates,
+      )
+      downloadBlob(
+        new Blob([csv], { type: 'text/csv;charset=utf-8' }),
+        csvFilename(new Date(), 'products'),
+      )
+      return 'Products CSV downloaded.'
     })
 
   const shareJson = () =>
@@ -170,6 +198,14 @@ function ExportPanel() {
           disabled={busy}
         >
           Export CSV
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={() => void exportProductsCsv()}
+          disabled={busy}
+        >
+          Products CSV
         </button>
       </div>
       {status ? (
@@ -258,7 +294,8 @@ function ImportPanel() {
       setRejected(result.rejected)
       setWarnings(result.warnings)
       setPreview(await previewImport(result.envelope))
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Could not read that file.')
     }
   }
@@ -269,12 +306,13 @@ function ImportPanel() {
     setError('')
     try {
       const result = await importData(envelope, mode, {
-        policy: importedWins ? 'imported-wins' : 'existing-wins',
+        policy: importedWins ? 'imported-wins' : 'newest-wins',
         importSettings,
       })
       setSummary(result)
       setRejected((prev) => [...prev, ...result.rejected])
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Import failed. The database was not changed.')
     } finally {
       setBusy(false)
@@ -354,7 +392,7 @@ function ImportPanel() {
                 checked={importedWins}
                 onChange={(event) => setImportedWins(event.target.checked)}
               />
-              Keep imported values on conflicts
+              Always keep imported values on conflicts (otherwise the newer edit wins)
             </label>
           ) : (
             <p className="field__error">
@@ -420,7 +458,8 @@ function ImportCode() {
       setSummary(await importData(result.envelope, 'merge'))
       setCard(null)
       setCode('')
-    } catch {
+    } catch (err) {
+      console.error(err)
       setError('Could not add the vendor.')
     }
   }

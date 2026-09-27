@@ -102,6 +102,7 @@ test('trip summary', async ({ page }) => {
   await page.goto('/#/trip')
   await expect(page.getByRole('heading', { name: 'Trip summary' })).toBeVisible()
   await expect(page.getByText('Ask for samples')).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Compare products' })).toBeVisible()
   await expectClean(page)
 })
 

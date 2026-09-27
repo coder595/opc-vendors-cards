@@ -130,12 +130,15 @@ export function VendorList() {
   const hasFilters = query.text !== '' || activeFilterCount > 0
 
   const activeVendors = data.vendors.filter((v) => v.deletedAt === undefined).length
-  const showBackupBanner = !bannerDismissed && activeVendors > 0 && (() => {
-    const lastExport = localStorage.getItem('opc.lastExportAt')
-    if (!lastExport) return true
-    const twoDays = 2 * 24 * 60 * 60 * 1000
-    return now - Number(lastExport) > twoDays
-  })()
+  const showBackupBanner =
+    !bannerDismissed &&
+    activeVendors > 0 &&
+    (() => {
+      const lastExport = localStorage.getItem('opc.lastExportAt')
+      if (!lastExport) return true
+      const twoDays = 2 * 24 * 60 * 60 * 1000
+      return now - Number(lastExport) > twoDays
+    })()
 
   return (
     <section aria-labelledby="vendors-heading">
@@ -158,129 +161,130 @@ export function VendorList() {
           className="btn btn--ghost"
           onClick={() => setFiltersOpen((prev) => !prev)}
           aria-expanded={filtersOpen}
+          aria-controls="vendor-filters"
         >
           {filtersOpen ? 'Hide' : 'Filters'}
           {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </button>
-        {filtersOpen ? (
-          <>
-            <div className="field">
-              <label htmlFor="filter-status">Status</label>
-              <select
-                id="filter-status"
-                value={query.filters.status}
-                onChange={(event) =>
-                  updateFilters({ status: event.target.value as PipelineStatus | 'all' })
-                }
-              >
-                <option value="all">All</option>
-                {STATUSES.map((status) => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="filter-country">Country</label>
-              <select
-                id="filter-country"
-                value={query.filters.country}
-                onChange={(event) => updateFilters({ country: event.target.value })}
-              >
-                <option value="all">All</option>
-                {index.countries.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="filter-type">Type</label>
-              <select
-                id="filter-type"
-                value={query.filters.type}
-                onChange={(event) => updateFilters({ type: event.target.value as VendorType | 'all' })}
-              >
-                <option value="all">All</option>
-                {VENDOR_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="filter-fair">Fair edition</label>
-              <select
-                id="filter-fair"
-                value={query.filters.fair}
-                onChange={(event) => updateFilters({ fair: event.target.value })}
-              >
-                <option value="all">All</option>
-                {index.fairEditions.map((edition) => (
-                  <option key={edition} value={edition}>
-                    {edition}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="filter-tag">Tag</label>
-              <select
-                id="filter-tag"
-                value={query.filters.tag}
-                onChange={(event) => updateFilters({ tag: event.target.value })}
-              >
-                <option value="all">All</option>
-                {index.allTags.map((tag) => (
-                  <option key={tag} value={tag}>
-                    {tag}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="filter-rating">Minimum rating</label>
-              <select
-                id="filter-rating"
-                value={String(query.filters.minRating)}
-                onChange={(event) => updateFilters({ minRating: Number(event.target.value) })}
-              >
-                <option value="0">Any</option>
-                {[1, 2, 3, 4, 5].map((score) => (
-                  <option key={score} value={score}>
-                    {score} of 5
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="sort">Sort</label>
-              <select
-                id="sort"
-                value={query.sort}
-                onChange={(event) =>
-                  setQuery((prev) => ({ ...prev, sort: event.target.value as VendorSort }))
-                }
-              >
-                <option value="name">Name</option>
-                <option value="updated">Recently updated</option>
-                <option value="rating">Rating</option>
-              </select>
-            </div>
-            {hasFilters ? (
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={() => setQuery(defaultVendorQuery)}
-              >
-                Clear filters
-              </button>
-            ) : null}
-          </>
-        ) : null}
+        <div id="vendor-filters" className="list-filters" hidden={!filtersOpen}>
+          <div className="field">
+            <label htmlFor="filter-status">Status</label>
+            <select
+              id="filter-status"
+              value={query.filters.status}
+              onChange={(event) =>
+                updateFilters({ status: event.target.value as PipelineStatus | 'all' })
+              }
+            >
+              <option value="all">All</option>
+              {STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="filter-country">Country</label>
+            <select
+              id="filter-country"
+              value={query.filters.country}
+              onChange={(event) => updateFilters({ country: event.target.value })}
+            >
+              <option value="all">All</option>
+              {index.countries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="filter-type">Type</label>
+            <select
+              id="filter-type"
+              value={query.filters.type}
+              onChange={(event) =>
+                updateFilters({ type: event.target.value as VendorType | 'all' })
+              }
+            >
+              <option value="all">All</option>
+              {VENDOR_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="filter-fair">Fair edition</label>
+            <select
+              id="filter-fair"
+              value={query.filters.fair}
+              onChange={(event) => updateFilters({ fair: event.target.value })}
+            >
+              <option value="all">All</option>
+              {index.fairEditions.map((edition) => (
+                <option key={edition} value={edition}>
+                  {edition}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="filter-tag">Tag</label>
+            <select
+              id="filter-tag"
+              value={query.filters.tag}
+              onChange={(event) => updateFilters({ tag: event.target.value })}
+            >
+              <option value="all">All</option>
+              {index.allTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="filter-rating">Minimum rating</label>
+            <select
+              id="filter-rating"
+              value={String(query.filters.minRating)}
+              onChange={(event) => updateFilters({ minRating: Number(event.target.value) })}
+            >
+              <option value="0">Any</option>
+              {[1, 2, 3, 4, 5].map((score) => (
+                <option key={score} value={score}>
+                  {score} of 5
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="sort">Sort</label>
+            <select
+              id="sort"
+              value={query.sort}
+              onChange={(event) =>
+                setQuery((prev) => ({ ...prev, sort: event.target.value as VendorSort }))
+              }
+            >
+              <option value="name">Name</option>
+              <option value="updated">Recently updated</option>
+              <option value="rating">Rating</option>
+            </select>
+          </div>
+          {hasFilters ? (
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => setQuery(defaultVendorQuery)}
+            >
+              Clear filters
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <p className="list-count" role="status">

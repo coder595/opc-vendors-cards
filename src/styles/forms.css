@@ -328,6 +328,10 @@
   margin-bottom: var(--sp-4);
 }
 
+.list-filters:not([hidden]) {
+  display: contents;
+}
+
 .list-count {
   font-size: var(--fs-sm);
   color: var(--muted);
@@ -830,6 +834,37 @@
 .trip__stats dd {
   margin: var(--sp-1) 0 0;
   font-size: var(--fs-xl);
+}
+
+.compare__controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.compare__scroll {
+  overflow-x: auto;
+  margin-bottom: var(--sp-3);
+}
+
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.compare th,
+.compare td {
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.compare thead th {
+  color: var(--muted);
+  font-weight: 500;
 }
 
 .trip__section {

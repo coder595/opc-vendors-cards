@@ -91,6 +91,7 @@ export function PhotoPicker({ id, label, kind, onAdd, testId }: PhotoPickerProps
         className="btn btn--ghost"
         onClick={triggerCamera}
         disabled={busy}
+        aria-describedby={error ? `${id}-error` : undefined}
       >
         {busy ? 'Processing\u2026' : `Take ${label}`}
       </button>
@@ -99,6 +100,7 @@ export function PhotoPicker({ id, label, kind, onAdd, testId }: PhotoPickerProps
         className="btn btn--ghost"
         onClick={triggerGallery}
         disabled={busy}
+        aria-describedby={error ? `${id}-error` : undefined}
       >
         {busy ? 'Processing\u2026' : `Choose ${label}`}
       </button>

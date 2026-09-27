@@ -1,13 +1,15 @@
-import QRCode from 'qrcode'
 import type { Contact, ExportEnvelope, Product, Vendor } from '../db/models'
 import { APP_ID, APP_VERSION } from './app'
 import { SCHEMA_VERSION } from '../db/schema'
+import { LIMITS } from './validate'
 
 const PREFIX_V1 = 'OCV1.'
 const PREFIX_V2 = 'OCV2.'
 /** QR v40 at EC level M holds 2331 bytes; keep density low for camera reliability. */
 const MAX_QR_BYTES = 1200
 const MAX_DECODE_CHARS = 5000
+/** Caps inflate output so a crafted QR can't decompress into a memory bomb. */
+const MAX_INFLATED_BYTES = 64 * 1024
 
 export interface VendorCardData {
   name: string
@@ -95,7 +97,7 @@ function base64UrlToBytes(value: string): Uint8Array {
   return bytes
 }
 
-async function readAll(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+async function readAll(stream: ReadableStream<Uint8Array>, maxBytes?: number): Promise<Uint8Array> {
   const reader = stream.getReader()
   const chunks: Uint8Array[] = []
   let total = 0
@@ -103,6 +105,10 @@ async function readAll(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> 
     const { done, value } = await reader.read()
     if (done) break
     total += value.byteLength
+    if (maxBytes !== undefined && total > maxBytes) {
+      await reader.cancel()
+      throw new Error('Decoded payload exceeds size limit.')
+    }
     chunks.push(value)
   }
   const out = new Uint8Array(total)
@@ -123,7 +129,7 @@ async function deflateRaw(data: Uint8Array): Promise<Uint8Array> {
 async function inflateRaw(data: Uint8Array): Promise<Uint8Array> {
   const copy = new Uint8Array(data)
   const stream = new Blob([copy]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
-  return readAll(stream)
+  return readAll(stream, MAX_INFLATED_BYTES)
 }
 
 function validateParsed(parsed: unknown): VendorCardData | null {
@@ -132,6 +138,9 @@ function validateParsed(parsed: unknown): VendorCardData | null {
   if (typeof card.name !== 'string' || card.name.trim() === '') return null
   if (!Array.isArray(card.contacts) || !Array.isArray(card.products)) return null
   if (card.tags !== undefined && !Array.isArray(card.tags)) return null
+  if (card.name.length > LIMITS.maxStringLength) return null
+  const n = LIMITS.maxNestedItems
+  if (card.contacts.length > n || card.products.length > n || (card.tags?.length ?? 0) > n) return null
   return card as VendorCardData
 }
 
@@ -180,6 +189,7 @@ export function payloadFitsQr(text: string): boolean {
 }
 
 export async function renderQrToCanvas(canvas: HTMLCanvasElement, text: string): Promise<void> {
+  const { default: QRCode } = await import('qrcode')
   await QRCode.toCanvas(canvas, text, { errorCorrectionLevel: 'M', margin: 2, width: 240 })
 }
 

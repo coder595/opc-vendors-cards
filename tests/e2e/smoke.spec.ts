@@ -35,5 +35,11 @@ test('serves the cached shell from the service worker with the network offline',
 
   expect(response?.fromServiceWorker()).toBeTruthy()
   await expect(page.getByRole('heading', { name: /no vendors yet/i })).toBeVisible()
+
+  // Lazy route chunks must come from the precache too.
+  await page.goto('/#/me')
+  await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible()
+  await page.goto('/#/trip')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await context.setOffline(false)
 })

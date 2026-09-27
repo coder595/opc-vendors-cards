@@ -308,9 +308,9 @@ function RecentlyDeletedSection() {
           </li>
         ))}
       </ul>
-      <dialog ref={confirmRef} className="dialog">
+      <dialog ref={confirmRef} className="dialog" aria-labelledby="purge-vendor-title">
         <form method="dialog">
-          <h2 className="dialog__title">Delete permanently?</h2>
+          <h2 id="purge-vendor-title" className="dialog__title">Delete permanently?</h2>
           <p className="dialog__body">
             All data including contacts, products and photos will be removed. This cannot be undone.
           </p>

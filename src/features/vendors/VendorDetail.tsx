@@ -14,7 +14,9 @@ import { addNote, deleteNote, updateNote } from '../../data/notes'
 import { getSettings } from '../../data/settings'
 import { softDeleteVendor, updateVendor } from '../../data/vendors'
 import { convertToBase, formatMoney } from '../../lib/currency'
+import { followUpLinks, followUpText } from '../../lib/followUp'
 import { safeHref } from '../../lib/safeHref'
+import { downloadBlob } from '../../lib/share'
 import { buildVcard } from '../../lib/vcard'
 import { LIMITS } from '../../lib/validate'
 import { useMutation } from './useMutation'
@@ -136,14 +138,17 @@ function OverviewPanel({ vendor }: { vendor: Vendor }) {
 function PeoplePanel({
   contacts,
   attachments,
+  products,
   vendor,
   onViewPhoto,
 }: {
   contacts: Contact[]
   attachments: Attachment[]
+  products: Product[]
   vendor: Vendor
   onViewPhoto: (index: number) => void
 }) {
+  const settings = useLiveQuery(() => getSettings(), [])
   if (contacts.length === 0) return <p className="panel__empty">No people yet.</p>
   return (
     <ul className="record-list">
@@ -151,15 +156,22 @@ function PeoplePanel({
         const card = attachments.find((item) => item.id === contact.cardAttachmentId)
         const cardIndex = card ? attachments.indexOf(card) : -1
 
+        const followUp = followUpLinks(
+          contact,
+          vendor,
+          followUpText(
+            contact,
+            vendor,
+            products.map((product) => product.name),
+            settings?.travellerName,
+          ),
+        )
+
         const handleSaveContact = () => {
-          const vcard = buildVcard(contact, vendor)
-          const blob = new Blob([vcard], { type: 'text/vcard' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `${contact.name.replace(/\s+/g, '_')}.vcf`
-          a.click()
-          URL.revokeObjectURL(url)
+          downloadBlob(
+            new Blob([buildVcard(contact, vendor)], { type: 'text/vcard' }),
+            `${contact.name.replace(/\s+/g, '_')}.vcf`,
+          )
         }
 
         return (
@@ -181,9 +193,26 @@ function PeoplePanel({
                 {contact.whatsapp ? <PhoneLink phone={contact.whatsapp} whatsapp /> : null}
                 {contact.wechat ? <span>WeChat {contact.wechat}</span> : null}
               </p>
-              <button type="button" className="btn btn--ghost" onClick={handleSaveContact}>
-                Save contact
-              </button>
+              <div className="button-row">
+                <button type="button" className="btn btn--ghost" onClick={handleSaveContact}>
+                  Save contact
+                </button>
+                {followUp.whatsapp ? (
+                  <a
+                    className="btn btn--ghost"
+                    href={followUp.whatsapp}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                  >
+                    Follow up on WhatsApp<span className="sr-only"> with {contact.name}</span>
+                  </a>
+                ) : null}
+                {followUp.email ? (
+                  <a className="btn btn--ghost" href={followUp.email}>
+                    Follow up by email<span className="sr-only"> with {contact.name}</span>
+                  </a>
+                ) : null}
+              </div>
             </div>
           </li>
         )
@@ -684,9 +713,9 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
               Delete
             </button>
           </div>
-          <dialog ref={deleteDialogRef} className="dialog">
+          <dialog ref={deleteDialogRef} className="dialog" aria-labelledby="delete-vendor-title">
             <form method="dialog">
-              <h2 className="dialog__title">Delete {vendor.name}?</h2>
+              <h2 id="delete-vendor-title" className="dialog__title">Delete {vendor.name}?</h2>
               <p className="dialog__body">
                 This vendor will be hidden and can be restored from Settings within 90 days.
                 Children (contacts, products, photos) are preserved.
@@ -713,7 +742,7 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
 
       <Tabs items={TABS} active={tab} onChange={setTab} label="Vendor sections">
         {tab === 'overview' ? <OverviewPanel vendor={vendor} /> : null}
-        {tab === 'people' ? <PeoplePanel vendor={vendor} contacts={contacts} attachments={attachments} onViewPhoto={setViewerIndex} /> : null}
+        {tab === 'people' ? <PeoplePanel vendor={vendor} contacts={contacts} attachments={attachments} products={products} onViewPhoto={setViewerIndex} /> : null}
         {tab === 'products' ? (
           <ProductsPanel products={products} attachments={attachments} onViewPhoto={setViewerIndex} />
         ) : null}

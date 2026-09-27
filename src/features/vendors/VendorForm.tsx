@@ -151,7 +151,8 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         if (bundle) dispatch({ type: 'load', draft: bundleToDraft(bundle) })
         else setLoadError('Vendor not found.')
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error(err)
         if (active) setLoadError('The vendor could not be loaded.')
       })
       .finally(() => {
@@ -164,8 +165,9 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
 
   useEffect(() => {
     if (mode !== 'new') return
+    let active = true
     loadDraft('new').then((saved) => {
-      if (saved) {
+      if (saved && active) {
         const restored: VendorDraft = {
           name: saved.vendor.name,
           type: saved.vendor.type ?? 'supplier',
@@ -226,6 +228,9 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         setDraftBanner(`Unsaved vendor from ${new Date(saved.updatedAt).toLocaleTimeString()} — `)
       }
     })
+    return () => {
+      active = false
+    }
   }, [mode])
 
   const discardDraft = useCallback(() => {
@@ -343,7 +348,8 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
       setDraftBanner('')
       void requestPersistentStorage()
       window.location.hash = mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'
-    } catch {
+    } catch (err) {
+      console.error(err)
       setSummary('The vendor could not be saved. Try again.')
     } finally {
       setSaving(false)
