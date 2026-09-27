@@ -43,5 +43,5 @@ test('lists people and summarizes the trip', async ({ page }) => {
   await page.getByRole('link', { name: 'Trip' }).click()
   await expect(page.getByRole('heading', { name: 'Trip summary' })).toBeVisible()
   await expect(page.getByText('Ask for samples')).toBeVisible()
-  await expect(page.getByText('1.2 A14')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Booths' }).getByText('1.2 A14')).toBeVisible()
 })

@@ -31,6 +31,7 @@ export async function seed(page: Page) {
       status: 'quoted',
       country: 'China',
       fair: { edition: '140th', hall: '1.2', booth: 'A14' },
+      tags: ['led-panel'],
     })
     await put('vendors', {
       ...base,
@@ -45,6 +46,8 @@ export async function seed(page: Page) {
       vendorId: 'v-cn',
       name: 'LED panel',
       currency: 'CNY',
+      price: 72,
+      moq: 500,
       tiers: [],
       photoAttachmentIds: ['a1'],
       createdAt: 1,

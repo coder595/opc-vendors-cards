@@ -137,6 +137,7 @@ p {
 }
 
 .main {
+  min-width: 0; /* let wide children (the compare table) scroll instead of widening the page */
   /* Clears the tab bar plus the floating Quick add button. */
   padding: var(--sp-5) var(--sp-4) calc(2 * var(--tap) + var(--sp-8) + env(safe-area-inset-bottom));
 }
