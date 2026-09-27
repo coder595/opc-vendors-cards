@@ -25,7 +25,7 @@ test('searches, filters by status and country, and opens a detail', async ({ pag
   await page.getByRole('link', { name: /Guangzhou Lighting/ }).click()
   await expect(page.getByRole('heading', { name: 'Guangzhou Lighting' })).toBeVisible()
   await page.getByRole('tab', { name: 'People' }).click()
-  await expect(page.getByText('Li Wei')).toBeVisible()
+  await expect(page.getByText('Li Wei').first()).toBeVisible()
   await page.getByRole('tab', { name: 'Overview' }).click()
   await expect(page.getByLabel('Status', { exact: true })).toHaveValue('quoted')
 })
