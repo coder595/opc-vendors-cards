@@ -35,7 +35,13 @@ function ExportPanel() {
   const [sizeEstimate, setSizeEstimate] = useState<ExportSizeEstimate | null>(null)
 
   useEffect(() => {
-    estimateExportSize({ format, includePhotos }).then(setSizeEstimate)
+    let cancelled = false
+    estimateExportSize({ format, includePhotos }).then((estimate) => {
+      if (!cancelled) setSizeEstimate(estimate)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [format, includePhotos])
 
   const markExported = () =>
