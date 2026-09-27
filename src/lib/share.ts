@@ -2,6 +2,7 @@ import QRCode from 'qrcode'
 import type { Contact, ExportEnvelope, Product, Vendor } from '../db/models'
 import { APP_ID, APP_VERSION } from './app'
 import { SCHEMA_VERSION } from '../db/schema'
+import { LIMITS } from './validate'
 
 const PREFIX_V1 = 'OCV1.'
 const PREFIX_V2 = 'OCV2.'
@@ -138,6 +139,9 @@ function validateParsed(parsed: unknown): VendorCardData | null {
   if (typeof card.name !== 'string' || card.name.trim() === '') return null
   if (!Array.isArray(card.contacts) || !Array.isArray(card.products)) return null
   if (card.tags !== undefined && !Array.isArray(card.tags)) return null
+  if (card.name.length > LIMITS.maxStringLength) return null
+  const n = LIMITS.maxNestedItems
+  if (card.contacts.length > n || card.products.length > n || (card.tags?.length ?? 0) > n) return null
   return card as VendorCardData
 }
 

@@ -31,6 +31,11 @@ describe('vendor card codec', () => {
     expect(decoded?.contacts[0]?.phone).toBe('+86 138')
   })
 
+  it('rejects a card with more nested items than LIMITS allows', async () => {
+    const contacts = Array.from({ length: 201 }, () => ({ name: 'x' }))
+    await expect(decodeVendorCard(rawCard({ name: 'x', contacts, products: [] }))).resolves.toBeNull()
+  })
+
   it('rejects malformed codes', async () => {
     await expect(decodeVendorCard('nope')).resolves.toBeNull()
     await expect(decodeVendorCard('OCV1.@@@')).resolves.toBeNull()
@@ -65,11 +70,7 @@ describe('vendor card codec', () => {
   })
 
   it('decodes OCV2 payload without URL wrapper', async () => {
-    const card = buildVendorCard(
-      makeVendor({ name: 'Plain Payload' }),
-      [],
-      [],
-    )
+    const card = buildVendorCard(makeVendor({ name: 'Plain Payload' }), [], [])
     const url = await encodeVendorCardUrl(card, 'https://x.com')
     const payload = url.split('c=')[1] ?? ''
     const decoded = await decodeVendorCard(payload)
