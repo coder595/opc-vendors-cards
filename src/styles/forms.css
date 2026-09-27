@@ -328,6 +328,10 @@
   margin-bottom: var(--sp-4);
 }
 
+.list-filters {
+  display: contents;
+}
+
 .list-count {
   font-size: var(--fs-sm);
   color: var(--muted);

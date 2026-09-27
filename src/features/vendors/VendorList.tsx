@@ -158,12 +158,13 @@ export function VendorList() {
           className="btn btn--ghost"
           onClick={() => setFiltersOpen((prev) => !prev)}
           aria-expanded={filtersOpen}
+          aria-controls="vendor-filters"
         >
           {filtersOpen ? 'Hide' : 'Filters'}
           {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </button>
         {filtersOpen ? (
-          <>
+          <div id="vendor-filters" className="list-filters">
             <div className="field">
               <label htmlFor="filter-status">Status</label>
               <select
@@ -279,7 +280,7 @@ export function VendorList() {
                 Clear filters
               </button>
             ) : null}
-          </>
+          </div>
         ) : null}
       </div>
 
