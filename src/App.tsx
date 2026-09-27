@@ -152,7 +152,7 @@ export default function App() {
         </div>
         {onForm ? null : (
           <div className="form-head__actions">
-            <a className="btn btn--ghost" href="#/vendors/quick">
+            <a className="btn btn--ghost appbar__quick" href="#/vendors/quick">
               Quick add
             </a>
             <a className="btn btn--primary" href="#/vendors/new">
@@ -161,6 +161,12 @@ export default function App() {
           </div>
         )}
       </header>
+      {onForm ? null : (
+        // Phone thumb zone: the fair-speed capture action sits above the tab bar.
+        <a className="btn btn--primary fab" href="#/vendors/quick">
+          Quick add
+        </a>
+      )}
       <nav className="nav" aria-label="Primary">
         {NAV.map((item) => (
           <a
