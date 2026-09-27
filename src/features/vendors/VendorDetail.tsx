@@ -681,9 +681,9 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
               Delete
             </button>
           </div>
-          <dialog ref={deleteDialogRef} className="dialog">
+          <dialog ref={deleteDialogRef} className="dialog" aria-labelledby="delete-vendor-title">
             <form method="dialog">
-              <h2 className="dialog__title">Delete {vendor.name}?</h2>
+              <h2 id="delete-vendor-title" className="dialog__title">Delete {vendor.name}?</h2>
               <p className="dialog__body">
                 This vendor will be hidden and can be restored from Settings within 90 days.
                 Children (contacts, products, photos) are preserved.
