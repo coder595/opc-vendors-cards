@@ -1,4 +1,3 @@
-import QRCode from 'qrcode'
 import type { Contact, ExportEnvelope, Product, Vendor } from '../db/models'
 import { APP_ID, APP_VERSION } from './app'
 import { SCHEMA_VERSION } from '../db/schema'
@@ -190,6 +189,7 @@ export function payloadFitsQr(text: string): boolean {
 }
 
 export async function renderQrToCanvas(canvas: HTMLCanvasElement, text: string): Promise<void> {
+  const { default: QRCode } = await import('qrcode')
   await QRCode.toCanvas(canvas, text, { errorCorrectionLevel: 'M', margin: 2, width: 240 })
 }
 
