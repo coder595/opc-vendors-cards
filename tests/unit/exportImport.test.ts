@@ -10,12 +10,15 @@ import { updateSettings } from '../../src/data/settings'
 import { createVendor } from '../../src/data/vendors'
 import {
   buildExportBlob,
+  EXPORT_FORMAT_V2,
   exportFilename,
   importData,
   isGzip,
+  ndjsonToEnvelope,
   parseImport,
   serializeDb,
 } from '../../src/lib/exportImport'
+import { LIMITS } from '../../src/lib/validate'
 import { resetDb } from './helpers/db'
 
 describe('export / import round-trip', () => {
@@ -160,5 +163,45 @@ describe('export / import round-trip', () => {
 
   it('uses a local date for the export filename', () => {
     expect(exportFilename(new Date(2026, 9, 5))).toBe('opc-vendors-2026-10-05.ocv.json.gz')
+  })
+
+  it('fails fast when NDJSON attachments exceed the total attachment byte budget', () => {
+    const limits = LIMITS as unknown as { maxTotalAttachmentBytes: number }
+    const original = limits.maxTotalAttachmentBytes
+    limits.maxTotalAttachmentBytes = 1000
+    try {
+      const header = {
+        schemaVersion: db.verno,
+        formatVersion: EXPORT_FORMAT_V2,
+        exportedAt: new Date().toISOString(),
+        app: { id: 'opc-vendors-cards', version: '1.0.0' },
+        counts: {},
+      }
+      const attachment = {
+        id: 'a1',
+        vendorId: 'v1',
+        kind: 'other',
+        width: 1,
+        height: 1,
+        bytes: 3,
+        createdAt: 1,
+        updatedAt: 1,
+        mime: 'application/octet-stream',
+        blobB64: 'A'.repeat(2000),
+        thumbMime: 'application/octet-stream',
+        thumbB64: 'A'.repeat(2000),
+      }
+      const text = [
+        JSON.stringify(header),
+        JSON.stringify({ t: 'attachment', r: attachment }),
+      ].join('\n')
+      const result = ndjsonToEnvelope(text)
+      expect(result).toMatchObject({
+        ok: false,
+        error: { code: 'too_many_records', message: 'Attachment payload is too large.' },
+      })
+    } finally {
+      limits.maxTotalAttachmentBytes = original
+    }
   })
 })

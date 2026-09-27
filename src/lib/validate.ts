@@ -381,7 +381,7 @@ export function parseAttachment(value: unknown): ExportedAttachment | null {
   }
 }
 
-function decodedBytes(base64: string): number {
+export function decodedBytes(base64: string): number {
   return Math.floor((base64.length * 3) / 4)
 }
 
