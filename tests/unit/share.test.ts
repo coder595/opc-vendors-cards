@@ -75,4 +75,13 @@ describe('vendor card codec', () => {
     const decoded = await decodeVendorCard(payload)
     expect(decoded?.name).toBe('Plain Payload')
   })
+
+  it('rejects an OCV2 payload that would inflate into a decompression bomb', async () => {
+    const card = buildVendorCard(makeVendor({ name: 'a'.repeat(1_000_000) }), [], [])
+    const url = await encodeVendorCardUrl(card, 'https://x.com')
+    // The repetitive payload compresses down far below the decode gate, so
+    // this is exercising the inflate-size cap, not the pre-inflate cap.
+    expect(url.length).toBeLessThan(5000)
+    await expect(decodeVendorCard(url)).resolves.toBeNull()
+  })
 })
