@@ -277,7 +277,7 @@ function ImportPanel() {
     setError('')
     try {
       const result = await importData(envelope, mode, {
-        policy: importedWins ? 'imported-wins' : 'existing-wins',
+        policy: importedWins ? 'imported-wins' : 'newest-wins',
         importSettings,
       })
       setSummary(result)
@@ -363,7 +363,7 @@ function ImportPanel() {
                 checked={importedWins}
                 onChange={(event) => setImportedWins(event.target.checked)}
               />
-              Keep imported values on conflicts
+              Always keep imported values on conflicts (otherwise the newer edit wins)
             </label>
           ) : (
             <p className="field__error">
