@@ -302,7 +302,7 @@ Add a **Products CSV**: vendor, booth, product, unit, currency, price, base-curr
 
 **Fix.** Self-host latin-subset `woff2` files for Archivo (600, 700), IBM Plex Sans (400, 500) and IBM Plex Mono (400, 500) in `public/fonts/`, declare them with `font-display: swap` in a new `src/styles/fonts.css`, and let Workbox precache them (the glob already includes `woff2`). Budget ≤ 150 KB total. Keep CJK on system fonts (`"PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei"` in the fallback stack) — do not bundle Noto Sans SC. CSP already allows `font-src 'self'`. Update the README privacy line.
 
-#### E2 · P2 · Manifest could do more
+#### E2 · P2 · Manifest could do more ✅ 04f22cd (partial: no screenshots or share_target)
 
 Remove `orientation: 'portrait'` (it locks tablets and desktop windows). Add `id`, `categories: ["business","productivity"]`, `shortcuts` (Quick add, Trip), and two `screenshots` (narrow + wide) for the richer Android install sheet. Later: `share_target` so a WhatsApp-received `.ocv.gz` can be opened straight into the importer (requires switching to `injectManifest`; not before the fair).
 
@@ -334,7 +334,7 @@ Five themes are already tested by axe, so keep them, but any new colour must be 
 
 `architecture.md` §4 lists files that do not exist (`db/migrations.ts`, `components/Button.tsx`, `Sheet.tsx`, `Confirm.tsx`, `Chip.tsx`, `Rating.tsx`, feature folders for contacts/products/notes/certs); `README.md` claims tag search and social links that cannot be entered. Update both after the P0/P1 work, and record the new decisions (schema v2, `newest-wins`, NDJSON v2 export, QR URL format, prompt-based SW updates) as ADR rows in §12.
 
-#### G2 · P2 · Small cleanups
+#### G2 · P2 · Small cleanups ✅ 83edd88
 
 `TripScreen` and `VendorDetail` each define their own date formatter and `formatDate`; move to `src/lib/format.ts`. `newKey()` lives in `features/vendors/formState.ts` but is imported by Settings; move it to `src/lib`. None of these are urgent — do them only while touching those files.
 
