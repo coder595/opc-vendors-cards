@@ -243,7 +243,7 @@ Each finding lists the evidence (file and line), why it matters in the field, th
 
 At ≥ 1024 px show list and detail side by side (list keeps its state; detail replaces the right pane). Useful for the evening review on the laptop.
 
-#### C6 · P2 · List rows give no visual memory
+#### C6 · P2 · List rows give no visual memory ✅ 4c3f596
 
 Add a 40 px thumbnail (business card or first booth photo) and the booth in mono to each manifest row. Load thumbnails lazily (`loading="lazy"` on object-URL images, revoke on unmount).
 
