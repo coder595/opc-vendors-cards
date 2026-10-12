@@ -21,5 +21,5 @@ export function BlobImage({ blob, alt, size = 72 }: { blob: Blob; alt: string; s
   }, [blob])
 
   if (!src) return null
-  return <img className="blob-image" src={src} alt={alt} width={size} height={size} />
+  return <img className="blob-image" src={src} alt={alt} width={size} height={size} loading="lazy" />
 }
