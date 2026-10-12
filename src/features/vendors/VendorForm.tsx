@@ -289,7 +289,11 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
           currency: p.currency || 'USD',
           price: p.price ? Number(p.price) : undefined,
           moq: p.moq ? Number(p.moq) : undefined,
-          tiers: [],
+          // Keep only complete breaks; the full form validates on save.
+          tiers: p.tiers
+            .filter((t) => t.minQty.trim() !== '' && t.unitPrice.trim() !== '')
+            .map((t) => ({ minQty: Number(t.minQty), unitPrice: Number(t.unitPrice) }))
+            .filter((t) => t.minQty > 0 && Number.isFinite(t.unitPrice) && t.unitPrice >= 0),
           leadTimeDays: p.leadTimeDays ? Number(p.leadTimeDays) : undefined,
           paymentTerms: p.paymentTerms || undefined,
           photoKeys: p.photoKeys,
