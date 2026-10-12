@@ -7,7 +7,7 @@ import { deleteVendor as permanentDeleteVendor, getDeletedVendors, restoreVendor
 import type { Settings, Theme } from '../../db/models'
 import { COMMON_CURRENCIES, normalizeCurrencyCode } from '../../lib/currency'
 import { setThemePreference } from '../../lib/theme'
-import { newKey } from '../vendors/formState'
+import { newKey } from '../../lib/app'
 import { useMutation } from '../vendors/useMutation'
 
 interface RateRow {

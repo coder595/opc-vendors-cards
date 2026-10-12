@@ -8,12 +8,6 @@ import type {
   VendorType,
 } from '../../db/models'
 
-export function newKey(): string {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `key-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`
-  )
-}
 
 export interface PhotoDraft {
   key: string

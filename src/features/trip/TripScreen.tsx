@@ -4,14 +4,10 @@ import { StatusSeal } from '../../components/StatusSeal'
 import { STATUSES } from '../../db/labels'
 import type { Vendor } from '../../db/models'
 import { db } from '../../db/schema'
+import { formatDate } from '../../lib/format'
 import { ProductCompare } from './ProductCompare'
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
-const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
-
-function formatDate(ms: number): string {
-  return dateFormatter.format(new Date(ms))
-}
 
 function startOfToday(): number {
   const date = new Date()

@@ -1,6 +1,7 @@
 import { TextField } from '../../components/Field'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
-import { newKey, type ContactDraft, type PhotoDraft } from './formState'
+import { newKey } from '../../lib/app'
+import type { ContactDraft, PhotoDraft } from './formState'
 import { useVendorForm } from './VendorFormContext'
 
 function ContactRow({ contact }: { contact: ContactDraft }) {

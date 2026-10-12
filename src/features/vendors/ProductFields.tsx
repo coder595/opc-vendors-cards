@@ -9,7 +9,8 @@ import {
   formatMoney,
   normalizeCurrencyCode,
 } from '../../lib/currency'
-import { createEmptyTier, newKey, type ProductDraft, type TierDraft } from './formState'
+import { newKey } from '../../lib/app'
+import { createEmptyTier, type ProductDraft, type TierDraft } from './formState'
 import { useVendorForm } from './VendorFormContext'
 
 function BasePreview({
