@@ -54,11 +54,15 @@ export default defineConfig({
         description:
           'Offline field notebook for suppliers, dealers, agents, and factories met at trade fairs.',
         display: 'standalone',
-        orientation: 'portrait',
+        categories: ['business', 'productivity'],
         theme_color: '#D8321F',
         background_color: '#FFFFFF',
         start_url: '.',
         scope: '.',
+        shortcuts: [
+          { name: 'Quick add vendor', short_name: 'Quick add', url: './#/vendors/quick' },
+          { name: 'Trip summary', short_name: 'Trip', url: './#/trip' },
+        ],
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
