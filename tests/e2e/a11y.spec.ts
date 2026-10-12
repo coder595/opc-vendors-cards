@@ -29,7 +29,9 @@ async function setTheme(page: Page, theme: string) {
   await page.evaluate((t) => {
     document.documentElement.dataset.theme = t
   }, theme)
-  await page.emulateMedia({ colorScheme: theme === 'dark' || theme === 'gruvbox' || theme === 'oled' ? 'dark' : 'light' })
+  await page.emulateMedia({
+    colorScheme: theme === 'dark' || theme === 'gruvbox' || theme === 'oled' ? 'dark' : 'light',
+  })
 }
 
 async function expectCleanInAllThemes(page: Page, label: string) {
@@ -74,6 +76,40 @@ test('vendor detail — every tab', async ({ page }) => {
 test('new vendor form', async ({ page }) => {
   await page.goto('/#/vendors/new')
   await expect(page.getByRole('heading', { name: 'New vendor' })).toBeVisible()
+  await expectClean(page)
+})
+
+test('quick add', async ({ page }) => {
+  await page.goto('/#/vendors/quick')
+  await expect(page.getByRole('heading', { name: 'Quick add vendor' })).toBeVisible()
+  await expectClean(page)
+})
+
+test('import vendor card from a QR link', async ({ page }) => {
+  const card = {
+    name: 'Shenzhen Panels',
+    type: 'factory',
+    status: 'met',
+    rating: 4,
+    tags: ['led-panel'],
+    fair: { edition: 'Canton 138', hall: '9.1', booth: 'B12' },
+    contacts: [{ name: 'Chen Jing', phone: '+86 138 0000 0000', isPrimary: true }],
+    products: [{ name: 'LED panel 60x60', currency: 'CNY', price: 85, moq: 500 }],
+  }
+  const code = 'OCV1.' + Buffer.from(JSON.stringify(card)).toString('base64url')
+  await page.goto(`/#/import?c=${code}`)
+  await expect(page.getByRole('heading', { name: 'Shenzhen Panels' })).toBeVisible()
+  await expectClean(page)
+})
+
+test('photo viewer dialog', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: /no vendors yet/i })).toBeVisible()
+  await seed(page)
+  await page.goto('/#/vendors/v-cn')
+  await page.getByRole('tab', { name: 'Files' }).click()
+  await page.locator('.file-grid .btn-blob').first().click()
+  await expect(page.getByRole('dialog', { name: /Photo 1 of/ })).toBeVisible()
   await expectClean(page)
 })
 
