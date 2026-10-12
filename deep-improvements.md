@@ -320,7 +320,7 @@ Add a Playwright job (Chromium only, with `npx playwright install --with-deps ch
 
 Six labelled selects plus search push results off the first screen. Keep search visible; collapse the rest into a **Filters** disclosure with an active-count badge (C3). Consider a sticky search bar.
 
-#### F2 · P1 · New UI must meet the existing bar
+#### F2 · P1 · New UI must meet the existing bar ✅ 4a439d0
 
 Every new dialog (photo viewer, delete confirm, unsaved-changes prompt) uses the native `<dialog>` with `showModal()`, a labelled heading, focus return, Esc to close, and 44 px targets; every new toast is an `aria-live="polite"` region. The existing axe spec must be extended to cover Quick add, the viewer and the import-card screen across all five themes.
 
