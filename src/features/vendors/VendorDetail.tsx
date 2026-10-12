@@ -14,6 +14,7 @@ import { addNote, deleteNote, updateNote } from '../../data/notes'
 import { getSettings } from '../../data/settings'
 import { softDeleteVendor, updateVendor } from '../../data/vendors'
 import { convertToBase, formatMoney } from '../../lib/currency'
+import { formatDate } from '../../lib/format'
 import { followUpLinks, followUpText } from '../../lib/followUp'
 import { safeHref } from '../../lib/safeHref'
 import { downloadBlob } from '../../lib/share'
@@ -39,11 +40,6 @@ const TABS: TabItem[] = [
   { id: 'files', label: 'Files' },
 ]
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
-
-function formatDate(ms: number): string {
-  return dateFormatter.format(new Date(ms))
-}
 
 function ExternalLink({ value }: { value: string }) {
   const href = safeHref(value)

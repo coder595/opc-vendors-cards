@@ -8,6 +8,7 @@ import { loadDraft, saveDraft, deleteDraft } from '../../data/drafts'
 import { STATUSES, VENDOR_TYPES } from '../../db/labels'
 import { db } from '../../db/schema'
 import { parseCardText } from '../../lib/cardParser'
+import { formatDate } from '../../lib/format'
 import { validateVendorDraft } from '../../lib/formValidation'
 import { requestPersistentStorage } from '../../lib/storage'
 import { ContactFields } from './ContactFields'
@@ -15,7 +16,6 @@ import { ProductFields } from './ProductFields'
 import { createEmptyDraft, vendorReducer, type PhotoDraft, type VendorDraft } from './formState'
 import { VendorFormContext } from './VendorFormContext'
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
 
 function bundleToDraft(bundle: VendorBundle): VendorDraft {
   const { vendor, contacts, products, attachments } = bundle
@@ -130,7 +130,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
       if (best) {
         setDuplicateHint({
           id: best.id,
-          date: dateFormatter.format(new Date(best.createdAt)),
+          date: formatDate(best.createdAt),
         })
       } else {
         setDuplicateHint(null)

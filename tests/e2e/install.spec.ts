@@ -16,6 +16,12 @@ test('is installable: manifest, icons and service worker', async ({ page, reques
   expect(manifest.display).toBe('standalone')
   expect(manifest.start_url).toBeTruthy()
   expect(manifest.scope).toBeTruthy()
+  // Tablets and laptop windows must not be locked to portrait (E2).
+  expect(manifest.orientation).toBeUndefined()
+  expect(manifest.shortcuts.map((s: { url: string }) => s.url)).toEqual([
+    './#/vendors/quick',
+    './#/trip',
+  ])
 
   const sizes = manifest.icons.map((icon: { sizes: string }) => icon.sizes)
   expect(sizes).toContain('192x192')

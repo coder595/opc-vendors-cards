@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import type { AttachmentKind } from '../db/models'
 import { resizePhoto } from '../lib/images'
-import { newKey, type PhotoDraft } from '../features/vendors/formState'
+import { newKey } from '../lib/app'
+import type { PhotoDraft } from '../features/vendors/formState'
 
 interface PhotoPickerProps {
   id: string
