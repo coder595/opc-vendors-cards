@@ -86,3 +86,8 @@ export function formatMoney(amount: number, currency: string, locale?: string): 
     return `${code} ${amount}`
   }
 }
+
+/** Minor-unit digits for a currency (OMR 3, JPY 0), defaulting to 2. */
+export function currencyDecimals(currency: string): number {
+  return getFormatter('en', currency)?.resolvedOptions().maximumFractionDigits ?? 2
+}

@@ -1,12 +1,15 @@
-import type { Product, Vendor } from '../../db/models'
+import type { LandedCostSettings, Product, Vendor } from '../../db/models'
 import { convertToBase, type RateMap } from '../../lib/currency'
+import { landedUnitCost } from '../../lib/landedCost'
 
-export type CompareSort = 'price' | 'moq' | 'lead' | 'rating'
+export type CompareSort = 'price' | 'landed' | 'moq' | 'lead' | 'rating'
 
 export interface CompareRow {
   product: Product
   vendor: Vendor
   basePrice: number | null
+  /** Null when landed cost is off in Settings or can't be computed for this product (N2). */
+  landedCost: number | null
 }
 
 /** Nulls sort last whatever the direction. */
@@ -24,6 +27,7 @@ export function compareRows(
   base: string,
   rates: RateMap,
   sort: CompareSort,
+  landed?: LandedCostSettings,
 ): CompareRow[] {
   const tagged = new Map(
     vendors.filter((vendor) => vendor.tags.includes(tag)).map((vendor) => [vendor.id, vendor]),
@@ -36,12 +40,15 @@ export function compareRows(
       product.price === undefined
         ? null
         : convertToBase(product.price, product.currency, base, rates)
-    rows.push({ product, vendor, basePrice })
+    const landedCost = landedUnitCost(product, { baseCurrency: base, rates, landed })
+    rows.push({ product, vendor, basePrice, landedCost })
   }
   return rows.sort((a, b) => {
     switch (sort) {
       case 'price':
         return byValue(a.basePrice, b.basePrice, 1)
+      case 'landed':
+        return byValue(a.landedCost, b.landedCost, 1)
       case 'moq':
         return byValue(a.product.moq, b.product.moq, 1)
       case 'lead':

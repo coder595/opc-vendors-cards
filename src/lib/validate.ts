@@ -6,6 +6,8 @@ import type {
   ExportEnvelope,
   ExportedAttachment,
   FairRef,
+  Incoterm,
+  LandedCostSettings,
   Note,
   PipelineStatus,
   PriceTier,
@@ -19,6 +21,7 @@ import type {
   VendorType,
 } from '../db/models'
 import { APP_ID } from './app'
+import { INCOTERMS } from './landedCost'
 
 export const LIMITS = {
   maxFileBytes: 250 * 1024 * 1024,
@@ -140,6 +143,23 @@ function isPositive(value: unknown): value is number {
 
 function nonNegativeNumber(value: unknown): number | undefined {
   return isNonNegative(value) ? value : undefined
+}
+
+/** Positive and at most `max`, else undefined (lenient: bad optional fields are dropped). */
+function boundedPositive(value: unknown, max: number): number | undefined {
+  return isFiniteNumber(value) && value > 0 && value <= max ? value : undefined
+}
+
+const INCOTERM_SET = new Set<string>(INCOTERMS)
+
+function parseLanded(value: unknown): LandedCostSettings | undefined {
+  if (!isObject(value)) return undefined
+  if (value.freightMode !== 'percent' && value.freightMode !== 'perCbm') return undefined
+  const { freight, dutyPercent, vatPercent } = value
+  if (!isNonNegative(freight) || freight > LIMITS.maxMoney) return undefined
+  if (!isNonNegative(dutyPercent) || dutyPercent > 1000) return undefined
+  if (!isNonNegative(vatPercent) || vatPercent > 1000) return undefined
+  return { freightMode: value.freightMode, freight, dutyPercent, vatPercent }
 }
 
 function moneyNumber(value: unknown): number | undefined {
@@ -307,6 +327,15 @@ export function parseProduct(value: unknown): Product | null {
     tiers,
     leadTimeDays: nonNegativeNumber(value.leadTimeDays),
     paymentTerms: optString(value.paymentTerms),
+    incoterm:
+      typeof value.incoterm === 'string' && INCOTERM_SET.has(value.incoterm)
+        ? (value.incoterm as Incoterm)
+        : undefined,
+    pcsPerCarton: boundedPositive(value.pcsPerCarton, 1_000_000),
+    cartonLengthCm: boundedPositive(value.cartonLengthCm, 10_000),
+    cartonWidthCm: boundedPositive(value.cartonWidthCm, 10_000),
+    cartonHeightCm: boundedPositive(value.cartonHeightCm, 10_000),
+    cartonGrossKg: boundedPositive(value.cartonGrossKg, 100_000),
     photoAttachmentIds,
     createdAt: value.createdAt,
     updatedAt: isPositive(value.updatedAt) ? value.updatedAt : (isPositive(value.createdAt) ? value.createdAt : Date.now()),
@@ -415,6 +444,7 @@ export function parseSettings(value: unknown): Settings | null {
     rates,
     travellerName: optString(value.travellerName),
     defaultFair: defaultFair ?? undefined,
+    landed: parseLanded(value.landed),
   }
 }
 

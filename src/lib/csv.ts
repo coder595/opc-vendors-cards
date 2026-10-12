@@ -1,6 +1,7 @@
 import { STATUS_LABEL, TYPE_LABEL } from '../db/labels'
-import type { Contact, Product, Vendor } from '../db/models'
-import { convertToBase, type RateMap } from './currency'
+import type { Contact, LandedCostSettings, Product, Vendor } from '../db/models'
+import { convertToBase, currencyDecimals, type RateMap } from './currency'
+import { cartonCbm, landedUnitCost } from './landedCost'
 
 const DANGEROUS_PREFIX = /^[=+\-@\t\r\n]/
 const PHONE_SHAPE = /^\+?[\d\s().-]{6,}$/
@@ -98,7 +99,9 @@ export function buildProductCsv(
   products: Product[],
   base: string,
   rates: RateMap,
+  landed?: LandedCostSettings,
 ): string {
+  const decimals = currencyDecimals(base)
   const vendorById = new Map(vendors.map((vendor) => [vendor.id, vendor]))
   const rows: (string | number | undefined)[][] = [
     [
@@ -116,6 +119,12 @@ export function buildProductCsv(
       'Payment terms',
       'Vendor rating',
       'Tags',
+      'Incoterm',
+      'Pcs per carton',
+      'Carton (cm)',
+      'CBM',
+      'Gross kg',
+      `Landed (${base})`,
     ],
   ]
   for (const product of products) {
@@ -125,6 +134,8 @@ export function buildProductCsv(
       product.price === undefined
         ? null
         : convertToBase(product.price, product.currency, base, rates)
+    const cbm = cartonCbm(product)
+    const landedCost = landedUnitCost(product, { baseCurrency: base, rates, landed }) ?? undefined
     rows.push([
       vendor.name,
       vendor.fair.hall,
@@ -133,13 +144,21 @@ export function buildProductCsv(
       product.unit,
       product.currency,
       product.price,
-      basePrice === null ? undefined : basePrice.toFixed(2),
+      basePrice === null ? undefined : basePrice.toFixed(decimals),
       product.moq,
       product.tiers.map((tier) => `${tier.minQty}: ${tier.unitPrice}`).join('; '),
       product.leadTimeDays,
       product.paymentTerms,
       vendor.rating,
       vendor.tags.join('; '),
+      product.incoterm,
+      product.pcsPerCarton,
+      cbm === null
+        ? undefined
+        : `${product.cartonLengthCm}x${product.cartonWidthCm}x${product.cartonHeightCm}`,
+      cbm?.toFixed(3),
+      product.cartonGrossKg,
+      landedCost?.toFixed(decimals),
     ])
   }
   return `\uFEFF${toCsv(rows)}`

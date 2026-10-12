@@ -1,7 +1,8 @@
 import type { VendorBundleDraft } from '../data/bundle'
 import { LIMITS } from './validate'
 import type { VendorDraft } from '../features/vendors/formState'
-import type { PriceTier } from '../db/models'
+import type { Incoterm, PriceTier } from '../db/models'
+import { INCOTERMS } from './landedCost'
 
 export interface DraftValidation {
   errors: Record<string, string>
@@ -32,6 +33,18 @@ function parseOptionalNumber(
   return value
 }
 
+/** Like parseOptionalNumber, but zero is an error (a carton of 0 pcs or 0 cm is a typo). */
+function parseOptionalPositive(
+  raw: string,
+  path: string,
+  label: string,
+  errors: Record<string, string>,
+): number | undefined {
+  const value = parseOptionalNumber(raw, path, label, errors, 1_000_000)
+  if (value === 0) errors[path] = label
+  return value === 0 ? undefined : value
+}
+
 function contactHasContent(contact: VendorDraft['contacts'][number]): boolean {
   return [
     contact.name,
@@ -54,6 +67,12 @@ function productHasContent(product: VendorDraft['products'][number]): boolean {
       product.moq,
       product.leadTimeDays,
       product.paymentTerms,
+      product.incoterm,
+      product.pcsPerCarton,
+      product.cartonLengthCm,
+      product.cartonWidthCm,
+      product.cartonHeightCm,
+      product.cartonGrossKg,
     ].some((value) => (value ?? '').toString().trim() !== '') ||
     product.photoKeys.length > 0 ||
     product.tiers.some((tier) => tier.minQty.trim() !== '' || tier.unitPrice.trim() !== '')
@@ -85,6 +104,7 @@ export function validateVendorDraft(draft: VendorDraft, defaultCurrency = 'USD')
   })
 
   const products = draft.products.filter(productHasContent).map((product) => {
+    const path = `products.${product.key}`
     const productName = product.name.trim()
     if (productName === '') errors[`products.${product.key}.name`] = 'Enter a product name'
 
@@ -150,6 +170,14 @@ export function validateVendorDraft(draft: VendorDraft, defaultCurrency = 'USD')
         errors,
       ),
       paymentTerms: blankToUndefined(product.paymentTerms),
+      incoterm: (INCOTERMS as readonly string[]).includes(product.incoterm)
+        ? (product.incoterm as Incoterm)
+        : undefined,
+      pcsPerCarton: parseOptionalPositive(product.pcsPerCarton, `${path}.pcsPerCarton`, 'Enter pieces per carton', errors),
+      cartonLengthCm: parseOptionalPositive(product.cartonLengthCm, `${path}.cartonLengthCm`, 'Enter a length in cm', errors),
+      cartonWidthCm: parseOptionalPositive(product.cartonWidthCm, `${path}.cartonWidthCm`, 'Enter a width in cm', errors),
+      cartonHeightCm: parseOptionalPositive(product.cartonHeightCm, `${path}.cartonHeightCm`, 'Enter a height in cm', errors),
+      cartonGrossKg: parseOptionalPositive(product.cartonGrossKg, `${path}.cartonGrossKg`, 'Enter a weight in kg', errors),
       tiers,
       photoKeys: product.photoKeys,
     }

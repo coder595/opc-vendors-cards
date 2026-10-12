@@ -49,4 +49,17 @@ describe('compareRows', () => {
     const rows = compareRows([a, b, c], products, 'led', 'USD', rates, 'moq')
     expect(rows[0]?.product.id).toBe('b1')
   })
+
+  it('adds a landed cost per row and sorts by it (N2)', () => {
+    const landed = { freightMode: 'percent' as const, freight: 10, dutyPercent: 0, vatPercent: 0 }
+    const priced = [
+      product('x', a.id, { price: 10, incoterm: 'FOB' }), // 10 + 10 % = 11
+      product('y', b.id, { price: 105, currency: 'CNY', incoterm: 'CIF' }), // 10.5, no freight
+    ]
+    const rows = compareRows([a, b], priced, 'led', 'USD', rates, 'landed', landed)
+    expect(rows.map((row) => row.product.id)).toEqual(['y', 'x'])
+    expect(rows[0]?.landedCost).toBeCloseTo(10.5, 9)
+    expect(rows[1]?.landedCost).toBeCloseTo(11, 9)
+    expect(compareRows([a], priced, 'led', 'USD', rates, 'price')[0]?.landedCost).toBeNull()
+  })
 })

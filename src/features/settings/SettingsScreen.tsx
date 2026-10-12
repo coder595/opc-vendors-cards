@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { SelectField, TextField } from '../../components/Field'
 import { getSettings, updateSettings } from '../../data/settings'
 import { deleteVendor as permanentDeleteVendor, getDeletedVendors, restoreVendor } from '../../data/vendors'
-import type { Settings, Theme } from '../../db/models'
+import type { LandedCostSettings, Settings, Theme } from '../../db/models'
 import { COMMON_CURRENCIES, normalizeCurrencyCode } from '../../lib/currency'
 import { setThemePreference } from '../../lib/theme'
 import { newKey } from '../../lib/app'
@@ -15,6 +15,8 @@ interface RateRow {
   code: string
   rate: string
 }
+
+const numberText = (value?: number) => (value === undefined ? '' : String(value))
 
 function toRows(rates: Settings['rates']): RateRow[] {
   return Object.entries(rates).map(([code, rate]) => ({
@@ -32,6 +34,12 @@ function SettingsForm({ initial }: { initial: Settings }) {
   const [defaultEdition, setDefaultEdition] = useState(initial.defaultFair?.edition ?? '')
   const [defaultHall, setDefaultHall] = useState(initial.defaultFair?.hall ?? '')
   const [defaultBooth, setDefaultBooth] = useState(initial.defaultFair?.booth ?? '')
+  const [freightMode, setFreightMode] = useState<LandedCostSettings['freightMode']>(
+    initial.landed?.freightMode ?? 'percent',
+  )
+  const [freight, setFreight] = useState(numberText(initial.landed?.freight))
+  const [duty, setDuty] = useState(numberText(initial.landed?.dutyPercent))
+  const [vat, setVat] = useState(numberText(initial.landed?.vatPercent))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
   const originalRows = useRef<RateRow[]>(toRows(initial.rates))
@@ -97,6 +105,24 @@ function SettingsForm({ initial }: { initial: Settings }) {
       rates[rowCode] = rate
     }
 
+    // Landed cost is off while all three numbers are blank; a blank one counts as 0 otherwise.
+    let landed: LandedCostSettings | undefined
+    if ([freight, duty, vat].some((value) => value.trim() !== '')) {
+      const numbers = { freight, duty, vat }
+      const parsed: Record<string, number> = {}
+      for (const [key, raw] of Object.entries(numbers)) {
+        const value = raw.trim() === '' ? 0 : Number(raw)
+        if (!Number.isFinite(value) || value < 0) nextErrors[`landed.${key}`] = 'Enter 0 or a positive number.'
+        parsed[key] = value
+      }
+      landed = {
+        freightMode,
+        freight: parsed.freight ?? 0,
+        dutyPercent: parsed.duty ?? 0,
+        vatPercent: parsed.vat ?? 0,
+      }
+    }
+
     setErrors(nextErrors)
     if (!code || Object.keys(nextErrors).length > 0) return
     setNotice('')
@@ -104,6 +130,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
       updateSettings({
         baseCurrency: code,
         rates,
+        landed,
         travellerName: travellerName.trim() || undefined,
         defaultFair: {
           edition: defaultEdition.trim() || undefined,
@@ -188,6 +215,54 @@ function SettingsForm({ initial }: { initial: Settings }) {
         <button type="button" className="btn btn--ghost" onClick={addRow}>
           Add rate
         </button>
+        <h2>Landed cost</h2>
+        <p className="field__hint">
+          Estimates the cost of one unit delivered home, in {base || 'the base currency'}. Leave
+          all three blank to turn it off.
+        </p>
+        <SelectField
+          id="landed-freight-mode"
+          label="Freight charged as"
+          value={freightMode}
+          onChange={setFreightMode}
+          options={[
+            { value: 'percent', label: 'Percent of the price' },
+            { value: 'perCbm', label: `${base || 'Base'} per cubic metre` },
+          ]}
+        />
+        <TextField
+          id="landed-freight"
+          label={freightMode === 'percent' ? 'Freight %' : `Freight per m³ (${base || '—'})`}
+          hint={
+            freightMode === 'perCbm'
+              ? 'Needs carton size and pieces per carton on each product.'
+              : 'Skipped for CIF quotes, which already include freight.'
+          }
+          inputMode="decimal"
+          mono
+          value={freight}
+          onChange={setFreight}
+          error={errors['landed.freight']}
+        />
+        <TextField
+          id="landed-duty"
+          label="Import duty %"
+          inputMode="decimal"
+          mono
+          value={duty}
+          onChange={setDuty}
+          error={errors['landed.duty']}
+        />
+        <TextField
+          id="landed-vat"
+          label="VAT %"
+          hint="Charged on price + freight + duty."
+          inputMode="decimal"
+          mono
+          value={vat}
+          onChange={setVat}
+          error={errors['landed.vat']}
+        />
         <div className="form-foot">
           <button type="submit" className="btn btn--primary">
             Save settings

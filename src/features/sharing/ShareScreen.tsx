@@ -108,6 +108,7 @@ function ExportPanel() {
         products,
         settings.baseCurrency,
         settings.rates,
+        settings.landed,
       )
       downloadBlob(
         new Blob([csv], { type: 'text/csv;charset=utf-8' }),

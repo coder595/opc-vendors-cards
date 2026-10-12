@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { validateVendorDraft } from '../../src/lib/formValidation'
 import {
   createEmptyDraft,
+  createEmptyProduct,
   type PhotoDraft,
   type ProductDraft,
 } from '../../src/features/vendors/formState'
 
 function product(overrides: Partial<ProductDraft> = {}): ProductDraft {
   return {
-    key: 'p1',
+    ...createEmptyProduct('p1'),
     name: '',
     description: '',
     unit: '',
@@ -82,6 +83,31 @@ describe('validateVendorDraft', () => {
     const result = validateVendorDraft(draft)
     expect(result.errors['contacts.c1.name']).toBeDefined()
     expect(result.bundle).toBeNull()
+  })
+
+  it('parses N2 packing fields and rejects a zero carton count', () => {
+    const draft = createEmptyDraft()
+    draft.name = 'ACME'
+    draft.products = [
+      product({
+        name: 'Panel',
+        incoterm: 'FOB',
+        pcsPerCarton: '20',
+        cartonLengthCm: '50',
+        cartonWidthCm: '40',
+        cartonHeightCm: '30',
+        cartonGrossKg: '12.5',
+      }),
+    ]
+    expect(validateVendorDraft(draft).bundle?.products[0]).toMatchObject({
+      incoterm: 'FOB',
+      pcsPerCarton: 20,
+      cartonLengthCm: 50,
+      cartonGrossKg: 12.5,
+    })
+
+    draft.products = [product({ name: 'Panel', pcsPerCarton: '0' })]
+    expect(validateVendorDraft(draft).errors['products.p1.pcsPerCarton']).toBeDefined()
   })
 
   it('rejects a negative price', () => {

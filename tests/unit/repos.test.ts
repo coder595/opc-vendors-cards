@@ -121,3 +121,19 @@ describe('repositories', () => {
     await expect(addNote(vendorId, { text: '' })).resolves.toBeTruthy()
   })
 })
+
+describe('landed-cost settings (N2)', () => {
+  beforeEach(resetDb)
+  afterEach(resetDb)
+
+  it('stores, validates and clears the landed-cost settings', async () => {
+    const landed = { freightMode: 'percent' as const, freight: 10, dutyPercent: 5, vatPercent: 5 }
+    await updateSettings({ landed })
+    expect((await getSettings()).landed).toEqual(landed)
+
+    await expect(updateSettings({ landed: { ...landed, vatPercent: -1 } })).rejects.toThrow()
+
+    await updateSettings({ landed: undefined })
+    expect((await getSettings()).landed).toBeUndefined()
+  })
+})

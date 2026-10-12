@@ -1,6 +1,8 @@
 import type {
   AttachmentKind,
   FairRef,
+  Incoterm,
+  ProductInput,
   PipelineStatus,
   ProcessedImage,
   Rating,
@@ -46,6 +48,12 @@ export interface ProductDraft {
   moq: string
   leadTimeDays: string
   paymentTerms: string
+  incoterm: string
+  pcsPerCarton: string
+  cartonLengthCm: string
+  cartonWidthCm: string
+  cartonHeightCm: string
+  cartonGrossKg: string
   tiers: TierDraft[]
   photoKeys: string[]
 }
@@ -115,6 +123,12 @@ export function createEmptyProduct(key: string): ProductDraft {
     moq: '',
     leadTimeDays: '',
     paymentTerms: '',
+    incoterm: '',
+    pcsPerCarton: '',
+    cartonLengthCm: '',
+    cartonWidthCm: '',
+    cartonHeightCm: '',
+    cartonGrossKg: '',
     tiers: [],
     photoKeys: [],
   }
@@ -235,5 +249,41 @@ export function vendorReducer(draft: VendorDraft, action: VendorAction): VendorD
       return action.draft
     default:
       return draft
+  }
+}
+
+type Packing = Pick<
+  ProductInput,
+  'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm' | 'cartonGrossKg'
+>
+type PackingDraft = Pick<
+  ProductDraft,
+  'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm' | 'cartonGrossKg'
+>
+
+const numberText = (value?: number) => (value === undefined ? '' : String(value))
+const textNumber = (value: string) => Number(value) || undefined
+
+/** Stored packing fields (N2) → form strings. */
+export function packingToDraft(product: Packing): PackingDraft {
+  return {
+    incoterm: product.incoterm ?? '',
+    pcsPerCarton: numberText(product.pcsPerCarton),
+    cartonLengthCm: numberText(product.cartonLengthCm),
+    cartonWidthCm: numberText(product.cartonWidthCm),
+    cartonHeightCm: numberText(product.cartonHeightCm),
+    cartonGrossKg: numberText(product.cartonGrossKg),
+  }
+}
+
+/** Form strings → packing fields for the crash-recovery draft (lenient; save validates). */
+export function packingFromDraft(product: PackingDraft): Packing {
+  return {
+    incoterm: (product.incoterm || undefined) as Incoterm | undefined,
+    pcsPerCarton: textNumber(product.pcsPerCarton),
+    cartonLengthCm: textNumber(product.cartonLengthCm),
+    cartonWidthCm: textNumber(product.cartonWidthCm),
+    cartonHeightCm: textNumber(product.cartonHeightCm),
+    cartonGrossKg: textNumber(product.cartonGrossKg),
   }
 }

@@ -114,6 +114,31 @@ describe('export / import round-trip', () => {
     expect(settings?.rates).toEqual({ CNY: 7.2 })
   })
 
+  it('round-trips N2 packing fields and landed-cost settings', async () => {
+    const vendorId = await createVendor({ name: 'Packer Co' })
+    const packing = {
+      incoterm: 'FOB' as const,
+      pcsPerCarton: 20,
+      cartonLengthCm: 50,
+      cartonWidthCm: 40,
+      cartonHeightCm: 30,
+      cartonGrossKg: 12.5,
+    }
+    const productId = await addProduct(vendorId, { name: 'Panel', price: 72, currency: 'CNY', ...packing })
+    const landed = { freightMode: 'perCbm' as const, freight: 40, dutyPercent: 5, vatPercent: 5 }
+    await updateSettings({ landed })
+
+    const parsed = await parseImport(await (await buildExportBlob(await serializeDb())).arrayBuffer())
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    await resetDb()
+    // Settings are device preferences and only come across when asked for.
+    await importData(parsed.envelope, 'replace', { importSettings: true })
+
+    expect(await db.products.get(productId)).toMatchObject(packing)
+    expect((await db.settings.get('app'))?.landed).toEqual(landed)
+  })
+
   it('imports plain (uncompressed) JSON as well as gzip', async () => {
     const vendorId = await createVendor({ name: 'Plain Co' })
     const envelope = await serializeDb()
