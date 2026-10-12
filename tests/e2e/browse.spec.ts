@@ -11,6 +11,12 @@ test('searches, filters by status and country, and opens a detail', async ({ pag
   await expect(page.getByRole('link', { name: /Guangzhou Lighting/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Berlin Metal/ })).toBeVisible()
 
+  // C6: a row with a photo shows its thumb and booth; one without keeps an empty slot.
+  const cnRow = page.getByRole('link', { name: /Guangzhou Lighting/ })
+  await expect(cnRow.locator('.manifest__thumb img')).toBeVisible()
+  await expect(cnRow).toContainText('1.2 A14')
+  await expect(page.getByRole('link', { name: /Berlin Metal/ }).locator('img')).toHaveCount(0)
+
   await page.getByLabel('Search').fill('Li Wei')
   await expect(page.getByRole('link', { name: /Guangzhou Lighting/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Berlin Metal/ })).toHaveCount(0)

@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { BlobImage } from '../../components/BlobImage'
 import { EmptyState } from '../../components/EmptyState'
 import { StatusSeal } from '../../components/StatusSeal'
 import { STATUSES, STATUS_LABEL, TYPE_LABEL, VENDOR_TYPES } from '../../db/labels'
@@ -9,6 +10,7 @@ import {
   applyVendorQuery,
   buildSearchIndex,
   defaultVendorQuery,
+  pickRowThumbs,
   type VendorFilters,
   type VendorQuery,
   type VendorSort,
@@ -58,12 +60,18 @@ function syncHash(query: VendorQuery): void {
   history.replaceState(null, '', qs ? `${base}?${qs}` : base)
 }
 
-const VendorRow = memo(function VendorRow({ vendor }: { vendor: Vendor }) {
+const VendorRow = memo(function VendorRow({ vendor, thumb }: { vendor: Vendor; thumb?: Blob }) {
+  const booth = [vendor.fair.hall, vendor.fair.booth].filter(Boolean).join(' ')
   return (
     <li className="manifest__row">
       <a className="manifest__link" href={`#/vendors/${vendor.id}`}>
+        {/* ponytail: thumbs decode eagerly via FileReader; switch to IntersectionObserver if long lists lag */}
+        <span className="manifest__thumb" aria-hidden="true">
+          {thumb ? <BlobImage blob={thumb} alt="" size={40} /> : null}
+        </span>
         <span className="manifest__name">{vendor.name}</span>
         <span className="manifest__meta">
+          {booth ? <span className="mono">{booth}</span> : null}
           <span>{TYPE_LABEL[vendor.type]}</span>
           {vendor.country ? <span className="mono">{vendor.country}</span> : null}
           <span>{STATUS_LABEL[vendor.status]}</span>
@@ -77,12 +85,13 @@ const VendorRow = memo(function VendorRow({ vendor }: { vendor: Vendor }) {
 
 export function VendorList() {
   const data = useLiveQuery(async () => {
-    const [vendors, contacts, products] = await Promise.all([
+    const [vendors, contacts, products, attachments] = await Promise.all([
       db.vendors.toArray(),
       db.contacts.toArray(),
       db.products.toArray(),
+      db.attachments.toArray(),
     ])
-    return { vendors, contacts, products }
+    return { vendors, contacts, products, thumbs: pickRowThumbs(attachments) }
   }, [])
   const [query, setQuery] = useState<VendorQuery>(parseHashQuery)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -313,7 +322,7 @@ export function VendorList() {
       ) : (
         <ul className="manifest">
           {results.map((vendor) => (
-            <VendorRow key={vendor.id} vendor={vendor} />
+            <VendorRow key={vendor.id} vendor={vendor} thumb={data.thumbs.get(vendor.id)} />
           ))}
         </ul>
       )}

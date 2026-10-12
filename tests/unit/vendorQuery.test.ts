@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { Contact, Product, Vendor } from '../../src/db/models'
+import type { Attachment, Contact, Product, Vendor } from '../../src/db/models'
 import {
   applyVendorQuery,
   buildSearchIndex,
   defaultVendorQuery,
   foldText,
+  pickRowThumbs,
   type VendorQuery,
 } from '../../src/features/vendors/vendorQuery'
 
@@ -181,5 +182,30 @@ describe('buildSearchIndex + applyVendorQuery', () => {
     const start = performance.now()
     applyVendorQuery(many, built, query({ text: 'vendor 42' }))
     expect(performance.now() - start).toBeLessThan(100)
+  })
+})
+
+describe('pickRowThumbs (C6)', () => {
+  function att(id: string, vendorId: string, kind: Attachment['kind'], createdAt: number): Attachment {
+    const thumb = new Blob([id], { type: 'image/jpeg' })
+    return { id, vendorId, kind, blob: thumb, thumb, width: 1, height: 1, bytes: 1, createdAt, updatedAt: createdAt }
+  }
+
+  it('prefers the business card, then a booth photo, then the earliest photo', async () => {
+    const thumbs = pickRowThumbs([
+      att('p1', 'v1', 'product', 1),
+      att('c1', 'v1', 'business_card', 5),
+      att('p2', 'v2', 'product', 3),
+      att('b2', 'v2', 'booth', 4),
+      att('p3', 'v3', 'product', 9),
+      att('o3', 'v3', 'other', 2),
+    ])
+    expect([...thumbs.keys()].sort()).toEqual(['v1', 'v2', 'v3'])
+    const ids = await Promise.all(['v1', 'v2', 'v3'].map((id) => thumbs.get(id)!.text()))
+    expect(ids).toEqual(['c1', 'b2', 'o3'])
+  })
+
+  it('returns no entry for a vendor without photos', () => {
+    expect(pickRowThumbs([]).size).toBe(0)
   })
 })

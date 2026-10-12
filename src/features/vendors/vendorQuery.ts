@@ -1,4 +1,4 @@
-import type { Contact, PipelineStatus, Product, Vendor, VendorType } from '../../db/models'
+import type { Attachment, Contact, PipelineStatus, Product, Vendor, VendorType } from '../../db/models'
 
 export interface VendorFilters {
   status: PipelineStatus | 'all'
@@ -130,4 +130,28 @@ export function applyVendorQuery(
       return b.updatedAt - a.updatedAt || collator.compare(a.name, b.name)
     return collator.compare(a.name, b.name)
   })
+}
+
+const THUMB_RANK: Record<Attachment['kind'], number> = {
+  business_card: 0,
+  booth: 1,
+  product: 2,
+  document: 2,
+  other: 2,
+}
+
+/** One list-row thumbnail per vendor: business card, else booth photo, else the earliest photo. */
+export function pickRowThumbs(attachments: Attachment[]): Map<string, Blob> {
+  const best = new Map<string, Attachment>()
+  for (const item of attachments) {
+    const current = best.get(item.vendorId)
+    if (
+      !current ||
+      THUMB_RANK[item.kind] < THUMB_RANK[current.kind] ||
+      (THUMB_RANK[item.kind] === THUMB_RANK[current.kind] && item.createdAt < current.createdAt)
+    ) {
+      best.set(item.vendorId, item)
+    }
+  }
+  return new Map([...best].map(([vendorId, item]) => [vendorId, item.thumb]))
 }
