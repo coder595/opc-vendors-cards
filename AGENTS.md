@@ -160,7 +160,6 @@ markers can lag the code).
   Prettier-formatted.
 ## Open items (2026-10-12)
 
-- **N2 is on branch `improve/n2-landed-cost`, not merged.** See `handoff.md` for the resume steps.
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan).
 - Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
