@@ -7,10 +7,11 @@ capturing suppliers, dealers, agents, and factories met at trade fairs. No backe
 data lives in IndexedDB. Files and QR codes are the sync protocol.
 
 Source of truth: **`plan.md`** (scope, phases), **`architecture.md`** (stack, data
-model, design, security), **`deep-improvements.md`** (improvement plan). Phases 0–7 and
-milestones M1–M3 (deep-improvements.md §3) are implemented. Improvement work is tracked
-by item ID (A1–G2, N1–N6); commits tag the ID, e.g. `feat(export): A5 …` (the doc's ✅
-markers can lag the code).
+model, design, security), **`deep-improvements.md`** (improvement plan, round 1) and
+**`improvement-plan-r2.md`** (round 2, `R1…` items, done). Phases 0–7, milestones M1–M3
+and N1–N7 are implemented. Improvement work is tracked by item ID (A1–G2, N1–N14, R1…);
+commits tag the ID, e.g. `feat(export): A5 …`, and done items carry `✅ <commit>` in
+deep-improvements.md.
 
 ## Commands
 
@@ -158,11 +159,14 @@ markers can lag the code).
 - `.opencode/agent/` holds 17 project-scoped ECC subagents (invoke via Task or `@name`).
   Regenerate with `python3 scripts/install-ecc-agents.py`; `scripts/` is not
   Prettier-formatted.
-## Open items (2026-10-12)
 
+## Open items (2026-10-13)
+
+- All pre-fair code work is merged and deployed (last: N2, `702bbad`).
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
-  (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan).
+  (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
+  landed-cost quote checked by hand).
 - Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
-  (manifest screenshots, `share_target`), N8–N14.
-- About 24 files in `src` already fail `prettier --check`. Leave existing formatting alone in
+  (manifest screenshots, `share_target`), N8–N14. E3 is won't-fix.
+- About 28 files in `src` already fail `prettier --check`. Leave existing formatting alone in
   feature commits; reformat in a separate commit if wanted.
