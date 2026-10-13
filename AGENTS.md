@@ -81,6 +81,20 @@ markers can lag the code).
 - Money: `src/lib/currency.ts`. Rates are **units of C per 1 base**, so
   `convertToBase(amount, C, base) = amount / rate`. Converted values are computed at
   render, never persisted.
+- Landed cost (N2, `src/lib/landedCost.ts`): product packing fields (`incoterm` EXW/FOB/CIF,
+  `pcsPerCarton`, `cartonLengthCm/WidthCm/HeightCm`, `cartonGrossKg`) plus
+  `Settings.landed` (`freightMode` `percent`|`perCbm`, `freight`, `dutyPercent`, `vatPercent`).
+  Formula, all in base currency: `unit = convertToBase(price)`; freight = `unit × freight%`
+  or `(cartonCbm / pcsPerCarton) × perCbmRate`, and **0 for CIF**; `customs = unit + freight`;
+  `duty = customs × duty%`; `VAT = (customs + duty) × VAT%`; landed = sum. Null when the price,
+  rate, settings or (per-CBM) packing is missing. **EXW is treated like FOB** (no inland or
+  port fees); a `ponytail:` comment marks it. The landed column/sort on Trip appears only when
+  `Settings.landed` is set. Settings stay device-local: import copies them only with
+  `importSettings`.
+- **No schema bump for N2.** The new fields are optional and unindexed, so Dexie needs no
+  migration, older exports import unchanged, and phones on an older app version still
+  accept new exports. This deliberately departs from the "new field → version bump" rule
+  above; bump only when an index or a data migration is needed.
 - Images: `src/lib/images.ts` resizes at pick time (EXIF-aware, max 1600px JPEG q0.75
   + 256px thumb). `bytes` is the resized blob size.
 - `__APP_VERSION__` injected by Vite `define` (declared in `src/vite-env.d.ts`).
@@ -144,3 +158,12 @@ markers can lag the code).
 - `.opencode/agent/` holds 17 project-scoped ECC subagents (invoke via Task or `@name`).
   Regenerate with `python3 scripts/install-ecc-agents.py`; `scripts/` is not
   Prettier-formatted.
+## Open items (2026-10-12)
+
+- **N2 is on branch `improve/n2-landed-cost`, not merged.** See `handoff.md` for the resume steps.
+- **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
+  (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan).
+- Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
+  (manifest screenshots, `share_target`), N8–N14.
+- About 24 files in `src` already fail `prettier --check`. Leave existing formatting alone in
+  feature commits; reformat in a separate commit if wanted.

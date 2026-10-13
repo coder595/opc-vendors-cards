@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { TextField } from '../../components/Field'
+import { SelectField, TextField } from '../../components/Field'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { getSettings } from '../../data/settings'
 import type { Settings } from '../../db/models'
@@ -10,8 +11,20 @@ import {
   normalizeCurrencyCode,
 } from '../../lib/currency'
 import { newKey } from '../../lib/app'
+import { INCOTERMS } from '../../lib/landedCost'
 import { createEmptyTier, type ProductDraft, type TierDraft } from './formState'
 import { useVendorForm } from './VendorFormContext'
+
+function hasPacking(product: ProductDraft): boolean {
+  return [
+    product.incoterm,
+    product.pcsPerCarton,
+    product.cartonLengthCm,
+    product.cartonWidthCm,
+    product.cartonHeightCm,
+    product.cartonGrossKg,
+  ].some((value) => value.trim() !== '')
+}
 
 function BasePreview({
   amount,
@@ -46,6 +59,8 @@ function ProductRow({
   const update = (patch: Partial<ProductDraft>) =>
     dispatch({ type: 'updateProduct', key: product.key, patch })
   const photos = draft.photos.filter((photo) => product.photoKeys.includes(photo.key))
+  // Opens by itself only when the product already has packing data; the user toggles it after.
+  const [packingOpen, setPackingOpen] = useState(() => hasPacking(product))
 
   const updateTier = (tierKey: string, patch: Partial<TierDraft>) =>
     update({
@@ -126,6 +141,72 @@ function ProductRow({
         value={product.paymentTerms}
         onChange={(paymentTerms) => update({ paymentTerms })}
       />
+
+      {/* N2: collapsed so the booth form stays short; opens when anything is filled in. */}
+      <details
+        className="card-paste"
+        open={packingOpen}
+        onToggle={(event) => setPackingOpen(event.currentTarget.open)}
+      >
+        <summary>Packing and incoterm</summary>
+        <div className="card-paste__body">
+        <SelectField
+          id={`${id}-incoterm`}
+          label="Incoterm"
+          value={product.incoterm}
+          onChange={(incoterm) => update({ incoterm })}
+          options={[
+            { value: '', label: 'Not set' },
+            ...INCOTERMS.map((term) => ({ value: term, label: term })),
+          ]}
+        />
+        <TextField
+          id={`${id}-pcs`}
+          label="Pieces per carton"
+          inputMode="numeric"
+          mono
+          value={product.pcsPerCarton}
+          onChange={(pcsPerCarton) => update({ pcsPerCarton })}
+          error={errors[`products.${product.key}.pcsPerCarton`]}
+        />
+        <TextField
+          id={`${id}-len`}
+          label="Carton length (cm)"
+          inputMode="decimal"
+          mono
+          value={product.cartonLengthCm}
+          onChange={(cartonLengthCm) => update({ cartonLengthCm })}
+          error={errors[`products.${product.key}.cartonLengthCm`]}
+        />
+        <TextField
+          id={`${id}-wid`}
+          label="Carton width (cm)"
+          inputMode="decimal"
+          mono
+          value={product.cartonWidthCm}
+          onChange={(cartonWidthCm) => update({ cartonWidthCm })}
+          error={errors[`products.${product.key}.cartonWidthCm`]}
+        />
+        <TextField
+          id={`${id}-hei`}
+          label="Carton height (cm)"
+          inputMode="decimal"
+          mono
+          value={product.cartonHeightCm}
+          onChange={(cartonHeightCm) => update({ cartonHeightCm })}
+          error={errors[`products.${product.key}.cartonHeightCm`]}
+        />
+        <TextField
+          id={`${id}-kg`}
+          label="Carton gross weight (kg)"
+          inputMode="decimal"
+          mono
+          value={product.cartonGrossKg}
+          onChange={(cartonGrossKg) => update({ cartonGrossKg })}
+          error={errors[`products.${product.key}.cartonGrossKg`]}
+        />
+        </div>
+      </details>
 
       <div className="tier-editor">
         <p className="field__hint">MOQ breaks — unit price at a quantity</p>

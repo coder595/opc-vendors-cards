@@ -84,8 +84,27 @@ describe('buildProductCsv', () => {
     const [header, row] = csv.replace('﻿', '').split('\r\n')
     expect(header).toContain('Price (USD)')
     expect(row).toBe(
-      'Acme,9.1,B12,LED panel 60x60,pc,CNY,72,10.00,500,1000: 68; 5000: 64,25,,4,led; panel',
+      'Acme,9.1,B12,LED panel 60x60,pc,CNY,72,10.00,500,1000: 68; 5000: 64,25,,4,led; panel,,,,,,',
     )
+  })
+
+  it('adds packing columns and a landed cost in the base currency decimals (N2)', () => {
+    const packed = {
+      ...product,
+      incoterm: 'FOB' as const,
+      pcsPerCarton: 20,
+      cartonLengthCm: 50,
+      cartonWidthCm: 40,
+      cartonHeightCm: 30,
+      cartonGrossKg: 12.5,
+    }
+    const landed = { freightMode: 'percent' as const, freight: 10, dutyPercent: 5, vatPercent: 5 }
+    // 72 CNY / 18 = 4 OMR → freight 4.4 → duty 4.62 → VAT 4.851
+    const csv = buildProductCsv([vendor], [packed], 'OMR', { CNY: 18 }, landed)
+    const [header, row] = csv.replace('\uFEFF', '').split('\r\n')
+    expect(header).toContain('Incoterm,Pcs per carton,Carton (cm),CBM,Gross kg,Landed (OMR)')
+    expect(row).toContain(',4.000,')
+    expect(row?.endsWith(',FOB,20,50x40x30,0.060,12.5,4.851')).toBe(true)
   })
 
   it('leaves the base price empty when no rate exists and skips orphans', () => {

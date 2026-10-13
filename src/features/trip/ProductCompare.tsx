@@ -10,6 +10,7 @@ import { compareRows, type CompareSort } from './compare'
 
 const SORTS: { value: CompareSort; label: string }[] = [
   { value: 'price', label: 'Lowest base price' },
+  { value: 'landed', label: 'Lowest landed cost' },
   { value: 'moq', label: 'Lowest MOQ' },
   { value: 'lead', label: 'Shortest lead time' },
   { value: 'rating', label: 'Highest rating' },
@@ -47,6 +48,7 @@ export function ProductCompare() {
             data.settings.baseCurrency,
             data.settings.rates,
             sort,
+            data.settings.landed,
           )
         : [],
     [data, tag, sort],
@@ -54,6 +56,8 @@ export function ProductCompare() {
 
   if (!data) return null
   const base = data.settings.baseCurrency
+  // The landed column and sort only appear once landed cost is set up in Settings.
+  const landedOn = data.settings.landed !== undefined
 
   const exportCsv = () => {
     const csv = buildProductCsv(
@@ -61,6 +65,7 @@ export function ProductCompare() {
       rows.map((row) => row.product),
       base,
       data.settings.rates,
+      data.settings.landed,
     )
     downloadBlob(
       new Blob([csv], { type: 'text/csv;charset=utf-8' }),
@@ -88,7 +93,7 @@ export function ProductCompare() {
               label="Sort by"
               value={sort}
               onChange={setSort}
-              options={SORTS}
+              options={landedOn ? SORTS : SORTS.filter((option) => option.value !== 'landed')}
             />
           </div>
           {rows.length === 0 ? (
@@ -103,6 +108,7 @@ export function ProductCompare() {
                       <th scope="col">Vendor</th>
                       <th scope="col">Price</th>
                       <th scope="col">Price ({base})</th>
+                      {landedOn ? <th scope="col">Landed ({base})</th> : null}
                       <th scope="col">MOQ</th>
                       <th scope="col">Lead (days)</th>
                       <th scope="col">Rating</th>
@@ -110,7 +116,7 @@ export function ProductCompare() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.map(({ product, vendor, basePrice }) => (
+                    {rows.map(({ product, vendor, basePrice, landedCost }) => (
                       <tr key={product.id}>
                         <th scope="row">{product.name}</th>
                         <td>
@@ -124,6 +130,11 @@ export function ProductCompare() {
                         <td className="mono">
                           {basePrice === null ? '—' : formatMoney(basePrice, base)}
                         </td>
+                        {landedOn ? (
+                          <td className="mono">
+                            {landedCost === null ? '—' : formatMoney(landedCost, base)}
+                          </td>
+                        ) : null}
                         <td className="mono">{product.moq ?? '—'}</td>
                         <td className="mono">{product.leadTimeDays ?? '—'}</td>
                         <td className="mono">{vendor.rating}</td>

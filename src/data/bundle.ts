@@ -115,6 +115,12 @@ export async function saveVendorBundle(
     tiers: product.tiers ?? [],
     leadTimeDays: product.leadTimeDays,
     paymentTerms: product.paymentTerms,
+    incoterm: product.incoterm,
+    pcsPerCarton: product.pcsPerCarton,
+    cartonLengthCm: product.cartonLengthCm,
+    cartonWidthCm: product.cartonWidthCm,
+    cartonHeightCm: product.cartonHeightCm,
+    cartonGrossKg: product.cartonGrossKg,
     photoAttachmentIds: (product.photoKeys ?? [])
       .map((key) => attachmentIdByKey.get(key))
       .filter((id): id is string => id !== undefined),

@@ -15,6 +15,7 @@ import { getSettings } from '../../data/settings'
 import { softDeleteVendor, updateVendor } from '../../data/vendors'
 import { convertToBase, formatMoney } from '../../lib/currency'
 import { formatDate } from '../../lib/format'
+import { landedUnitCost, packingSummary } from '../../lib/landedCost'
 import { followUpLinks, followUpText } from '../../lib/followUp'
 import { safeHref } from '../../lib/safeHref'
 import { downloadBlob } from '../../lib/share'
@@ -235,6 +236,8 @@ function ProductsPanel({
           settings && product.price !== undefined
             ? convertToBase(product.price, product.currency, settings.baseCurrency, settings.rates)
             : null
+        const landed = settings ? landedUnitCost(product, settings) : null
+        const packing = packingSummary(product)
         return (
           <li key={product.id} className="record">
             <div className="record__body">
@@ -259,6 +262,13 @@ function ProductsPanel({
                   <span className="mono">{product.leadTimeDays} days</span>
                 ) : null}
               </p>
+              {packing ? <p className="record__sub mono">{packing}</p> : null}
+              {settings && landed !== null ? (
+                <p className="record__sub" data-testid="landed-cost">
+                  Landed ≈ <span className="mono">{formatMoney(landed, settings.baseCurrency)}</span> per
+                  unit
+                </p>
+              ) : null}
               {product.tiers.length > 0 ? (
                 <ul className="tier-list">
                   {product.tiers.map((tier, index) => {

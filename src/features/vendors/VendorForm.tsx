@@ -13,7 +13,14 @@ import { validateVendorDraft } from '../../lib/formValidation'
 import { requestPersistentStorage } from '../../lib/storage'
 import { ContactFields } from './ContactFields'
 import { ProductFields } from './ProductFields'
-import { createEmptyDraft, vendorReducer, type PhotoDraft, type VendorDraft } from './formState'
+import {
+  createEmptyDraft,
+  packingFromDraft,
+  packingToDraft,
+  vendorReducer,
+  type PhotoDraft,
+  type VendorDraft,
+} from './formState'
 import { VendorFormContext } from './VendorFormContext'
 
 
@@ -61,6 +68,7 @@ function bundleToDraft(bundle: VendorBundle): VendorDraft {
       moq: product.moq !== undefined ? String(product.moq) : '',
       leadTimeDays: product.leadTimeDays !== undefined ? String(product.leadTimeDays) : '',
       paymentTerms: product.paymentTerms ?? '',
+      ...packingToDraft(product),
       tiers: product.tiers.map((tier) => ({
         key: crypto.randomUUID(),
         minQty: String(tier.minQty),
@@ -210,6 +218,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             moq: p.moq !== undefined ? String(p.moq) : '',
             leadTimeDays: p.leadTimeDays !== undefined ? String(p.leadTimeDays) : '',
             paymentTerms: p.paymentTerms ?? '',
+            ...packingToDraft(p),
             tiers: p.tiers.map((t) => ({
               key: crypto.randomUUID(),
               minQty: String(t.minQty),
@@ -289,9 +298,14 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
           currency: p.currency || 'USD',
           price: p.price ? Number(p.price) : undefined,
           moq: p.moq ? Number(p.moq) : undefined,
-          tiers: [],
+          // Keep only complete breaks; the full form validates on save.
+          tiers: p.tiers
+            .filter((t) => t.minQty.trim() !== '' && t.unitPrice.trim() !== '')
+            .map((t) => ({ minQty: Number(t.minQty), unitPrice: Number(t.unitPrice) }))
+            .filter((t) => t.minQty > 0 && Number.isFinite(t.unitPrice) && t.unitPrice >= 0),
           leadTimeDays: p.leadTimeDays ? Number(p.leadTimeDays) : undefined,
           paymentTerms: p.paymentTerms || undefined,
+          ...packingFromDraft(p),
           photoKeys: p.photoKeys,
         })),
         photos: draft.photos.map((ph) => ({

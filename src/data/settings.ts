@@ -1,6 +1,7 @@
 import { db } from '../db/schema'
 import type { Settings } from '../db/models'
 import { definedPatch } from './guards'
+import { parseSettings } from '../lib/validate'
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 'app',
@@ -35,6 +36,10 @@ export async function updateSettings(patch: Partial<Omit<Settings, 'id'>>): Prom
       }
     }
   }
+  // Same rules as an imported file, so the UI cannot store what an import would drop.
+  if (safe.landed !== undefined && !parseSettings({ id: 'app', rates: {}, landed: safe.landed })?.landed) {
+    throw new Error('Landed-cost values must be non-negative numbers')
+  }
   // Rates are expressed per base; changing the base alone invalidates them.
   if (
     safe.baseCurrency !== undefined &&
@@ -43,5 +48,8 @@ export async function updateSettings(patch: Partial<Omit<Settings, 'id'>>): Prom
   ) {
     safe.rates = {}
   }
-  await db.settings.put({ ...current, ...safe, id: 'app' })
+  const next: Settings = { ...current, ...safe, id: 'app' }
+  // An explicit `landed: undefined` turns the estimate off (definedPatch would keep the old value).
+  if ('landed' in patch && patch.landed === undefined) delete next.landed
+  await db.settings.put(next)
 }

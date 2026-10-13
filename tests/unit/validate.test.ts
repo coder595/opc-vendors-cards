@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import type { ExportedAttachment } from '../../src/db/models'
-import { LIMITS, validateEnvelope } from '../../src/lib/validate'
+import { LIMITS, parseProduct, parseSettings, validateEnvelope } from '../../src/lib/validate'
 import { makeEnvelope, makeVendor } from './helpers/fixtures'
 
 function attachment(overrides: Partial<ExportedAttachment> = {}): ExportedAttachment {
@@ -202,5 +202,44 @@ describe('validateEnvelope', () => {
     if (!result.ok) return
     expect(result.envelope.data.settings).toBeNull()
     expect(result.rejected.some((item) => item.table === 'settings')).toBe(true)
+  })
+})
+
+describe('N2 packing and landed-cost fields', () => {
+  const base = {
+    id: 'p1',
+    vendorId: 'v1',
+    name: 'Panel',
+    currency: 'CNY',
+    tiers: [],
+    photoAttachmentIds: [],
+    createdAt: 1,
+    updatedAt: 1,
+  }
+
+  it('keeps valid packing fields and drops invalid ones', () => {
+    const product = parseProduct({
+      ...base,
+      incoterm: 'FOB',
+      pcsPerCarton: 20,
+      cartonLengthCm: 50,
+      cartonWidthCm: 40,
+      cartonHeightCm: 30,
+      cartonGrossKg: 12.5,
+    })
+    expect(product).toMatchObject({ incoterm: 'FOB', pcsPerCarton: 20, cartonGrossKg: 12.5 })
+
+    const bad = parseProduct({ ...base, incoterm: 'DDX', pcsPerCarton: -1, cartonLengthCm: 'x' })
+    expect(bad).not.toBeNull()
+    expect(bad?.incoterm).toBeUndefined()
+    expect(bad?.pcsPerCarton).toBeUndefined()
+    expect(bad?.cartonLengthCm).toBeUndefined()
+  })
+
+  it('keeps valid landed-cost settings and drops malformed ones', () => {
+    const landed = { freightMode: 'perCbm', freight: 40, dutyPercent: 5, vatPercent: 5 }
+    expect(parseSettings({ id: 'app', rates: {}, landed })?.landed).toEqual(landed)
+    expect(parseSettings({ id: 'app', rates: {}, landed: { ...landed, freightMode: 'air' } })?.landed).toBeUndefined()
+    expect(parseSettings({ id: 'app', rates: {}, landed: { ...landed, vatPercent: -5 } })?.landed).toBeUndefined()
   })
 })

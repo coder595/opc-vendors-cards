@@ -75,10 +75,19 @@ export interface Product {
   tiers: PriceTier[]
   leadTimeDays?: number
   paymentTerms?: string
+  /* Packing (N2): optional, unindexed, so older exports and app versions stay compatible. */
+  incoterm?: Incoterm
+  pcsPerCarton?: number
+  cartonLengthCm?: number
+  cartonWidthCm?: number
+  cartonHeightCm?: number
+  cartonGrossKg?: number
   photoAttachmentIds: string[]
   createdAt: number
   updatedAt: number
 }
+
+export type Incoterm = 'EXW' | 'FOB' | 'CIF'
 
 export interface Note {
   id: string
@@ -121,6 +130,15 @@ export interface Settings {
   travellerName?: string
   defaultFair?: FairRef
   theme: Theme
+  /** Landed-cost estimate (N2). `freight` is a percent of price or a base-currency rate per m³. */
+  landed?: LandedCostSettings
+}
+
+export interface LandedCostSettings {
+  freightMode: 'percent' | 'perCbm'
+  freight: number
+  dutyPercent: number
+  vatPercent: number
 }
 
 /* Input types — defaults are applied by the repositories. */
@@ -162,6 +180,12 @@ export interface ProductInput {
   tiers?: PriceTier[]
   leadTimeDays?: number
   paymentTerms?: string
+  incoterm?: Incoterm
+  pcsPerCarton?: number
+  cartonLengthCm?: number
+  cartonWidthCm?: number
+  cartonHeightCm?: number
+  cartonGrossKg?: number
   photoAttachmentIds?: string[]
 }
 
@@ -254,6 +278,12 @@ export interface DraftRecord {
     tiers: PriceTier[]
     leadTimeDays?: number
     paymentTerms?: string
+    incoterm?: Incoterm
+    pcsPerCarton?: number
+    cartonLengthCm?: number
+    cartonWidthCm?: number
+    cartonHeightCm?: number
+    cartonGrossKg?: number
     photoKeys: string[]
   }>
   photos: DraftPhotoRecord[]
