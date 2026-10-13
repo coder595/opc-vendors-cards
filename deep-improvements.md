@@ -2,7 +2,7 @@
 
 Review date: 2026-09-23 · Reviewed commit: `1dde6a4` (master) · Target: usable at the 140th Canton Fair (mid-October 2026)
 
-This document is the single source of truth for the next round of work. Every issue has an ID (`A1`, `B3`, …). The OpenCode prompt (`opencode-prompt.md`) references these IDs, so keep them stable; mark items done by appending `✅ <commit>` to the heading instead of deleting them.
+This document is the single source of truth for the next round of work. Every issue has an ID (`A1`, `B3`, …). Commits reference these IDs, so keep them stable; mark items done by appending `✅ <commit>` to the heading instead of deleting them.
 
 ---
 
