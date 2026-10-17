@@ -165,7 +165,7 @@ export default function App() {
             <a className="btn btn--ghost appbar__quick" href="#/vendors/quick">
               Quick add
             </a>
-            <a className="btn btn--primary" href="#/vendors/new">
+            <a className="btn btn--primary appbar__add" href="#/vendors/new">
               Add vendor
             </a>
           </div>
@@ -174,6 +174,9 @@ export default function App() {
       {onForm ? null : (
         // Phone thumb zone: the fair-speed capture action sits above the tab bar.
         <a className="btn btn--primary fab" href="#/vendors/quick">
+          <svg className="btn__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
           Quick add
         </a>
       )}

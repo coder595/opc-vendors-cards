@@ -55,7 +55,12 @@ function storeTheme(preference: Theme): void {
 export function applyTheme(preference: Theme): ResolvedTheme {
   const resolved =
     preference === 'system' ? resolveTheme('system') : (preference as ResolvedTheme)
-  document.documentElement.dataset.theme = resolved
+  const root = document.documentElement
+  // Swap colours instantly: without this, every control's colour transition
+  // would blend the old theme into the new one.
+  root.dataset.themeSwitching = ''
+  root.dataset.theme = resolved
+  requestAnimationFrame(() => requestAnimationFrame(() => delete root.dataset.themeSwitching))
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) {
     meta.setAttribute('content', THEME_COLORS[resolved])
