@@ -100,6 +100,11 @@ deep-improvements.md.
   port fees); a `ponytail:` comment marks it. The landed column/sort on Trip appears only when
   `Settings.landed` is set. Settings stay device-local: import copies them only with
   `importSettings`.
+- Order totals (`orderTotals` in `landedCost.ts`): quantity is the product's optional
+  `orderQty`, else `moq`; the unit price is the highest price break at or below it. The
+  Products tab shows the total in the product currency and the base, plus the landed total
+  (converted back to the product currency at the saved rate). `orderQty` is optional and
+  unindexed like the N2 fields (no schema bump); the QR card and CSV do not carry it yet.
 - **No schema bump for N2.** The new fields are optional and unindexed, so Dexie needs no
   migration, older exports import unchanged, and phones on an older app version still
   accept new exports. This deliberately departs from the "new field → version bump" rule
@@ -170,7 +175,7 @@ deep-improvements.md.
 
 ## Open items (2026-10-17)
 
-- All pre-fair code work is merged and deployed (last: FX live rates, `160fb56`). FX has
+- All pre-fair code work is merged and deployed (last: order totals + `orderQty`). FX has
   no plan-doc item ID; its commits are tagged `FX`.
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
