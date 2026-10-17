@@ -8,11 +8,11 @@ describe('app shell', () => {
     expect(await screen.findByRole('heading', { name: /no vendors yet/i })).toBeInTheDocument()
   })
 
-  it('renders the four primary destinations', () => {
+  it('renders the five primary destinations', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: /primary/i })
     expect(nav).toBeInTheDocument()
-    expect(within(nav).getAllByRole('link')).toHaveLength(4)
+    expect(within(nav).getAllByRole('link')).toHaveLength(5)
   })
 
   it('moves aria-current to the active hash route', () => {

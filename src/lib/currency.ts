@@ -40,6 +40,17 @@ export function rateFor(rates: RateMap, base: string, currency: string): number 
   return typeof rate === 'number' && Number.isFinite(rate) && rate > 0 ? rate : null
 }
 
+/** Units of `to` for 1 `from`, through the base; null when either rate is missing. */
+export function crossRate(
+  settings: { baseCurrency: string; rates: RateMap },
+  from: string,
+  to: string,
+): number | null {
+  const fromRate = rateFor(settings.rates, settings.baseCurrency, from)
+  const toRate = rateFor(settings.rates, settings.baseCurrency, to)
+  return fromRate === null || toRate === null ? null : toRate / fromRate
+}
+
 /** Converts an amount in `from` into the base currency, or null when no rate exists. */
 export function convertToBase(
   amount: number,

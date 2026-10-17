@@ -22,12 +22,12 @@ test('renders a CNY quote in the base currency and updates when the rate changes
   await page.getByRole('tab', { name: 'Products' }).click()
   await expect(page.getByText(/no USD rate/i)).toBeVisible()
 
-  // Enter the rate in Settings.
-  await page.getByRole('link', { name: 'Me' }).click()
+  // Enter the rate on the Rates tab.
+  await page.getByRole('link', { name: 'Rates' }).click()
   await page.getByRole('button', { name: 'Add rate' }).click()
   await page.getByLabel('Currency 1').fill('CNY')
   await page.getByLabel(/units per 1/i).fill('7.2')
-  await page.getByRole('button', { name: 'Save settings' }).click()
+  await page.getByRole('button', { name: 'Save rates' }).click()
   await expect(page.getByText('Saved.')).toBeVisible()
 
   // The quote now renders in the base currency (720 / 7.2 = 100).
@@ -37,9 +37,9 @@ test('renders a CNY quote in the base currency and updates when the rate changes
   await expect(page.getByTestId('base-price')).toContainText('100.00')
 
   // Changing the rate updates the display without a reload (720 / 7.5 = 96).
-  await page.getByRole('link', { name: 'Me' }).click()
+  await page.getByRole('link', { name: 'Rates' }).click()
   await page.getByLabel(/units per 1/i).fill('7.5')
-  await page.getByRole('button', { name: 'Save settings' }).click()
+  await page.getByRole('button', { name: 'Save rates' }).click()
   await page.getByRole('link', { name: 'Vendors' }).click()
   await page.getByRole('link', { name: /Guangzhou Tools/ }).click()
   await page.getByRole('tab', { name: 'Products' }).click()

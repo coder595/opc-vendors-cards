@@ -11,6 +11,7 @@ const cases: [string, Route][] = [
   ['#/vendors?status=quoted', { name: 'vendors' }],
   ['#/people', { name: 'people' }],
   ['#/trip', { name: 'trip' }],
+  ['#/rates', { name: 'rates' }],
   ['#/me', { name: 'me' }],
   ['#/import', { name: 'import' }],
   ['#/import?c=OCV2.abc', { name: 'import' }],

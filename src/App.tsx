@@ -19,6 +19,9 @@ const ImportCardScreen = lazy(() =>
 const VendorShare = lazy(() =>
   import('./features/sharing/VendorShare').then((m) => ({ default: m.VendorShare })),
 )
+const RatesScreen = lazy(() =>
+  import('./features/rates/RatesScreen').then((m) => ({ default: m.RatesScreen })),
+)
 const TripScreen = lazy(() =>
   import('./features/trip/TripScreen').then((m) => ({ default: m.TripScreen })),
 )
@@ -50,6 +53,12 @@ const NAV: NavItem[] = [
     paths: ['M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z', 'M12 11a2 2 0 100-4 2 2 0 000 4z'],
   },
   {
+    href: '#/rates',
+    name: 'rates',
+    label: 'Rates',
+    paths: ['M4 8h14', 'M14 4l4 4-4 4', 'M20 16H6', 'M10 12l-4 4 4 4'],
+  },
+  {
     href: '#/me',
     name: 'me',
     label: 'Me',
@@ -67,6 +76,7 @@ const TITLES: Record<Route['name'], string> = {
   share: 'Sharing & data',
   people: 'People',
   trip: 'Trip',
+  rates: 'Exchange rates',
   me: 'Settings',
   import: 'Import vendor card',
 }
@@ -208,6 +218,8 @@ export default function App() {
             <PeopleScreen />
           ) : route.name === 'trip' ? (
             <TripScreen />
+          ) : route.name === 'rates' ? (
+            <RatesScreen />
           ) : route.name === 'me' ? (
             <SettingsScreen />
           ) : (

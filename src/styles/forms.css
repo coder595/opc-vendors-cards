@@ -764,6 +764,42 @@
   flex: 1 1 140px;
 }
 
+/* Rates converter */
+.converter__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--sp-3);
+}
+
+.converter__swap {
+  min-width: var(--tap);
+  font-size: var(--fs-lg);
+}
+
+.converter__result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.converter__value {
+  font-size: var(--fs-2xl);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.converter__rates {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
 /* Sharing */
 .button-row {
   display: flex;
