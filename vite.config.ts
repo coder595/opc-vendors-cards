@@ -42,6 +42,8 @@ export default defineConfig({
   base: './',
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
+    // package.json stays 0.0.0, so the build time is what tells two installs apart.
+    __APP_BUILT_AT__: JSON.stringify(new Date().toISOString()),
   },
   plugins: [
     react(),

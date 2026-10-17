@@ -94,7 +94,11 @@ async function canvasToJpeg(canvas: HTMLCanvasElement | OffscreenCanvas): Promis
 
 async function rasterizeToJpeg(source: DecodedSource, size: Dimensions): Promise<Blob> {
   const canvas = createCanvas(size.width, size.height)
-  const context = canvas.getContext('2d')
+  // getContext on the canvas union loses its '2d' overload once Node types are loaded (tests).
+  const context = canvas.getContext('2d') as
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D
+    | null
   if (!context) throw new Error('Canvas 2D is unavailable')
   context.drawImage(source.image, 0, 0, size.width, size.height)
   return canvasToJpeg(canvas)
