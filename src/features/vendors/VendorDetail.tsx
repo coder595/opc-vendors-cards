@@ -41,7 +41,6 @@ const TABS: TabItem[] = [
   { id: 'files', label: 'Files' },
 ]
 
-
 function ExternalLink({ value }: { value: string }) {
   const href = safeHref(value)
   if (!href) return <span className="mono">{value}</span>
@@ -265,7 +264,8 @@ function ProductsPanel({
               {packing ? <p className="record__sub mono">{packing}</p> : null}
               {settings && landed !== null ? (
                 <p className="record__sub" data-testid="landed-cost">
-                  Landed ≈ <span className="mono">{formatMoney(landed, settings.baseCurrency)}</span> per
+                  Landed ≈{' '}
+                  <span className="mono">{formatMoney(landed, settings.baseCurrency)}</span> per
                   unit
                 </p>
               ) : null}
@@ -308,7 +308,12 @@ function ProductsPanel({
                 .map((item) => {
                   const idx = attachments.indexOf(item)
                   return (
-                    <button key={item.id} type="button" className="btn-blob" onClick={() => onViewPhoto(idx)}>
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="btn-blob"
+                      onClick={() => onViewPhoto(idx)}
+                    >
                       <BlobImage blob={item.thumb} alt={product.name} size={56} />
                     </button>
                   )
@@ -586,7 +591,13 @@ function CertsPanel({ vendorId, certs }: { vendorId: string; certs: Certificatio
   )
 }
 
-function FilesPanel({ attachments, onViewPhoto }: { attachments: Attachment[]; onViewPhoto: (index: number) => void }) {
+function FilesPanel({
+  attachments,
+  onViewPhoto,
+}: {
+  attachments: Attachment[]
+  onViewPhoto: (index: number) => void
+}) {
   if (attachments.length === 0) return <p className="panel__empty">No files yet.</p>
   return (
     <ul className="file-grid">
@@ -613,11 +624,14 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
   const handleDelete = useCallback(() => {
     setDeleteError('')
     void run(
-      softDeleteVendor(vendorId).then(() => {
-        window.location.hash = '#/vendors'
-      }, () => {
-        setDeleteError('Could not delete the vendor.')
-      }),
+      softDeleteVendor(vendorId).then(
+        () => {
+          window.location.hash = '#/vendors'
+        },
+        () => {
+          setDeleteError('Could not delete the vendor.')
+        },
+      ),
     )
   }, [vendorId, run])
   const data = useLiveQuery(async (): Promise<DetailData | null> => {
@@ -721,23 +735,23 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
           </div>
           <dialog ref={deleteDialogRef} className="dialog" aria-labelledby="delete-vendor-title">
             <form method="dialog">
-              <h2 id="delete-vendor-title" className="dialog__title">Delete {vendor.name}?</h2>
+              <h2 id="delete-vendor-title" className="dialog__title">
+                Delete {vendor.name}?
+              </h2>
               <p className="dialog__body">
                 This vendor will be hidden and can be restored from Settings within 90 days.
                 Children (contacts, products, photos) are preserved.
               </p>
               {deleteError ? (
-                <p className="field__error" role="alert">{deleteError}</p>
+                <p className="field__error" role="alert">
+                  {deleteError}
+                </p>
               ) : null}
               <div className="dialog__actions">
                 <button type="submit" className="btn btn--ghost">
                   Cancel
                 </button>
-                <button
-                  type="button"
-                  className="btn btn--primary"
-                  onClick={handleDelete}
-                >
+                <button type="button" className="btn btn--primary" onClick={handleDelete}>
                   Delete
                 </button>
               </div>
@@ -748,13 +762,27 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
 
       <Tabs items={TABS} active={tab} onChange={setTab} label="Vendor sections">
         {tab === 'overview' ? <OverviewPanel vendor={vendor} /> : null}
-        {tab === 'people' ? <PeoplePanel vendor={vendor} contacts={contacts} attachments={attachments} products={products} onViewPhoto={setViewerIndex} /> : null}
+        {tab === 'people' ? (
+          <PeoplePanel
+            vendor={vendor}
+            contacts={contacts}
+            attachments={attachments}
+            products={products}
+            onViewPhoto={setViewerIndex}
+          />
+        ) : null}
         {tab === 'products' ? (
-          <ProductsPanel products={products} attachments={attachments} onViewPhoto={setViewerIndex} />
+          <ProductsPanel
+            products={products}
+            attachments={attachments}
+            onViewPhoto={setViewerIndex}
+          />
         ) : null}
         {tab === 'notes' ? <NotesPanel vendorId={vendor.id} notes={notes} /> : null}
         {tab === 'certs' ? <CertsPanel vendorId={vendor.id} certs={certs} /> : null}
-        {tab === 'files' ? <FilesPanel attachments={attachments} onViewPhoto={setViewerIndex} /> : null}
+        {tab === 'files' ? (
+          <FilesPanel attachments={attachments} onViewPhoto={setViewerIndex} />
+        ) : null}
       </Tabs>
 
       {viewerIndex !== null ? (

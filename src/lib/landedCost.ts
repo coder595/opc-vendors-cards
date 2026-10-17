@@ -4,7 +4,9 @@ import { convertToBase } from './currency'
 export const INCOTERMS = ['EXW', 'FOB', 'CIF'] as const
 
 /** Carton volume in m³ from centimetres, or null when a side is missing. */
-export function cartonCbm(product: Pick<Product, 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm'>): number | null {
+export function cartonCbm(
+  product: Pick<Product, 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm'>,
+): number | null {
   const { cartonLengthCm: l, cartonWidthCm: w, cartonHeightCm: h } = product
   if (!l || !w || !h) return null
   return (l * w * h) / 1_000_000
@@ -21,7 +23,13 @@ export function cartonCbm(product: Pick<Product, 'cartonLengthCm' | 'cartonWidth
 export function landedUnitCost(
   product: Pick<
     Product,
-    'price' | 'currency' | 'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm'
+    | 'price'
+    | 'currency'
+    | 'incoterm'
+    | 'pcsPerCarton'
+    | 'cartonLengthCm'
+    | 'cartonWidthCm'
+    | 'cartonHeightCm'
   >,
   settings: Pick<Settings, 'baseCurrency' | 'rates' | 'landed'>,
 ): number | null {
@@ -50,7 +58,12 @@ export function landedUnitCost(
 export function packingSummary(
   product: Pick<
     Product,
-    'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm' | 'cartonGrossKg'
+    | 'incoterm'
+    | 'pcsPerCarton'
+    | 'cartonLengthCm'
+    | 'cartonWidthCm'
+    | 'cartonHeightCm'
+    | 'cartonGrossKg'
   >,
 ): string {
   const cbm = cartonCbm(product)
