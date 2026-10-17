@@ -16,6 +16,7 @@ export async function addProduct(vendorId: string, input: ProductInput): Promise
     leadTimeDays: input.leadTimeDays,
     paymentTerms: input.paymentTerms,
     incoterm: input.incoterm,
+    orderQty: input.orderQty,
     pcsPerCarton: input.pcsPerCarton,
     cartonLengthCm: input.cartonLengthCm,
     cartonWidthCm: input.cartonWidthCm,

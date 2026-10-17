@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Settings } from '../../src/db/models'
-import { cartonCbm, landedUnitCost, packingSummary } from '../../src/lib/landedCost'
+import { cartonCbm, landedUnitCost, orderTotals, packingSummary } from '../../src/lib/landedCost'
 
 // OMR books: 1 OMR = 18.5 CNY, freight 10 %, duty 5 %, VAT 5 %.
 const settings: Pick<Settings, 'baseCurrency' | 'rates' | 'landed'> = {
@@ -48,5 +48,42 @@ describe('packingSummary', () => {
     ).toBe('FOB · 20 pcs/ctn · 50×40×30 cm · 0.060 m³ · 12.5 kg')
     expect(packingSummary({ incoterm: 'CIF' })).toBe('CIF')
     expect(packingSummary({})).toBe('')
+  })
+})
+
+describe('orderTotals', () => {
+  it('totals the MOQ in both currencies, landed included', () => {
+    const totals = orderTotals({ ...product, moq: 100, tiers: [] }, settings)!
+    expect(totals.total).toBe(3700) // 100 × ¥37
+    expect(totals.totalBase).toBeCloseTo(200) // 3700 / 18.5
+    expect(totals.landedBase).toBeCloseTo(242.55) // 2 → 2.2 → 2.31 → 2.4255, × 100
+  })
+
+  it('uses the highest price break the MOQ reaches', () => {
+    const tiers = [
+      { minQty: 500, unitPrice: 10 },
+      { minQty: 50, unitPrice: 18.5 },
+      { minQty: 10, unitPrice: 30 },
+    ]
+    const totals = orderTotals({ ...product, moq: 100, tiers }, settings)!
+    expect(totals.unitPrice).toBe(18.5)
+    expect(totals.total).toBe(1850)
+    expect(totals.landedBase).toBeCloseTo(121.275)
+  })
+
+  it('prefers the order quantity over the MOQ', () => {
+    const tiers = [{ minQty: 500, unitPrice: 10 }]
+    const totals = orderTotals({ ...product, moq: 100, orderQty: 600, tiers }, settings)!
+    expect(totals).toMatchObject({ qty: 600, fromMoq: false, unitPrice: 10, total: 6000 })
+    expect(orderTotals({ ...product, moq: 100, tiers }, settings)!.fromMoq).toBe(true)
+  })
+
+  it('is null without an MOQ or a price, and has no base figures without a rate', () => {
+    expect(orderTotals({ ...product, tiers: [] }, settings)).toBeNull()
+    expect(orderTotals({ currency: 'CNY', moq: 5, tiers: [] }, settings)).toBeNull()
+    const noRate = orderTotals({ ...product, moq: 2, tiers: [] }, { ...settings, rates: {} })!
+    expect(noRate.total).toBe(74)
+    expect(noRate.totalBase).toBeNull()
+    expect(noRate.landedBase).toBeNull()
   })
 })

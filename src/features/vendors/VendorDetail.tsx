@@ -13,9 +13,9 @@ import { addCert, deleteCert } from '../../data/certs'
 import { addNote, deleteNote, updateNote } from '../../data/notes'
 import { getSettings } from '../../data/settings'
 import { softDeleteVendor, updateVendor } from '../../data/vendors'
-import { convertToBase, formatMoney } from '../../lib/currency'
+import { convertToBase, formatMoney, rateFor } from '../../lib/currency'
 import { formatDate } from '../../lib/format'
-import { landedUnitCost, packingSummary } from '../../lib/landedCost'
+import { landedUnitCost, orderTotals, packingSummary } from '../../lib/landedCost'
 import { followUpLinks, followUpText } from '../../lib/followUp'
 import { safeHref } from '../../lib/safeHref'
 import { downloadBlob } from '../../lib/share'
@@ -237,6 +237,12 @@ function ProductsPanel({
             : null
         const landed = settings ? landedUnitCost(product, settings) : null
         const packing = packingSummary(product)
+        const totals = orderTotals(product, settings)
+        const foreign = settings !== undefined && product.currency !== settings.baseCurrency
+        const landedTotal = totals?.landedBase ?? null
+        const toProductCurrency = settings
+          ? rateFor(settings.rates, settings.baseCurrency, product.currency)
+          : null
         return (
           <li key={product.id} className="record">
             <div className="record__body">
@@ -267,6 +273,34 @@ function ProductsPanel({
                   Landed ≈{' '}
                   <span className="mono">{formatMoney(landed, settings.baseCurrency)}</span> per
                   unit
+                </p>
+              ) : null}
+              {totals ? (
+                <p className="record__sub" data-testid="order-total">
+                  Total for {totals.fromMoq ? 'MOQ ' : ''}
+                  {totals.qty}
+                  {product.unit ? ` ${product.unit}` : ' pcs'}
+                  {totals.unitPrice !== product.price
+                    ? ` at ${formatMoney(totals.unitPrice, product.currency)}`
+                    : ''}
+                  : <span className="mono">{formatMoney(totals.total, product.currency)}</span>
+                  {settings && foreign && totals.totalBase !== null ? (
+                    <span className="mono">
+                      {' '}
+                      ≈ {formatMoney(totals.totalBase, settings.baseCurrency)}
+                    </span>
+                  ) : null}
+                </p>
+              ) : null}
+              {settings && landedTotal !== null ? (
+                <p className="record__sub" data-testid="order-landed">
+                  Landed total ≈{' '}
+                  {foreign && toProductCurrency !== null ? (
+                    <span className="mono">
+                      {formatMoney(landedTotal * toProductCurrency, product.currency)} ≈{' '}
+                    </span>
+                  ) : null}
+                  <span className="mono">{formatMoney(landedTotal, settings.baseCurrency)}</span>
                 </p>
               ) : null}
               {product.tiers.length > 0 ? (

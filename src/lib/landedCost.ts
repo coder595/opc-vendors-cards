@@ -54,6 +54,54 @@ export function landedUnitCost(
   return customsValue + duty + vat
 }
 
+export interface OrderTotals {
+  qty: number
+  /** True when `qty` is the MOQ because no order quantity was entered. */
+  fromMoq: boolean
+  /** Unit price used: the highest price break at or below `qty`, else the list price. */
+  unitPrice: number
+  /** In the product's currency. */
+  total: number
+  /** In the base currency; null without a rate. */
+  totalBase: number | null
+  /** Landed cost of the whole order in the base currency; null like `landedUnitCost`. */
+  landedBase: number | null
+}
+
+/**
+ * Cost of ordering `orderQty`, or the MOQ when it is blank. ponytail: per-CBM freight uses fractional cartons, like the
+ * per-unit estimate; round cartons up if part-filled cartons start to matter.
+ */
+export function orderTotals(
+  product: Parameters<typeof landedUnitCost>[0] & Pick<Product, 'orderQty' | 'moq' | 'tiers'>,
+  settings: Pick<Settings, 'baseCurrency' | 'rates' | 'landed'> | undefined,
+): OrderTotals | null {
+  const qty = product.orderQty ?? product.moq
+  if (!qty || qty <= 0) return null
+  let unitPrice = product.price
+  let best = 0
+  for (const tier of product.tiers) {
+    if (tier.minQty <= qty && tier.minQty > best) {
+      best = tier.minQty
+      unitPrice = tier.unitPrice
+    }
+  }
+  if (unitPrice === undefined) return null
+  const total = unitPrice * qty
+  const totalBase = settings
+    ? convertToBase(total, product.currency, settings.baseCurrency, settings.rates)
+    : null
+  const landedUnit = settings ? landedUnitCost({ ...product, price: unitPrice }, settings) : null
+  return {
+    qty,
+    fromMoq: product.orderQty === undefined,
+    unitPrice,
+    total,
+    totalBase,
+    landedBase: landedUnit === null ? null : landedUnit * qty,
+  }
+}
+
 /** One-line packing summary, e.g. "FOB · 20 pcs/ctn · 50×40×30 cm · 0.060 m³ · 12.5 kg", or "" when empty. */
 export function packingSummary(
   product: Pick<

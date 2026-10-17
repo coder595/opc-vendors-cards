@@ -75,8 +75,10 @@ export interface Product {
   tiers: PriceTier[]
   leadTimeDays?: number
   paymentTerms?: string
+  /** Pieces the buyer plans to order; totals fall back to `moq`. Optional, unindexed (no schema bump). */
   /* Packing (N2): optional, unindexed, so older exports and app versions stay compatible. */
   incoterm?: Incoterm
+  orderQty?: number
   pcsPerCarton?: number
   cartonLengthCm?: number
   cartonWidthCm?: number
@@ -181,6 +183,7 @@ export interface ProductInput {
   leadTimeDays?: number
   paymentTerms?: string
   incoterm?: Incoterm
+  orderQty?: number
   pcsPerCarton?: number
   cartonLengthCm?: number
   cartonWidthCm?: number
@@ -279,6 +282,7 @@ export interface DraftRecord {
     leadTimeDays?: number
     paymentTerms?: string
     incoterm?: Incoterm
+    orderQty?: number
     pcsPerCarton?: number
     cartonLengthCm?: number
     cartonWidthCm?: number

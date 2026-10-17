@@ -68,6 +68,7 @@ function productHasContent(product: VendorDraft['products'][number]): boolean {
       product.leadTimeDays,
       product.paymentTerms,
       product.incoterm,
+      product.orderQty,
       product.pcsPerCarton,
       product.cartonLengthCm,
       product.cartonWidthCm,
@@ -173,6 +174,7 @@ export function validateVendorDraft(draft: VendorDraft, defaultCurrency = 'USD')
       incoterm: (INCOTERMS as readonly string[]).includes(product.incoterm)
         ? (product.incoterm as Incoterm)
         : undefined,
+      orderQty: parseOptionalPositive(product.orderQty, `${path}.orderQty`, 'Enter a quantity of 1 or more', errors),
       pcsPerCarton: parseOptionalPositive(product.pcsPerCarton, `${path}.pcsPerCarton`, 'Enter pieces per carton', errors),
       cartonLengthCm: parseOptionalPositive(product.cartonLengthCm, `${path}.cartonLengthCm`, 'Enter a length in cm', errors),
       cartonWidthCm: parseOptionalPositive(product.cartonWidthCm, `${path}.cartonWidthCm`, 'Enter a width in cm', errors),

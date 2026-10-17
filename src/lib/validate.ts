@@ -331,6 +331,7 @@ export function parseProduct(value: unknown): Product | null {
       typeof value.incoterm === 'string' && INCOTERM_SET.has(value.incoterm)
         ? (value.incoterm as Incoterm)
         : undefined,
+    orderQty: boundedPositive(value.orderQty, 1_000_000_000),
     pcsPerCarton: boundedPositive(value.pcsPerCarton, 1_000_000),
     cartonLengthCm: boundedPositive(value.cartonLengthCm, 10_000),
     cartonWidthCm: boundedPositive(value.cartonWidthCm, 10_000),

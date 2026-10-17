@@ -127,6 +127,16 @@ function ProductRow({
         error={errors[`products.${product.key}.moq`]}
       />
       <TextField
+        id={`${id}-order-qty`}
+        label="Order quantity"
+        hint="How many you plan to buy. Totals use the MOQ when this is blank."
+        inputMode="numeric"
+        mono
+        value={product.orderQty}
+        onChange={(orderQty) => update({ orderQty })}
+        error={errors[`products.${product.key}.orderQty`]}
+      />
+      <TextField
         id={`${id}-lead`}
         label="Lead time in days"
         inputMode="numeric"

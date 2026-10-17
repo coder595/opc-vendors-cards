@@ -116,6 +116,7 @@ export async function saveVendorBundle(
     leadTimeDays: product.leadTimeDays,
     paymentTerms: product.paymentTerms,
     incoterm: product.incoterm,
+    orderQty: product.orderQty,
     pcsPerCarton: product.pcsPerCarton,
     cartonLengthCm: product.cartonLengthCm,
     cartonWidthCm: product.cartonWidthCm,

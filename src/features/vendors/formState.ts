@@ -49,6 +49,7 @@ export interface ProductDraft {
   leadTimeDays: string
   paymentTerms: string
   incoterm: string
+  orderQty: string
   pcsPerCarton: string
   cartonLengthCm: string
   cartonWidthCm: string
@@ -124,6 +125,7 @@ export function createEmptyProduct(key: string): ProductDraft {
     leadTimeDays: '',
     paymentTerms: '',
     incoterm: '',
+    orderQty: '',
     pcsPerCarton: '',
     cartonLengthCm: '',
     cartonWidthCm: '',
@@ -254,11 +256,11 @@ export function vendorReducer(draft: VendorDraft, action: VendorAction): VendorD
 
 type Packing = Pick<
   ProductInput,
-  'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm' | 'cartonGrossKg'
+  'orderQty' | 'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm' | 'cartonGrossKg'
 >
 type PackingDraft = Pick<
   ProductDraft,
-  'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm' | 'cartonGrossKg'
+  'orderQty' | 'incoterm' | 'pcsPerCarton' | 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm' | 'cartonGrossKg'
 >
 
 const numberText = (value?: number) => (value === undefined ? '' : String(value))
@@ -268,6 +270,7 @@ const textNumber = (value: string) => Number(value) || undefined
 export function packingToDraft(product: Packing): PackingDraft {
   return {
     incoterm: product.incoterm ?? '',
+    orderQty: numberText(product.orderQty),
     pcsPerCarton: numberText(product.pcsPerCarton),
     cartonLengthCm: numberText(product.cartonLengthCm),
     cartonWidthCm: numberText(product.cartonWidthCm),
@@ -280,6 +283,7 @@ export function packingToDraft(product: Packing): PackingDraft {
 export function packingFromDraft(product: PackingDraft): Packing {
   return {
     incoterm: (product.incoterm || undefined) as Incoterm | undefined,
+    orderQty: textNumber(product.orderQty),
     pcsPerCarton: textNumber(product.pcsPerCarton),
     cartonLengthCm: textNumber(product.cartonLengthCm),
     cartonWidthCm: textNumber(product.cartonWidthCm),
