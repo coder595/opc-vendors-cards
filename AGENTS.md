@@ -24,6 +24,9 @@ deep-improvements.md.
 - `test:e2e` = `npm run build && playwright test` (not bare `playwright test`).
   `playwright.config.ts` serves `vite preview` on port 4173 and only reuses an
   existing server outside `CI`.
+- `tsc -b` is incremental (`node_modules/.tmp/*.tsbuildinfo`) and can pass on stale info. Use
+  `npx tsc -b --force` to see what a clean CI checkout sees. The test project
+  (`tsconfig.test.json`, adds Node types) type-checks any `src` file a test imports.
 
 ## Non-negotiables
 
@@ -152,6 +155,9 @@ deep-improvements.md.
 
 ## Deploy
 
+- Workflow: branch `improve/<slug>` → commit (tag the item ID when there is one) →
+  `git merge --no-ff` into `master`. **Pushing `master` deploys to production**, so push only
+  when the user asks.
 - CI (`.github/workflows/deploy.yml`) on push to `master`: `verify` (lint → typecheck →
   test) → `test-e2e` → `deploy`. The deploy job needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
   `VERCEL_PROJECT_ID` secrets; if the token expires the job fails.
@@ -188,13 +194,13 @@ deep-improvements.md.
 
 ## Open items (2026-10-17)
 
-- All pre-fair code work is merged and deployed (last: order totals + `orderQty`). FX has
-  no plan-doc item ID; its commits are tagged `FX`.
+- All pre-fair code work is merged and deployed (last: Rates tab, Update app button, `130b1fa`).
+  The FX, order-totals, Rates and update work has no plan-doc item IDs.
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
   landed-cost quote checked by hand). Also paste the rates key on each device (it is
-  device-local) and check one OMR→CNY fetch.
+  device-local), check one OMR→CNY fetch, and press Me → Update app once on the installed app.
 - Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
   (manifest screenshots, `share_target`), N8–N14. E3 is won't-fix.
-- About 26 files in `src` already fail `prettier --check`. Leave existing formatting alone in
+- About 28 `.ts`/`.tsx` files in `src` already fail `prettier --check`. Leave existing formatting alone in
   feature commits; reformat in a separate commit if wanted.
