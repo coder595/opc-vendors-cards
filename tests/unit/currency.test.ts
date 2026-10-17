@@ -31,7 +31,11 @@ describe('currency', () => {
   })
 
   it('formats money deterministically', () => {
-    expect(formatMoney(100, 'USD', 'en-US')).toBe('$100.00')
+    expect(formatMoney(100, 'USD', 'en-US')).toBe('$\u00a0100.00')
+    expect(formatMoney(17401.3, 'CNY', 'en-US')).toBe('CN¥\u00a017,401.30')
+    // Codes already come with a space, and a trailing symbol gets none added.
+    expect(formatMoney(57.467, 'OMR', 'en-US')).toBe('OMR\u00a057.467')
+    expect(formatMoney(5, 'EUR', 'de-DE')).toBe('5,00\u00a0€')
     expect(formatMoney(720, 'CNY', 'en-US')).toContain('720.00')
   })
 

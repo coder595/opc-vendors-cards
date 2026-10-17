@@ -87,7 +87,17 @@ export function formatMoney(amount: number, currency: string, locale?: string): 
   if (!Number.isFinite(amount)) return '—'
   const code = normalizeCurrencyCode(currency) ?? currency.trim().toUpperCase()
   const formatter = getFormatter(locale, code)
-  if (formatter) return formatter.format(amount)
+  if (formatter) {
+    // A symbol glued to the digits ("CN¥17,401.30") is hard to read; add a no-break space.
+    const parts = formatter.formatToParts(amount)
+    return parts
+      .map((part, i) =>
+        part.type === 'currency' && parts[i + 1] && parts[i + 1]?.type !== 'literal'
+          ? `${part.value}\u00a0`
+          : part.value,
+      )
+      .join('')
+  }
   try {
     const fallback = new Intl.NumberFormat(locale, {
       minimumFractionDigits: 2,

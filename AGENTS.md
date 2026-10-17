@@ -169,6 +169,13 @@ deep-improvements.md.
 - npm 11 blocks install scripts by default; `package.json` pins
   `allowScripts: { "esbuild@0.28.2": true }`. If a fresh install breaks esbuild:
   `npm install-scripts approve esbuild && npm rebuild esbuild`.
+- Manual update: Settings → "Update app" (`src/lib/appUpdate.ts`) calls `registration.update()`,
+  then posts `SKIP_WAITING` to the new worker and reloads on `controllerchange`; it answers
+  "already on the latest version" when nothing is waiting. It only swaps the SW precache;
+  IndexedDB and localStorage are untouched. `__APP_BUILT_AT__` (build time, set in
+  `vite.config.ts`) is the shown version because `package.json` stays `0.0.0`.
+  `tests/e2e/update.spec.ts` runs its own no-cache server over `dist/` to publish a changed
+  `sw.js` (Playwright routing cannot intercept the browser's SW update check).
 - SW uses `registerType: 'prompt'` (not autoUpdate). The update toast
   (`src/components/UpdateToast.tsx`, via `virtual:pwa-register/react`) is suppressed on
   vendor form routes (`#/vendors/new`, `*/edit`).

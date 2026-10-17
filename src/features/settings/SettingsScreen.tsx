@@ -10,7 +10,59 @@ import {
 } from '../../data/vendors'
 import type { LandedCostSettings, Settings, Theme } from '../../db/models'
 import { setThemePreference } from '../../lib/theme'
+import { APP_BUILT_AT } from '../../lib/app'
+import { updateApp, type UpdateResult } from '../../lib/appUpdate'
 import { useMutation } from '../vendors/useMutation'
+
+const builtAtText = APP_BUILT_AT
+  ? new Date(APP_BUILT_AT).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  : 'unknown'
+
+const UPDATE_MESSAGES: Record<UpdateResult, string> = {
+  latest: `You're already on the latest version (built ${builtAtText}).`,
+  updating:
+    'A new version was found. Updating now; the app will reload in a moment. Your vendors, photos and settings stay as they are.',
+  offline: "You're offline. Connect to the internet, then press Update app again.",
+  unavailable:
+    "Updates aren't available here. Open the installed app, or reload this page in your browser.",
+}
+
+function AppUpdateSection() {
+  const [busy, setBusy] = useState<'idle' | 'checking' | 'updating'>('idle')
+  const [message, setMessage] = useState('')
+
+  const check = () => {
+    setBusy('checking')
+    setMessage('')
+    updateApp()
+      .then((result) => {
+        setMessage(UPDATE_MESSAGES[result])
+        setBusy(result === 'updating' ? 'updating' : 'idle')
+      })
+      .catch(() => {
+        setMessage("Couldn't check for updates. Check your connection and try again.")
+        setBusy('idle')
+      })
+  }
+
+  return (
+    <section className="form-section" aria-labelledby="app-update-heading">
+      <h2 id="app-update-heading">App version</h2>
+      <p className="field__hint">
+        This copy was built {builtAtText}. Updating replaces only the app itself; your vendors,
+        photos and settings stay on this device.
+      </p>
+      <button type="button" className="btn btn--ghost" onClick={check} disabled={busy !== 'idle'}>
+        {busy === 'checking' ? 'Checking for updates…' : busy === 'updating' ? 'Updating…' : 'Update app'}
+      </button>
+      {message ? (
+        <p className="form-summary" role="status">
+          {message}
+        </p>
+      ) : null}
+    </section>
+  )
+}
 
 const numberText = (value?: number) => (value === undefined ? '' : String(value))
 
@@ -84,6 +136,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
   return (
     <section className="settings" aria-labelledby="settings-heading">
       <h1 id="settings-heading">Settings</h1>
+      <AppUpdateSection />
       <form className="form-section" onSubmit={save} noValidate>
         <h2>Appearance</h2>
         <SelectField
