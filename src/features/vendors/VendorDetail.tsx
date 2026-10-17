@@ -264,7 +264,9 @@ function ProductsPanel({
                 ) : null}
                 {product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
                 {product.leadTimeDays !== undefined ? (
-                  <span className="mono">{product.leadTimeDays} days</span>
+                  <span>
+                    Lead time <span className="mono">{product.leadTimeDays} days</span>
+                  </span>
                 ) : null}
               </p>
               {packing ? <p className="record__sub mono">{packing}</p> : null}
@@ -349,7 +351,11 @@ function ProductsPanel({
                   })}
                 </ul>
               ) : null}
-              {product.paymentTerms ? <p className="record__sub">{product.paymentTerms}</p> : null}
+              {product.paymentTerms ? (
+                <p className="record__sub">
+                  <span className="record__label">Payment terms:</span> {product.paymentTerms}
+                </p>
+              ) : null}
             </div>
             <div className="record__photos">
               {attachments
