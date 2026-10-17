@@ -28,7 +28,8 @@ deep-improvements.md.
 ## Non-negotiables
 
 - Offline-first: **no backend, cloud, accounts, telemetry, or runtime external
-  requests**. User data in IndexedDB, never in the SW cache.
+  requests**. User data in IndexedDB, never in the SW cache. **One exception:** live FX
+  rates from `openexchangerates.org` (see Money), only when the user has entered an API key.
 - Production deps **≤ 6** (currently 5: `react`, `react-dom`, `dexie`,
   `dexie-react-hooks`, `qrcode`). No router lib, no state lib, no Tailwind — use
   native APIs (camera input, Canvas, `CompressionStream`) and Dexie `useLiveQuery`.
@@ -82,6 +83,13 @@ deep-improvements.md.
 - Money: `src/lib/currency.ts`. Rates are **units of C per 1 base**, so
   `convertToBase(amount, C, base) = amount / rate`. Converted values are computed at
   render, never persisted.
+- Live rates: `src/lib/fx.ts`. The free plan quotes USD only, so `rebase()` computes
+  `usd[C] / usd[base]` (6 significant digits). The API key and last-fetch time live in
+  **localStorage** (`opc.fxKey`, `opc.fxFetchedAt`), never in IndexedDB, because exports
+  serialize the whole settings row. Settings → "Fetch live rates" fills the editable rows
+  (listed codes + OMR + CNY) for the user to save. With a key set, opening Settings online
+  auto-refreshes and saves once per 24 h, which overwrites hand edits for those codes.
+  CSP `connect-src` allows `https://openexchangerates.org`.
 - Landed cost (N2, `src/lib/landedCost.ts`): product packing fields (`incoterm` EXW/FOB/CIF,
   `pcsPerCarton`, `cartonLengthCm/WidthCm/HeightCm`, `cartonGrossKg`) plus
   `Settings.landed` (`freightMode` `percent`|`perCbm`, `freight`, `dutyPercent`, `vatPercent`).
