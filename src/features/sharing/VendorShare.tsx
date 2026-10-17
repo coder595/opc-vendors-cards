@@ -127,6 +127,9 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
                   <span className="mono">{formatMoney(product.price, product.currency)}</span>
                 ) : null}
                 {includePrices && product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
+                {includePrices && product.orderQty !== undefined ? (
+                  <span className="mono">Order {product.orderQty}</span>
+                ) : null}
               </li>
             ))}
           </ul>

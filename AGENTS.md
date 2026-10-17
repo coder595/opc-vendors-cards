@@ -104,7 +104,8 @@ deep-improvements.md.
   `orderQty`, else `moq`; the unit price is the highest price break at or below it. The
   Products tab shows the total in the product currency and the base, plus the landed total
   (converted back to the product currency at the saved rate). `orderQty` is optional and
-  unindexed like the N2 fields (no schema bump); the QR card and CSV do not carry it yet.
+  unindexed like the N2 fields (no schema bump). It travels in exports, the QR card
+  (`VendorCardData.products[].orderQty`) and the products CSV (`Order qty` after `MOQ`).
 - **No schema bump for N2.** The new fields are optional and unindexed, so Dexie needs no
   migration, older exports import unchanged, and phones on an older app version still
   accept new exports. This deliberately departs from the "new field → version bump" rule

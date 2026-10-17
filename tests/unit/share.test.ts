@@ -31,6 +31,18 @@ describe('vendor card codec', () => {
     expect(decoded?.contacts[0]?.phone).toBe('+86 138')
   })
 
+  it('carries the order quantity through the QR card into an import', async () => {
+    const product = {
+      id: 'p1', vendorId: 'v', name: 'Angle valve', currency: 'CNY', price: 20.4, moq: 100,
+      orderQty: 120, tiers: [], photoAttachmentIds: [], createdAt: 1, updatedAt: 1,
+    }
+    const card = buildVendorCard(makeVendor({ name: 'Green Island' }), [], [product])
+    const decoded = await decodeVendorCard(await encodeVendorCardUrl(card, 'https://x').then((url) => url.split('c=')[1]!))
+    expect(decoded?.products[0]?.orderQty).toBe(120)
+    const result = validateEnvelope(cardToEnvelope(decoded!))
+    expect(result.ok && result.envelope.data.products[0]?.orderQty).toBe(120)
+  })
+
   it('rejects a card with more nested items than LIMITS allows', async () => {
     const contacts = Array.from({ length: 201 }, () => ({ name: 'x' }))
     await expect(decodeVendorCard(rawCard({ name: 'x', contacts, products: [] }))).resolves.toBeNull()

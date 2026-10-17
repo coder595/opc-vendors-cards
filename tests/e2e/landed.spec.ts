@@ -41,7 +41,7 @@ test('estimates a landed cost from packing and Settings (N2)', async ({ page }) 
   await page.getByRole('tab', { name: 'Products' }).click()
   await expect(page.getByTestId('landed-cost')).toContainText('121.28')
   // Order quantity 10 (MOQ 5): ¥7,200 ≈ $1,000; landed $1,212.75 ≈ ¥8,731.80 (× 7.2).
-  await expect(page.getByTestId('order-total')).toContainText('Total for 10 pcs')
+  await expect(page.getByTestId('order-total')).toContainText('Order of 10 pcs')
   await expect(page.getByTestId('order-total')).toContainText('7,200.00')
   await expect(page.getByTestId('order-total')).toContainText('1,000.00')
   await expect(page.getByTestId('order-landed')).toContainText('8,731.80')

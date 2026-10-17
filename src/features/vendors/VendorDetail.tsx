@@ -276,32 +276,47 @@ function ProductsPanel({
                 </p>
               ) : null}
               {totals ? (
-                <p className="record__sub" data-testid="order-total">
-                  Total for {totals.fromMoq ? 'MOQ ' : ''}
-                  {totals.qty}
-                  {product.unit ? ` ${product.unit}` : ' pcs'}
-                  {totals.unitPrice !== product.price
-                    ? ` at ${formatMoney(totals.unitPrice, product.currency)}`
-                    : ''}
-                  : <span className="mono">{formatMoney(totals.total, product.currency)}</span>
-                  {settings && foreign && totals.totalBase !== null ? (
+                <div className="order-totals" data-testid="order-total">
+                  <p className="order-totals__head">
+                    Order of{' '}
                     <span className="mono">
-                      {' '}
-                      ≈ {formatMoney(totals.totalBase, settings.baseCurrency)}
+                      {totals.qty} {product.unit && /[a-z]/i.test(product.unit) ? product.unit : 'pcs'}
                     </span>
+                    {totals.fromMoq ? ' (MOQ)' : ''} at{' '}
+                    <span className="mono">{formatMoney(totals.unitPrice, product.currency)}</span>
+                  </p>
+                  <dl className="order-totals__rows">
+                    <div className="order-totals__row">
+                      <dt>Goods</dt>
+                      <dd className="mono">{formatMoney(totals.total, product.currency)}</dd>
+                      {settings && foreign && totals.totalBase !== null ? (
+                        <dd className="mono order-totals__base">
+                          ≈ {formatMoney(totals.totalBase, settings.baseCurrency)}
+                        </dd>
+                      ) : null}
+                    </div>
+                    {settings && landedTotal !== null ? (
+                      <div className="order-totals__row" data-testid="order-landed">
+                        <dt>Landed</dt>
+                        {foreign && toProductCurrency !== null ? (
+                          <>
+                            <dd className="mono">
+                              {formatMoney(landedTotal * toProductCurrency, product.currency)}
+                            </dd>
+                            <dd className="mono order-totals__base">
+                              ≈ {formatMoney(landedTotal, settings.baseCurrency)}
+                            </dd>
+                          </>
+                        ) : (
+                          <dd className="mono">{formatMoney(landedTotal, settings.baseCurrency)}</dd>
+                        )}
+                      </div>
+                    ) : null}
+                  </dl>
+                  {settings && landedTotal !== null ? (
+                    <p className="order-totals__note">Landed includes freight, duty and VAT from Settings.</p>
                   ) : null}
-                </p>
-              ) : null}
-              {settings && landedTotal !== null ? (
-                <p className="record__sub" data-testid="order-landed">
-                  Landed total ≈{' '}
-                  {foreign && toProductCurrency !== null ? (
-                    <span className="mono">
-                      {formatMoney(landedTotal * toProductCurrency, product.currency)} ≈{' '}
-                    </span>
-                  ) : null}
-                  <span className="mono">{formatMoney(landedTotal, settings.baseCurrency)}</span>
-                </p>
+                </div>
               ) : null}
               {product.tiers.length > 0 ? (
                 <ul className="tier-list">

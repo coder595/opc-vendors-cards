@@ -38,6 +38,7 @@ export interface VendorCardData {
     currency: string
     price?: number
     moq?: number
+    orderQty?: number
     leadTimeDays?: number
   }[]
 }
@@ -74,6 +75,7 @@ export function buildVendorCard(
       currency: product.currency,
       price: product.price,
       moq: product.moq,
+      orderQty: product.orderQty,
       leadTimeDays: product.leadTimeDays,
     })),
   }
@@ -240,6 +242,7 @@ export function cardToEnvelope(card: VendorCardData): ExportEnvelope {
         currency: product.currency,
         price: product.price,
         moq: product.moq,
+        orderQty: product.orderQty,
         tiers: [],
         leadTimeDays: product.leadTimeDays,
         photoAttachmentIds: [],

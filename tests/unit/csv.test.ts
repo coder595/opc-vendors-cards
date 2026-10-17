@@ -69,6 +69,7 @@ describe('buildProductCsv', () => {
     currency: 'CNY',
     price: 72,
     moq: 500,
+    orderQty: 1200,
     tiers: [
       { minQty: 1000, unitPrice: 68 },
       { minQty: 5000, unitPrice: 64 },
@@ -84,7 +85,7 @@ describe('buildProductCsv', () => {
     const [header, row] = csv.replace('﻿', '').split('\r\n')
     expect(header).toContain('Price (USD)')
     expect(row).toBe(
-      'Acme,9.1,B12,LED panel 60x60,pc,CNY,72,10.00,500,1000: 68; 5000: 64,25,,4,led; panel,,,,,,',
+      'Acme,9.1,B12,LED panel 60x60,pc,CNY,72,10.00,500,1200,1000: 68; 5000: 64,25,,4,led; panel,,,,,,',
     )
   })
 
