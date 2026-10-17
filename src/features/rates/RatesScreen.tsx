@@ -326,7 +326,7 @@ function RatesForm({ initial }: { initial: Settings }) {
             </span>
             <button
               type="button"
-              className="btn btn--ghost"
+              className="btn btn--danger"
               aria-label={`Remove rate ${index + 1}`}
               onClick={() => removeRow(row.key)}
             >

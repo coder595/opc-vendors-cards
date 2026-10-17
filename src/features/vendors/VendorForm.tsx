@@ -418,7 +418,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         {draftBanner ? (
           <p className="form-summary" role="status">
             {draftBanner}
-            <button type="button" className="btn btn--ghost" onClick={discardDraft}>
+            <button type="button" className="btn btn--danger" onClick={discardDraft}>
               Discard
             </button>
           </p>
@@ -648,7 +648,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
               />
               <button
                 type="button"
-                className="btn btn--ghost"
+                className="btn btn--danger"
                 aria-label={`Remove ${social.platform}`}
                 onClick={() => dispatch({ type: 'removeSocial', index })}
               >

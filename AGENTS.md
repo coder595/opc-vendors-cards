@@ -45,6 +45,11 @@ deep-improvements.md.
 - `src/styles/tokens.css` is the visual source of truth. No colors outside the tokens.
   New tokens go in **all five** theme blocks (`:root`, dark, gruvbox, oled, sepia) in
   the same commit.
+- Buttons: `btn--primary` (one main action per screen), `btn--ghost` (secondary), `btn--danger`
+  (destructive trigger, outlined), `btn--danger-solid` (the confirm step in a `<dialog className="dialog">`).
+  Hovers use `color-mix` on tokens. Motion uses `--ease-out` and `--dur-1..3`; the seal stamp
+  (keyed on status) is the one authored animation. `applyTheme` sets `data-theme-switching` so
+  theme changes skip colour transitions; the a11y spec waits for `document.getAnimations()`.
 
 ## Architecture map (non-obvious)
 
@@ -150,6 +155,10 @@ deep-improvements.md.
   the top-bar one. The seed's `v-cn` vendor is tagged `led-panel` and has a priced
   product, so the Trip compare table renders for axe.
 - `tests/e2e/a11y.spec.ts` runs axe (WCAG 2.2 AA tags) across all 5 themes.
+- To seed realistic data or produce a real export file, run `npx vite` and, in Playwright,
+  `page.evaluate(() => import('/src/data/bundle.ts'))` (also `/src/lib/images.ts` `resizePhoto`,
+  `/src/lib/exportImport.ts` `exportNdjsonStream`/`parseImport`). Vite dev serves `src` modules,
+  so you get the real repositories, photo pipeline and exporter; the built app cannot do this.
 - `.prettierignore` excludes `*.md`, `.opencode/`, `scripts/`, `public/icons`, so
   `npm run format` never touches `plan.md`/`architecture.md`.
 
@@ -200,6 +209,9 @@ deep-improvements.md.
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
   landed-cost quote checked by hand). Also paste the rates key on each device (it is
   device-local), check one OMR→CNY fetch, and press Me → Update app once on the installed app.
+- Sample data: `docs/sample-data-prompt.md` describes the Canton Fair 140th demo file (20 fictional
+  vendors, `sample` tag). Import it at `opc-vendors-cards.vercel.app`, never `www.skhazaen.com`
+  (real data; each origin has its own IndexedDB).
 - Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
   (manifest screenshots, `share_target`), N8–N14. E3 is won't-fix.
 - About 28 `.ts`/`.tsx` files in `src` already fail `prettier --check`. Leave existing formatting alone in

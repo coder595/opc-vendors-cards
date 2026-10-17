@@ -457,7 +457,7 @@ function NotesPanel({ vendorId, notes }: { vendorId: string; notes: Note[] }) {
             ) : (
               <button
                 type="button"
-                className="btn btn--ghost"
+                className="btn btn--danger"
                 aria-label={`Delete note: ${note.text}`}
                 onClick={() => scheduleDelete(note)}
               >
@@ -579,7 +579,7 @@ function CertsPanel({ vendorId, certs }: { vendorId: string; certs: Certificatio
             ) : (
               <button
                 type="button"
-                className="btn btn--ghost"
+                className="btn btn--danger"
                 aria-label={`Delete certification: ${cert.name}`}
                 onClick={() => scheduleDelete(cert)}
               >
@@ -736,7 +736,8 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
         <a href="#/vendors">← Vendors</a>
       </p>
       <header className="detail__head">
-        <StatusSeal status={vendor.status} rating={vendor.rating} size="md" animate />
+        {/* Keyed on status so the stamp replays when the status changes. */}
+        <StatusSeal key={vendor.status} status={vendor.status} rating={vendor.rating} size="md" animate />
         <div className="detail__identity">
           <h1>{vendor.name}</h1>
           <p className="detail__meta">
@@ -757,14 +758,7 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
               value={vendor.rating}
               onChange={(rating) => void run(updateVendor(vendor.id, { rating }))}
             />
-          </div>
-          {mutationError ? (
-            <p className="field__error" role="alert">
-              {mutationError}
-            </p>
-          ) : null}
-          <div className="detail__actions">
-            <label className="checkbox">
+            <label className="toggle-chip">
               <input
                 type="checkbox"
                 checked={vendor.revisit ?? false}
@@ -772,8 +766,18 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
                   void run(updateVendor(vendor.id, { revisit: !(vendor.revisit ?? false) }))
                 }
               />
+              <svg viewBox="0 0 24 24" aria-hidden="true" strokeLinejoin="round">
+                <path d="M6 3h12v18l-6-4.5L6 21z" />
+              </svg>
               Revisit
             </label>
+          </div>
+          {mutationError ? (
+            <p className="field__error" role="alert">
+              {mutationError}
+            </p>
+          ) : null}
+          <div className="detail__actions">
             <a className="btn btn--ghost" href={`#/vendors/${vendor.id}/edit`}>
               Edit
             </a>
@@ -782,7 +786,7 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
             </a>
             <button
               type="button"
-              className="btn btn--ghost"
+              className="btn btn--danger"
               onClick={() => deleteDialogRef.current?.showModal()}
             >
               Delete
@@ -806,7 +810,7 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
                 <button type="submit" className="btn btn--ghost">
                   Cancel
                 </button>
-                <button type="button" className="btn btn--primary" onClick={handleDelete}>
+                <button type="button" className="btn btn--danger-solid" onClick={handleDelete}>
                   Delete
                 </button>
               </div>

@@ -16,6 +16,11 @@
   --brand-ink: #ffffff;
   --brand-soft: #fbe7e3;
 
+  /* Destructive: cooler crimson, distinct from the vermilion brand */
+  --danger: #b4162b;
+  --danger-ink: #ffffff;
+  --danger-soft: #fdecee;
+
   /* Status */
   --jade: #0e7c66; /* verified / ordered */
   --amber: #8a5a12; /* quoted / pending — 5.9:1 on paper */
@@ -56,6 +61,13 @@
   --overlay-fg: #ffffff; /* glyph on the always-dark photo-remove disc */
 
   --tap: 44px; /* minimum touch target */
+
+  /* Motion: fast feedback, confident deceleration, exits faster than entrances. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --dur-1: 120ms; /* press, hover, colour */
+  --dur-2: 200ms; /* state change, panel swap */
+  --dur-3: 320ms; /* overlay entrance, seal stamp */
 }
 
 /* Dark theme. Applied as a resolved light|dark value on <html data-theme>. */
@@ -74,6 +86,11 @@
   --brand: #ff6b52;
   --brand-ink: #1a0f0c;
   --brand-soft: #3a211d;
+
+  /* Destructive: cooler crimson, distinct from the vermilion brand */
+  --danger: #ff7a8a;
+  --danger-ink: #1a0f0c;
+  --danger-soft: #3a1d22;
 
   --jade: #3dd9b0;
   --amber: #e3a83c;
@@ -96,15 +113,20 @@
   --ink-2: #d5c4a1;
   --muted: #a89984;
   --line: #4f4a48;
-  --control-line: #665c54;
+  --control-line: #928374; /* 4:1 on paper (was 2.3:1) */
 
   --brand: #ff6b52;
   --brand-ink: #1a0f0c;
   --brand-soft: #3a211d;
 
+  /* Destructive: cooler crimson, distinct from the vermilion brand */
+  --danger: #ff7a8a;
+  --danger-ink: #1a0f0c;
+  --danger-soft: #3c2526;
+
   --jade: #689d6a;
   --amber: #d79921;
-  --slate: #7c6f64;
+  --slate: #a89984; /* seal text, 5.3:1 */
 
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5);
   --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.55);
@@ -123,11 +145,16 @@
   --ink-2: #c0c4cc;
   --muted: #8b949e;
   --line: #1c1e22;
-  --control-line: #484f58;
+  --control-line: #6e7681; /* 4.6:1 on black (was 2.5:1) */
 
   --brand: #ff6b52;
   --brand-ink: #000000;
   --brand-soft: #1f120e;
+
+  /* Destructive: cooler crimson, distinct from the vermilion brand */
+  --danger: #ff7a8a;
+  --danger-ink: #000000;
+  --danger-soft: #24100f;
 
   --jade: #3dd9b0;
   --amber: #e3a83c;
@@ -150,11 +177,16 @@
   --ink-2: #5a4a33;
   --muted: #6e5f4a;
   --line: #d4c9b4;
-  --control-line: #b0a090;
+  --control-line: #8f7d66; /* 3.5:1 on paper (was 2.3:1) */
 
-  --brand: #d8321f;
+  --brand: #c42a17; /* 5:1 on sepia paper (was 4.25:1) */
   --brand-ink: #ffffff;
   --brand-soft: #fbe7e3;
+
+  /* Destructive: cooler crimson, distinct from the vermilion brand */
+  --danger: #a3162a;
+  --danger-ink: #ffffff;
+  --danger-soft: #f6dfdc;
 
   --jade: #0e7c66;
   --amber: #8a5a12;

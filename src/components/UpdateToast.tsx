@@ -21,10 +21,10 @@ export function UpdateToast() {
 
   return (
     <div className="update-toast" role="status" aria-live="polite">
-      <span>Update ready — Reload</span>
+      <span>A new version is ready.</span>
       <button
         type="button"
-        className="btn btn--ghost"
+        className="btn btn--primary"
         onClick={() => void updateServiceWorker(true)}
       >
         Reload

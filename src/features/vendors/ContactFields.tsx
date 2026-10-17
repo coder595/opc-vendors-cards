@@ -95,7 +95,7 @@ function ContactRow({ contact }: { contact: ContactDraft }) {
         </label>
         <button
           type="button"
-          className="btn btn--ghost"
+          className="btn btn--danger"
           onClick={() => dispatch({ type: 'removeContact', key: contact.key })}
         >
           Remove person

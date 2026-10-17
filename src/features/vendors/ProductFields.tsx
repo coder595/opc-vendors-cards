@@ -251,7 +251,7 @@ function ProductRow({
             ) : null}
             <button
               type="button"
-              className="btn btn--ghost"
+              className="btn btn--danger"
               aria-label={`Remove break from ${tier.minQty || 'new'}`}
               onClick={() => removeTier(tier.key)}
             >
@@ -283,7 +283,7 @@ function ProductRow({
       </div>
       <button
         type="button"
-        className="btn btn--ghost"
+        className="btn btn--danger"
         onClick={() => dispatch({ type: 'removeProduct', key: product.key })}
       >
         Remove product

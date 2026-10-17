@@ -326,7 +326,7 @@ function RecentlyDeletedSection() {
               </button>
               <button
                 type="button"
-                className="btn btn--ghost"
+                className="btn btn--danger"
                 onClick={() => askPermanentDelete(vendor.id)}
               >
                 Delete permanently
@@ -347,7 +347,7 @@ function RecentlyDeletedSection() {
             <button type="submit" className="btn btn--ghost">
               Cancel
             </button>
-            <button type="button" className="btn btn--primary" onClick={confirmPermanentDelete}>
+            <button type="button" className="btn btn--danger-solid" onClick={confirmPermanentDelete}>
               Delete permanently
             </button>
           </div>

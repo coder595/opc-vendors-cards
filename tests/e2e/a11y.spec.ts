@@ -13,6 +13,13 @@ interface Violation {
 }
 
 async function scan(page: Page): Promise<Violation[]> {
+  // Measure settled colours: a panel fade or colour transition mid-flight blends values.
+  // allSettled: a transition interrupted by a newer one rejects with AbortError.
+  await page.evaluate(async () => {
+    for (let i = 0; i < 3 && document.getAnimations().length > 0; i += 1) {
+      await Promise.allSettled(document.getAnimations().map((a) => a.finished))
+    }
+  })
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
   return results.violations.map((violation) => ({
     id: violation.id,

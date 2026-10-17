@@ -59,6 +59,7 @@ export function Tabs({ items, active, onChange, label, children }: TabsProps) {
         ))}
       </div>
       <div
+        key={active}
         className="tabpanel"
         id={`${baseId}-panel`}
         role="tabpanel"

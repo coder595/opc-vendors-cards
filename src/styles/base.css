@@ -14,6 +14,23 @@ html {
   scroll-padding-top: 64px;
 }
 
+html {
+  /* Native checkboxes, radios, range and progress take the brand instead of browser blue. */
+  accent-color: var(--brand);
+  caret-color: var(--brand);
+  scrollbar-color: var(--control-line) transparent;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 body {
   font-family: var(--font-body);
   font-size: var(--fs-base);
@@ -40,6 +57,13 @@ textarea {
 
 a {
   color: inherit;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color var(--dur-1) ease;
+}
+
+a:hover {
+  text-decoration-color: var(--brand);
 }
 
 h1,
@@ -151,7 +175,22 @@ p {
   right: var(--sp-4);
   bottom: calc(var(--tap) + var(--sp-5) + env(safe-area-inset-bottom));
   z-index: 25;
+  min-height: 52px;
+  padding: 0 var(--sp-5) 0 var(--sp-4);
+  border-radius: var(--r-pill);
   box-shadow: var(--shadow-2);
+}
+
+/* Phones: Quick add (thumb zone) is the one primary action; Add vendor steps back. */
+.appbar__add.btn--primary {
+  background: transparent;
+  border-color: var(--control-line);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.appbar__add.btn--primary:hover {
+  background: var(--surface);
 }
 
 /* Primary nav: bottom tab bar on phones/tablets --------------------------- */
@@ -168,6 +207,11 @@ p {
 }
 
 .nav__item {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color var(--dur-1) ease,
+    background-color var(--dur-1) ease,
+    box-shadow var(--dur-2) var(--ease-out);
   min-height: var(--tap);
   display: flex;
   flex-direction: column;
@@ -186,7 +230,21 @@ p {
   box-shadow: inset 0 2px 0 var(--brand);
 }
 
+.nav__item:active {
+  background: var(--surface);
+}
+
+.nav__item svg {
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.nav__item:active svg {
+  transform: scale(0.88);
+}
+
 /* Buttons ---------------------------------------------------------------- */
+/* One vocabulary: primary (the screen's main action), ghost (secondary),
+   danger (destructive trigger, outlined) and danger-solid (the confirm step). */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -197,17 +255,44 @@ p {
   border: 1px solid transparent;
   border-radius: var(--r-md);
   font-weight: 600;
+  line-height: 1.2;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--dur-1) ease,
+    border-color var(--dur-1) ease,
+    color var(--dur-1) ease,
+    box-shadow var(--dur-1) ease,
+    transform var(--dur-1) var(--ease-out);
+}
+
+.btn:active:not(:disabled, [aria-disabled='true']) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn[aria-busy='true'] {
+  cursor: progress;
 }
 
 .btn--primary {
   background: var(--brand);
   color: var(--brand-ink);
+  box-shadow: var(--shadow-1);
 }
 
-.btn--primary:hover {
-  filter: brightness(0.93);
+.btn--primary:hover:not(:disabled) {
+  /* Toward ink: darker on light themes, lighter on dark ones. */
+  background: color-mix(in oklab, var(--brand), var(--ink) 14%);
 }
 
 .btn--ghost {
@@ -216,8 +301,45 @@ p {
   color: var(--ink);
 }
 
+.btn--ghost:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--ink-2);
+}
+
+.btn--ghost:active:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.btn--ghost[aria-expanded='true'] {
+  background: var(--surface-2);
+  border-color: var(--ink-2);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: color-mix(in oklab, var(--danger), var(--paper) 35%);
+  color: var(--danger);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.btn--danger-solid {
+  background: var(--danger);
+  color: var(--danger-ink);
+  box-shadow: var(--shadow-1);
+}
+
+.btn--danger-solid:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--danger), var(--ink) 14%);
+}
+
 .btn__icon {
   flex: none;
+  width: 18px;
+  height: 18px;
 }
 
 /* Empty state ------------------------------------------------------------ */
@@ -271,6 +393,17 @@ p {
 
   .fab {
     display: none;
+  }
+
+  .appbar__add.btn--primary {
+    background: var(--brand);
+    border-color: transparent;
+    color: var(--brand-ink);
+    box-shadow: var(--shadow-1);
+  }
+
+  .appbar__add.btn--primary:hover {
+    background: color-mix(in oklab, var(--brand), var(--ink) 14%);
   }
 
   .app {
@@ -327,14 +460,140 @@ p {
   }
 }
 
+/* Dialogs ---------------------------------------------------------------- */
+.dialog {
+  width: min(28rem, calc(100vw - 2 * var(--sp-4)));
+  margin: auto;
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-2);
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--overlay-ink) 55%, transparent);
+}
+
+.dialog__title {
+  font-size: var(--fs-lg);
+  text-wrap: balance;
+}
+
+.dialog__body {
+  margin-top: var(--sp-3);
+  color: var(--ink-2);
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+}
+
+/* Update toast ----------------------------------------------------------- */
+.update-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tap) + var(--sp-8) + var(--sp-5) + env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--sp-4));
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transform: translateX(-50%);
+}
+
+@media (min-width: 1024px) {
+  .update-toast {
+    left: auto;
+    right: var(--sp-6);
+    bottom: var(--sp-6);
+    transform: none;
+  }
+}
+
 /* Motion ----------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: dialog-in var(--dur-3) var(--ease-out);
+  }
+
+  .dialog[open]::backdrop {
+    animation: fade-in var(--dur-2) ease-out;
+  }
+
+  .update-toast {
+    animation: toast-in var(--dur-3) var(--ease-out);
+  }
+
+  @media (min-width: 1024px) {
+    .update-toast {
+      animation-name: toast-in-desktop;
+    }
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+@keyframes toast-in-desktop {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
+}
+
+/* Reduced motion: no movement, but colour and opacity feedback stays so actions
+   still visibly register. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
+  }
+
+  .btn:active:not(:disabled),
+  .nav__item:active svg {
+    transform: none !important;
   }
 }
