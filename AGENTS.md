@@ -168,13 +168,15 @@ deep-improvements.md.
   Regenerate with `python3 scripts/install-ecc-agents.py`; `scripts/` is not
   Prettier-formatted.
 
-## Open items (2026-10-13)
+## Open items (2026-10-17)
 
-- All pre-fair code work is merged and deployed (last: N2, `702bbad`).
+- All pre-fair code work is merged and deployed (last: FX live rates, `160fb56`). FX has
+  no plan-doc item ID; its commits are tagged `FX`.
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
-  landed-cost quote checked by hand).
+  landed-cost quote checked by hand). Also paste the rates key on each device (it is
+  device-local) and check one OMR→CNY fetch.
 - Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
   (manifest screenshots, `share_target`), N8–N14. E3 is won't-fix.
-- About 28 files in `src` already fail `prettier --check`. Leave existing formatting alone in
+- About 26 files in `src` already fail `prettier --check`. Leave existing formatting alone in
   feature commits; reformat in a separate commit if wanted.
