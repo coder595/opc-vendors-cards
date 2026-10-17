@@ -3,7 +3,11 @@ import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SelectField, TextField } from '../../components/Field'
 import { getSettings, updateSettings } from '../../data/settings'
-import { deleteVendor as permanentDeleteVendor, getDeletedVendors, restoreVendor } from '../../data/vendors'
+import {
+  deleteVendor as permanentDeleteVendor,
+  getDeletedVendors,
+  restoreVendor,
+} from '../../data/vendors'
 import type { LandedCostSettings, Settings, Theme } from '../../db/models'
 import { COMMON_CURRENCIES, normalizeCurrencyCode } from '../../lib/currency'
 import { setThemePreference } from '../../lib/theme'
@@ -112,7 +116,8 @@ function SettingsForm({ initial }: { initial: Settings }) {
       const parsed: Record<string, number> = {}
       for (const [key, raw] of Object.entries(numbers)) {
         const value = raw.trim() === '' ? 0 : Number(raw)
-        if (!Number.isFinite(value) || value < 0) nextErrors[`landed.${key}`] = 'Enter 0 or a positive number.'
+        if (!Number.isFinite(value) || value < 0)
+          nextErrors[`landed.${key}`] = 'Enter 0 or a positive number.'
         parsed[key] = value
       }
       landed = {
@@ -217,8 +222,8 @@ function SettingsForm({ initial }: { initial: Settings }) {
         </button>
         <h2>Landed cost</h2>
         <p className="field__hint">
-          Estimates the cost of one unit delivered home, in {base || 'the base currency'}. Leave
-          all three blank to turn it off.
+          Estimates the cost of one unit delivered home, in {base || 'the base currency'}. Leave all
+          three blank to turn it off.
         </p>
         <SelectField
           id="landed-freight-mode"
@@ -331,9 +336,12 @@ function RecentlyDeletedSection() {
   const confirmRef = useRef<HTMLDialogElement>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
 
-  const handleRestore = useCallback((id: string) => {
-    void run(restoreVendor(id))
-  }, [run])
+  const handleRestore = useCallback(
+    (id: string) => {
+      void run(restoreVendor(id))
+    },
+    [run],
+  )
 
   const askPermanentDelete = useCallback((id: string) => {
     setPendingId(id)
@@ -342,9 +350,11 @@ function RecentlyDeletedSection() {
 
   const confirmPermanentDelete = useCallback(() => {
     if (pendingId) {
-      void run(permanentDeleteVendor(pendingId).then(() => {
-        setPendingId(null)
-      }))
+      void run(
+        permanentDeleteVendor(pendingId).then(() => {
+          setPendingId(null)
+        }),
+      )
     }
   }, [pendingId, run])
 
@@ -354,7 +364,11 @@ function RecentlyDeletedSection() {
     <section className="form-section" aria-labelledby="deleted-heading">
       <h2 id="deleted-heading">Recently deleted</h2>
       <p className="field__hint">These vendors will be permanently removed after 90 days.</p>
-      {error ? <p className="field__error" role="alert">{error}</p> : null}
+      {error ? (
+        <p className="field__error" role="alert">
+          {error}
+        </p>
+      ) : null}
       <ul className="record-list">
         {vendors.map((vendor) => (
           <li key={vendor.id} className="record">
@@ -385,17 +399,17 @@ function RecentlyDeletedSection() {
       </ul>
       <dialog ref={confirmRef} className="dialog" aria-labelledby="purge-vendor-title">
         <form method="dialog">
-          <h2 id="purge-vendor-title" className="dialog__title">Delete permanently?</h2>
+          <h2 id="purge-vendor-title" className="dialog__title">
+            Delete permanently?
+          </h2>
           <p className="dialog__body">
             All data including contacts, products and photos will be removed. This cannot be undone.
           </p>
           <div className="dialog__actions">
-            <button type="submit" className="btn btn--ghost">Cancel</button>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={confirmPermanentDelete}
-            >
+            <button type="submit" className="btn btn--ghost">
+              Cancel
+            </button>
+            <button type="button" className="btn btn--primary" onClick={confirmPermanentDelete}>
               Delete permanently
             </button>
           </div>
