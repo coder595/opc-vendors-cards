@@ -148,6 +148,7 @@ function ProductRow({
       <TextField
         id={`${id}-terms`}
         label="Payment terms"
+        hint="Write it in full, for example “30 days credit” or “30% deposit, 70% before shipping”."
         value={product.paymentTerms}
         onChange={(paymentTerms) => update({ paymentTerms })}
       />

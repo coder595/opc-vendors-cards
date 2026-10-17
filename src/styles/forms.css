@@ -490,6 +490,10 @@
   color: var(--ink-2);
 }
 
+.record__label {
+  color: var(--muted);
+}
+
 .record__meta {
   display: flex;
   flex-wrap: wrap;
