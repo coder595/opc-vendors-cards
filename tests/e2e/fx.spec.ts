@@ -10,7 +10,7 @@ test('fills live OMR→CNY rates, keeps a hand edit, and auto-refreshes after a 
     calls += 1
     return route.fulfill({ json: { timestamp: 1_700_000_000, base: 'USD', rates: USD_RATES } })
   })
-  await page.goto('/#/me')
+  await page.goto('/#/rates')
 
   await page.getByLabel('Base currency').fill('OMR')
   await page.getByLabel('Rates API key').fill('test-key')
@@ -25,7 +25,7 @@ test('fills live OMR→CNY rates, keeps a hand edit, and auto-refreshes after a 
 
   // The user can still override it.
   await rate.fill('17.5')
-  await page.getByRole('button', { name: 'Save settings' }).click()
+  await page.getByRole('button', { name: 'Save rates' }).click()
   await expect(page.getByText('Saved.')).toBeVisible()
   await page.reload()
   await expect(page.getByLabel('Units per 1 OMR (1)')).toHaveValue('17.5')

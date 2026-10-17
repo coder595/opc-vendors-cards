@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SelectField, TextField } from '../../components/Field'
@@ -9,61 +9,14 @@ import {
   restoreVendor,
 } from '../../data/vendors'
 import type { LandedCostSettings, Settings, Theme } from '../../db/models'
-import { COMMON_CURRENCIES, normalizeCurrencyCode } from '../../lib/currency'
-import {
-  FX_DEFAULT_CODES,
-  fxIsStale,
-  fetchLiveRates,
-  mergeLiveRates,
-  readFxStorage,
-  writeFxStorage,
-} from '../../lib/fx'
 import { setThemePreference } from '../../lib/theme'
-import { newKey } from '../../lib/app'
 import { useMutation } from '../vendors/useMutation'
-
-interface RateRow {
-  key: string
-  code: string
-  rate: string
-}
 
 const numberText = (value?: number) => (value === undefined ? '' : String(value))
 
-function toRows(rates: Settings['rates']): RateRow[] {
-  return Object.entries(rates).map(([code, rate]) => ({
-    key: newKey(),
-    code,
-    rate: String(rate),
-  }))
-}
-
-/** Updates listed currencies with live rates and appends OMR/CNY when missing. */
-function mergeRows(rows: RateRow[], live: Record<string, number>, base: string): RateRow[] {
-  const next = rows.map((row) => {
-    const code = normalizeCurrencyCode(row.code)
-    const rate = code && code !== base ? live[code] : undefined
-    return rate === undefined ? row : { ...row, rate: String(rate) }
-  })
-  const listed = new Set(next.map((row) => normalizeCurrencyCode(row.code)))
-  for (const code of FX_DEFAULT_CODES) {
-    const rate = live[code]
-    if (code !== base && !listed.has(code) && rate !== undefined) {
-      next.push({ key: newKey(), code, rate: String(rate) })
-    }
-  }
-  return next
-}
-
-const sameRows = (a: RateRow[], b: RateRow[]) =>
-  a.length === b.length && a.every((row, i) => row.code === b[i]?.code && row.rate === b[i]?.rate)
-
-const asOfText = (asOf: number) => new Date(asOf).toLocaleString()
-
 function SettingsForm({ initial }: { initial: Settings }) {
-  const [base, setBase] = useState(initial.baseCurrency)
+  const base = initial.baseCurrency
   const [theme, setTheme] = useState<Theme>(initial.theme)
-  const [rows, setRows] = useState<RateRow[]>(() => toRows(initial.rates))
   const [travellerName, setTravellerName] = useState(initial.travellerName ?? '')
   const [defaultEdition, setDefaultEdition] = useState(initial.defaultFair?.edition ?? '')
   const [defaultHall, setDefaultHall] = useState(initial.defaultFair?.hall ?? '')
@@ -76,71 +29,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
   const [vat, setVat] = useState(numberText(initial.landed?.vatPercent))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
-  const originalRows = useRef<RateRow[]>(toRows(initial.rates))
   const { error: saveError, run } = useMutation()
-  const [fxKey, setFxKey] = useState(() => readFxStorage().key)
-  const [fxStatus, setFxStatus] = useState('')
-  const [fetching, setFetching] = useState(false)
-  const baseRef = useRef(initial.baseCurrency)
-
-  // Auto-refresh: once a day per base, when a key is set and the device is online. Saves
-  // straight away. The timestamp is claimed before the request so StrictMode, a second tab
-  // or a bad key cannot burn the free plan's quota; the manual button retries a failure.
-  useEffect(() => {
-    const savedBase = initial.baseCurrency
-    const { key } = readFxStorage()
-    if (!key || !navigator.onLine || !fxIsStale(savedBase)) return
-    writeFxStorage({ fetched: { base: savedBase, at: Date.now() } })
-    fetchLiveRates(key, savedBase)
-      .then(async ({ rates: live, asOf }) => {
-        const current = await getSettings()
-        if (current.baseCurrency !== savedBase) return
-        const merged = mergeLiveRates(current.rates, live, savedBase)
-        await updateSettings({ rates: merged })
-        const before = originalRows.current
-        originalRows.current = toRows(merged)
-        // Rows the user has started editing are left alone; their Save wins.
-        if (baseRef.current === savedBase) {
-          setRows((prev) => (sameRows(prev, before) ? mergeRows(prev, live, savedBase) : prev))
-        }
-        setFxStatus(`Saved rates updated from openexchangerates.org (${asOfText(asOf)}).`)
-      })
-      .catch((error: unknown) => {
-        setFxStatus(error instanceof Error ? error.message : 'Rates fetch failed.')
-      })
-  }, [initial.baseCurrency])
-
-  const changeFxKey = (value: string) => {
-    setFxKey(value)
-    writeFxStorage({ key: value.trim() })
-  }
-
-  const fetchRates = () => {
-    const code = normalizeCurrencyCode(base)
-    if (!code) {
-      setErrors((prev) => ({ ...prev, base: 'Enter a 3-letter base currency.' }))
-      return
-    }
-    setFetching(true)
-    setFxStatus('')
-    fetchLiveRates(fxKey.trim(), code)
-      .then(({ rates: live, asOf }) => {
-        if (baseRef.current !== code) {
-          setFxStatus('The base currency changed while fetching. Press Fetch live rates again.')
-          return
-        }
-        writeFxStorage({ fetched: { base: code, at: Date.now() } })
-        setRows((prev) => mergeRows(prev, live, code))
-        setFxStatus(
-          `Live rates filled in from openexchangerates.org (${asOfText(asOf)}). Edit any value, then press Save settings.`,
-        )
-      })
-      .catch((error: unknown) => {
-        setFxStatus(error instanceof Error ? error.message : 'Rates fetch failed.')
-      })
-      .finally(() => setFetching(false))
-  }
-
   const changeTheme = (next: Theme) => {
     setTheme(next)
     setThemePreference(next)
@@ -152,56 +41,9 @@ function SettingsForm({ initial }: { initial: Settings }) {
     })
   }
 
-  const changeBase = (value: string) => {
-    const code = value
-      .toUpperCase()
-      .replace(/[^A-Z]/g, '')
-      .slice(0, 3)
-    if (code === base) return
-    setBase(code)
-    baseRef.current = code
-    if (code === initial.baseCurrency) {
-      setRows(originalRows.current)
-      setNotice('')
-    } else {
-      setRows([])
-      setNotice('Base changed — rates were cleared. Re-enter them for the new base.')
-    }
-  }
-
-  const updateRow = (key: string, patch: Partial<RateRow>) =>
-    setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)))
-  const addRow = () => setRows((prev) => [...prev, { key: newKey(), code: '', rate: '' }])
-  const removeRow = (key: string) => setRows((prev) => prev.filter((row) => row.key !== key))
-
   const save = (event: FormEvent) => {
     event.preventDefault()
     const nextErrors: Record<string, string> = {}
-    const code = normalizeCurrencyCode(base)
-    if (!code) nextErrors.base = 'Enter a 3-letter base currency.'
-
-    const rates: Record<string, number> = {}
-    const seen = new Set<string>()
-    for (const row of rows) {
-      if (row.code.trim() === '' && row.rate.trim() === '') continue
-      const rowCode = normalizeCurrencyCode(row.code)
-      const rate = Number(row.rate)
-      if (!rowCode) {
-        nextErrors[`${row.key}.code`] = 'Use a 3-letter currency code.'
-        continue
-      }
-      if (seen.has(rowCode)) {
-        nextErrors[`${row.key}.code`] = 'Duplicate currency code.'
-        continue
-      }
-      if (!Number.isFinite(rate) || rate <= 0) {
-        nextErrors[`${row.key}.rate`] = 'Enter a positive number.'
-        continue
-      }
-      seen.add(rowCode)
-      rates[rowCode] = rate
-    }
-
     // Landed cost is off while all three numbers are blank; a blank one counts as 0 otherwise.
     let landed: LandedCostSettings | undefined
     if ([freight, duty, vat].some((value) => value.trim() !== '')) {
@@ -222,12 +64,10 @@ function SettingsForm({ initial }: { initial: Settings }) {
     }
 
     setErrors(nextErrors)
-    if (!code || Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0) return
     setNotice('')
     void run(
       updateSettings({
-        baseCurrency: code,
-        rates,
         landed,
         travellerName: travellerName.trim() || undefined,
         defaultFair: {
@@ -261,80 +101,6 @@ function SettingsForm({ initial }: { initial: Settings }) {
             { value: 'oled', label: 'OLED Black' },
           ]}
         />
-        <h2>Currency</h2>
-        <TextField
-          id="base-currency"
-          label="Base currency"
-          hint="Three-letter ISO code, for example USD."
-          list="settings-currency-codes"
-          mono
-          value={base}
-          onChange={changeBase}
-          error={errors.base}
-        />
-        <p className="field__hint">
-          Rates are units of each currency per 1 {base || '—'}. Changing the base clears them.
-        </p>
-        <div className="rate-rows">
-          {rows.map((row, index) => (
-            <div key={row.key} className="rate-row">
-              <TextField
-                id={`rate-${row.key}-code`}
-                label={`Currency ${index + 1}`}
-                list="settings-currency-codes"
-                mono
-                value={row.code}
-                onChange={(code) => updateRow(row.key, { code: code.toUpperCase() })}
-                error={errors[`${row.key}.code`]}
-              />
-              <TextField
-                id={`rate-${row.key}-rate`}
-                label={`Units per 1 ${base || '—'} (${index + 1})`}
-                inputMode="decimal"
-                mono
-                value={row.rate}
-                onChange={(rate) => updateRow(row.key, { rate })}
-                error={errors[`${row.key}.rate`]}
-              />
-              <span className="rate-preview mono">
-                1 {base || '—'} = {row.rate || '—'} {row.code || '—'}
-              </span>
-              <button
-                type="button"
-                className="btn btn--ghost"
-                aria-label={`Remove rate ${index + 1}`}
-                onClick={() => removeRow(row.key)}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-        <button type="button" className="btn btn--ghost" onClick={addRow}>
-          Add rate
-        </button>
-        <TextField
-          id="fx-key"
-          label="Rates API key"
-          hint="Free App ID from openexchangerates.org. Kept on this device only and never exported. With a key, rates refresh once a day when you open Settings online; clear it to keep only hand-entered rates."
-          autoComplete="off"
-          mono
-          value={fxKey}
-          onChange={changeFxKey}
-        />
-        <button
-          type="button"
-          className="btn btn--ghost"
-          onClick={fetchRates}
-          disabled={!fxKey.trim() || fetching}
-        >
-          {fetching ? 'Fetching rates…' : 'Fetch live rates'}
-        </button>
-        {fxStatus ? (
-          <p className="field__hint" role="status">
-            {fxStatus}
-          </p>
-        ) : null}
         <h2>Landed cost</h2>
         <p className="field__hint">
           Estimates the cost of one unit delivered home, in {base || 'the base currency'}. Leave all
@@ -429,6 +195,15 @@ function SettingsForm({ initial }: { initial: Settings }) {
           onChange={setDefaultBooth}
         />
       </section>
+      <section className="form-section" aria-labelledby="rates-link-heading">
+        <h2 id="rates-link-heading">Exchange rates</h2>
+        <p className="field__hint">
+          Base currency ({base}), saved rates, live rates and the converter are on the Rates tab.
+        </p>
+        <a className="btn btn--ghost" href="#/rates">
+          Open exchange rates
+        </a>
+      </section>
       <section className="form-section" aria-labelledby="sharing-link-heading">
         <h2 id="sharing-link-heading">Sharing &amp; data</h2>
         <p className="field__hint">Export, import, CSV and single-vendor QR sharing.</p>
@@ -436,11 +211,6 @@ function SettingsForm({ initial }: { initial: Settings }) {
           Open sharing &amp; data
         </a>
       </section>
-      <datalist id="settings-currency-codes">
-        {COMMON_CURRENCIES.map((code) => (
-          <option key={code} value={code} />
-        ))}
-      </datalist>
     </section>
   )
 }

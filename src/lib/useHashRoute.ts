@@ -10,6 +10,7 @@ export type Route =
   | { name: 'share' }
   | { name: 'people' }
   | { name: 'trip' }
+  | { name: 'rates' }
   | { name: 'me' }
   | { name: 'import' }
 
@@ -54,6 +55,8 @@ export function parseHash(hash: string): Route {
       return { name: 'people' }
     case 'trip':
       return { name: 'trip' }
+    case 'rates':
+      return { name: 'rates' }
     case 'me':
       return { name: 'me' }
     case 'import':

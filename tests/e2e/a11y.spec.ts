@@ -119,6 +119,18 @@ test('settings', async ({ page }) => {
   await expectClean(page)
 })
 
+test('exchange rates', async ({ page }) => {
+  await page.goto('/#/rates')
+  await expect(page.getByRole('heading', { name: 'Exchange rates' })).toBeVisible()
+  await page.getByLabel('Base currency').fill('OMR')
+  await page.getByRole('button', { name: 'Add rate' }).click()
+  await page.getByLabel('Currency 1').fill('CNY')
+  await page.getByLabel(/units per 1/i).fill('17.4')
+  await page.getByRole('button', { name: 'Save rates' }).click()
+  await expect(page.getByTestId('convert-result')).toContainText('17.40')
+  await expectClean(page)
+})
+
 test('people list', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: /no vendors yet/i })).toBeVisible()

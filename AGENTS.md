@@ -50,8 +50,8 @@ deep-improvements.md.
 - Routing: hand-rolled hash router in `src/lib/useHashRoute.ts`. Routes:
   `#/vendors`, `#/vendors/new`, `#/vendors/quick`, `#/vendors/:id` (detail),
   `#/vendors/:id/edit`, `#/vendors/:id/share`, `#/import`, `#/share`, `#/people`,
-  `#/trip`, `#/me`. Vendor-list filter state lives in hash query params:
-  `q, status, country, type, minRating, fair, tag, sort`. Settings, Trip, Import and
+  `#/trip`, `#/rates`, `#/me`. Vendor-list filter state lives in hash query params:
+  `q, status, country, type, minRating, fair, tag, sort`. Settings, Rates, Trip, Import and
   VendorShare are `React.lazy` chunks behind one `<Suspense>` in `App.tsx`; `qrcode` is a
   dynamic import in `renderQrToCanvas`. The Workbox glob precaches every chunk, so they
   work offline.
@@ -86,9 +86,13 @@ deep-improvements.md.
 - Live rates: `src/lib/fx.ts`. The free plan quotes USD only, so `rebase()` computes
   `usd[C] / usd[base]` (6 significant digits). The API key and last-fetch time live in
   **localStorage** (`opc.fxKey`, `opc.fxFetchedAt`), never in IndexedDB, because exports
-  serialize the whole settings row. Settings → "Fetch live rates" fills the editable rows
-  (listed codes + OMR + CNY) for the user to save. With a key set, opening Settings online
-  auto-refreshes and saves once per 24 h, which overwrites hand edits for those codes.
+  serialize the whole settings row. All of it lives on the **Rates tab**
+  (`src/features/rates/RatesScreen.tsx`, not Settings): base currency, rate rows, API key,
+  "Fetch live rates" (fills listed codes + OMR + CNY for the user to save with "Save rates"),
+  and a converter (default OMR → CNY, pair remembered in localStorage `opc.ratesPair`,
+  via `crossRate` in `currency.ts`). With a key set, opening Rates online auto-refreshes and
+  saves once per 24 h, which overwrites hand edits for those codes. Settings saves only
+  theme, landed cost and profile, never rates.
   CSP `connect-src` allows `https://openexchangerates.org`.
 - Landed cost (N2, `src/lib/landedCost.ts`): product packing fields (`incoterm` EXW/FOB/CIF,
   `pcsPerCarton`, `cartonLengthCm/WidthCm/HeightCm`, `cartonGrossKg`) plus
@@ -138,7 +142,8 @@ deep-improvements.md.
   Examples: the photo picker is two inputs, `vendor-photo-input-camera` (`capture`,
   single) and `vendor-photo-input-gallery` (multiple); list filters are hidden behind a
   `Filters` toggle button (the panel stays mounted with `hidden`). Below 1024px, "Quick add"
-  is a floating `.fab` and the top-bar copy is hidden. E2E runs at desktop width, so it sees
+  is a floating `.fab` and the top-bar copy is hidden. The bottom nav uses `grid-auto-flow: column`, so it fits
+  any number of tabs (5 now). E2E runs at desktop width, so it sees
   the top-bar one. The seed's `v-cn` vendor is tagged `led-panel` and has a priced
   product, so the Trip compare table renders for axe.
 - `tests/e2e/a11y.spec.ts` runs axe (WCAG 2.2 AA tags) across all 5 themes.
