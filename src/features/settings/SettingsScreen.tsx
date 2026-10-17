@@ -1,11 +1,23 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SelectField, TextField } from '../../components/Field'
 import { getSettings, updateSettings } from '../../data/settings'
-import { deleteVendor as permanentDeleteVendor, getDeletedVendors, restoreVendor } from '../../data/vendors'
+import {
+  deleteVendor as permanentDeleteVendor,
+  getDeletedVendors,
+  restoreVendor,
+} from '../../data/vendors'
 import type { LandedCostSettings, Settings, Theme } from '../../db/models'
 import { COMMON_CURRENCIES, normalizeCurrencyCode } from '../../lib/currency'
+import {
+  FX_DEFAULT_CODES,
+  fxIsStale,
+  fetchLiveRates,
+  mergeLiveRates,
+  readFxStorage,
+  writeFxStorage,
+} from '../../lib/fx'
 import { setThemePreference } from '../../lib/theme'
 import { newKey } from '../../lib/app'
 import { useMutation } from '../vendors/useMutation'
@@ -26,6 +38,28 @@ function toRows(rates: Settings['rates']): RateRow[] {
   }))
 }
 
+/** Updates listed currencies with live rates and appends OMR/CNY when missing. */
+function mergeRows(rows: RateRow[], live: Record<string, number>, base: string): RateRow[] {
+  const next = rows.map((row) => {
+    const code = normalizeCurrencyCode(row.code)
+    const rate = code && code !== base ? live[code] : undefined
+    return rate === undefined ? row : { ...row, rate: String(rate) }
+  })
+  const listed = new Set(next.map((row) => normalizeCurrencyCode(row.code)))
+  for (const code of FX_DEFAULT_CODES) {
+    const rate = live[code]
+    if (code !== base && !listed.has(code) && rate !== undefined) {
+      next.push({ key: newKey(), code, rate: String(rate) })
+    }
+  }
+  return next
+}
+
+const sameRows = (a: RateRow[], b: RateRow[]) =>
+  a.length === b.length && a.every((row, i) => row.code === b[i]?.code && row.rate === b[i]?.rate)
+
+const asOfText = (asOf: number) => new Date(asOf).toLocaleString()
+
 function SettingsForm({ initial }: { initial: Settings }) {
   const [base, setBase] = useState(initial.baseCurrency)
   const [theme, setTheme] = useState<Theme>(initial.theme)
@@ -44,6 +78,68 @@ function SettingsForm({ initial }: { initial: Settings }) {
   const [notice, setNotice] = useState('')
   const originalRows = useRef<RateRow[]>(toRows(initial.rates))
   const { error: saveError, run } = useMutation()
+  const [fxKey, setFxKey] = useState(() => readFxStorage().key)
+  const [fxStatus, setFxStatus] = useState('')
+  const [fetching, setFetching] = useState(false)
+  const baseRef = useRef(initial.baseCurrency)
+
+  // Auto-refresh: once a day per base, when a key is set and the device is online. Saves
+  // straight away. The timestamp is claimed before the request so StrictMode, a second tab
+  // or a bad key cannot burn the free plan's quota; the manual button retries a failure.
+  useEffect(() => {
+    const savedBase = initial.baseCurrency
+    const { key } = readFxStorage()
+    if (!key || !navigator.onLine || !fxIsStale(savedBase)) return
+    writeFxStorage({ fetched: { base: savedBase, at: Date.now() } })
+    fetchLiveRates(key, savedBase)
+      .then(async ({ rates: live, asOf }) => {
+        const current = await getSettings()
+        if (current.baseCurrency !== savedBase) return
+        const merged = mergeLiveRates(current.rates, live, savedBase)
+        await updateSettings({ rates: merged })
+        const before = originalRows.current
+        originalRows.current = toRows(merged)
+        // Rows the user has started editing are left alone; their Save wins.
+        if (baseRef.current === savedBase) {
+          setRows((prev) => (sameRows(prev, before) ? mergeRows(prev, live, savedBase) : prev))
+        }
+        setFxStatus(`Saved rates updated from openexchangerates.org (${asOfText(asOf)}).`)
+      })
+      .catch((error: unknown) => {
+        setFxStatus(error instanceof Error ? error.message : 'Rates fetch failed.')
+      })
+  }, [initial.baseCurrency])
+
+  const changeFxKey = (value: string) => {
+    setFxKey(value)
+    writeFxStorage({ key: value.trim() })
+  }
+
+  const fetchRates = () => {
+    const code = normalizeCurrencyCode(base)
+    if (!code) {
+      setErrors((prev) => ({ ...prev, base: 'Enter a 3-letter base currency.' }))
+      return
+    }
+    setFetching(true)
+    setFxStatus('')
+    fetchLiveRates(fxKey.trim(), code)
+      .then(({ rates: live, asOf }) => {
+        if (baseRef.current !== code) {
+          setFxStatus('The base currency changed while fetching. Press Fetch live rates again.')
+          return
+        }
+        writeFxStorage({ fetched: { base: code, at: Date.now() } })
+        setRows((prev) => mergeRows(prev, live, code))
+        setFxStatus(
+          `Live rates filled in from openexchangerates.org (${asOfText(asOf)}). Edit any value, then press Save settings.`,
+        )
+      })
+      .catch((error: unknown) => {
+        setFxStatus(error instanceof Error ? error.message : 'Rates fetch failed.')
+      })
+      .finally(() => setFetching(false))
+  }
 
   const changeTheme = (next: Theme) => {
     setTheme(next)
@@ -63,6 +159,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
       .slice(0, 3)
     if (code === base) return
     setBase(code)
+    baseRef.current = code
     if (code === initial.baseCurrency) {
       setRows(originalRows.current)
       setNotice('')
@@ -112,7 +209,8 @@ function SettingsForm({ initial }: { initial: Settings }) {
       const parsed: Record<string, number> = {}
       for (const [key, raw] of Object.entries(numbers)) {
         const value = raw.trim() === '' ? 0 : Number(raw)
-        if (!Number.isFinite(value) || value < 0) nextErrors[`landed.${key}`] = 'Enter 0 or a positive number.'
+        if (!Number.isFinite(value) || value < 0)
+          nextErrors[`landed.${key}`] = 'Enter 0 or a positive number.'
         parsed[key] = value
       }
       landed = {
@@ -215,10 +313,32 @@ function SettingsForm({ initial }: { initial: Settings }) {
         <button type="button" className="btn btn--ghost" onClick={addRow}>
           Add rate
         </button>
+        <TextField
+          id="fx-key"
+          label="Rates API key"
+          hint="Free App ID from openexchangerates.org. Kept on this device only and never exported. With a key, rates refresh once a day when you open Settings online; clear it to keep only hand-entered rates."
+          autoComplete="off"
+          mono
+          value={fxKey}
+          onChange={changeFxKey}
+        />
+        <button
+          type="button"
+          className="btn btn--ghost"
+          onClick={fetchRates}
+          disabled={!fxKey.trim() || fetching}
+        >
+          {fetching ? 'Fetching rates…' : 'Fetch live rates'}
+        </button>
+        {fxStatus ? (
+          <p className="field__hint" role="status">
+            {fxStatus}
+          </p>
+        ) : null}
         <h2>Landed cost</h2>
         <p className="field__hint">
-          Estimates the cost of one unit delivered home, in {base || 'the base currency'}. Leave
-          all three blank to turn it off.
+          Estimates the cost of one unit delivered home, in {base || 'the base currency'}. Leave all
+          three blank to turn it off.
         </p>
         <SelectField
           id="landed-freight-mode"
@@ -331,9 +451,12 @@ function RecentlyDeletedSection() {
   const confirmRef = useRef<HTMLDialogElement>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
 
-  const handleRestore = useCallback((id: string) => {
-    void run(restoreVendor(id))
-  }, [run])
+  const handleRestore = useCallback(
+    (id: string) => {
+      void run(restoreVendor(id))
+    },
+    [run],
+  )
 
   const askPermanentDelete = useCallback((id: string) => {
     setPendingId(id)
@@ -342,9 +465,11 @@ function RecentlyDeletedSection() {
 
   const confirmPermanentDelete = useCallback(() => {
     if (pendingId) {
-      void run(permanentDeleteVendor(pendingId).then(() => {
-        setPendingId(null)
-      }))
+      void run(
+        permanentDeleteVendor(pendingId).then(() => {
+          setPendingId(null)
+        }),
+      )
     }
   }, [pendingId, run])
 
@@ -354,7 +479,11 @@ function RecentlyDeletedSection() {
     <section className="form-section" aria-labelledby="deleted-heading">
       <h2 id="deleted-heading">Recently deleted</h2>
       <p className="field__hint">These vendors will be permanently removed after 90 days.</p>
-      {error ? <p className="field__error" role="alert">{error}</p> : null}
+      {error ? (
+        <p className="field__error" role="alert">
+          {error}
+        </p>
+      ) : null}
       <ul className="record-list">
         {vendors.map((vendor) => (
           <li key={vendor.id} className="record">
@@ -385,17 +514,17 @@ function RecentlyDeletedSection() {
       </ul>
       <dialog ref={confirmRef} className="dialog" aria-labelledby="purge-vendor-title">
         <form method="dialog">
-          <h2 id="purge-vendor-title" className="dialog__title">Delete permanently?</h2>
+          <h2 id="purge-vendor-title" className="dialog__title">
+            Delete permanently?
+          </h2>
           <p className="dialog__body">
             All data including contacts, products and photos will be removed. This cannot be undone.
           </p>
           <div className="dialog__actions">
-            <button type="submit" className="btn btn--ghost">Cancel</button>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={confirmPermanentDelete}
-            >
+            <button type="submit" className="btn btn--ghost">
+              Cancel
+            </button>
+            <button type="button" className="btn btn--primary" onClick={confirmPermanentDelete}>
               Delete permanently
             </button>
           </div>

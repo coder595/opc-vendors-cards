@@ -12,7 +12,7 @@ const CSP = [
   "img-src 'self' blob: data:",
   "style-src 'self'",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://openexchangerates.org",
   "manifest-src 'self'",
   "form-action 'self'",
   "frame-src 'none'",

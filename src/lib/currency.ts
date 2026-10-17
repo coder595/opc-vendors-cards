@@ -2,6 +2,7 @@ export type RateMap = Readonly<Record<string, number>>
 
 export const COMMON_CURRENCIES = [
   'USD',
+  'OMR',
   'EUR',
   'CNY',
   'GBP',
