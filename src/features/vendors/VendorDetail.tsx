@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
 import { EmailLink, PhoneLink } from '../../components/ContactLinks'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { RatingField, SelectField } from '../../components/Field'
 import { PhotoViewer } from '../../components/PhotoViewer'
 import { StatusSeal } from '../../components/StatusSeal'
@@ -282,7 +283,8 @@ function ProductsPanel({
                   <p className="order-totals__head">
                     Order of{' '}
                     <span className="mono">
-                      {totals.qty} {product.unit && /[a-z]/i.test(product.unit) ? product.unit : 'pcs'}
+                      {totals.qty}{' '}
+                      {product.unit && /[a-z]/i.test(product.unit) ? product.unit : 'pcs'}
                     </span>
                     {totals.fromMoq ? ' (MOQ)' : ''} at{' '}
                     <span className="mono">{formatMoney(totals.unitPrice, product.currency)}</span>
@@ -310,13 +312,17 @@ function ProductsPanel({
                             </dd>
                           </>
                         ) : (
-                          <dd className="mono">{formatMoney(landedTotal, settings.baseCurrency)}</dd>
+                          <dd className="mono">
+                            {formatMoney(landedTotal, settings.baseCurrency)}
+                          </dd>
                         )}
                       </div>
                     ) : null}
                   </dl>
                   {settings && landedTotal !== null ? (
-                    <p className="order-totals__note">Landed includes freight, duty and VAT from Settings.</p>
+                    <p className="order-totals__note">
+                      Landed includes freight, duty and VAT from Settings.
+                    </p>
                   ) : null}
                 </div>
               ) : null}
@@ -708,11 +714,7 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
   }, [vendorId, vendorName])
 
   if (data === undefined) {
-    return (
-      <p className="form-summary" role="status">
-        Loading vendor…
-      </p>
-    )
+    return <LoadingSpinner>Loading vendor…</LoadingSpinner>
   }
 
   if (data === null) {
@@ -737,7 +739,13 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
       </p>
       <header className="detail__head">
         {/* Keyed on status so the stamp replays when the status changes. */}
-        <StatusSeal key={vendor.status} status={vendor.status} rating={vendor.rating} size="md" animate />
+        <StatusSeal
+          key={vendor.status}
+          status={vendor.status}
+          rating={vendor.rating}
+          size="md"
+          animate
+        />
         <div className="detail__identity">
           <h1>{vendor.name}</h1>
           <p className="detail__meta">

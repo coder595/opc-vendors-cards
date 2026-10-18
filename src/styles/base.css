@@ -109,6 +109,21 @@ p {
   left: var(--sp-3);
 }
 
+/* Brand mark: a small vermilion square that grounds the wordmark */
+.brand-mark {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--brand);
+  transform: rotate(10deg);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.wordmark:hover .brand-mark {
+  transform: rotate(25deg) scale(1.1);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -144,12 +159,18 @@ p {
 
 .wordmark {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  gap: var(--sp-2);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--fs-sm);
   letter-spacing: -0.02em;
+}
+
+.wordmark__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .wordmark__sub {
@@ -539,9 +560,17 @@ p {
     animation: toast-in var(--dur-3) var(--ease-out);
   }
 
+  .fab {
+    animation: fab-in var(--dur-4, 400ms) var(--ease-out);
+  }
+
   @media (min-width: 1024px) {
     .update-toast {
       animation-name: toast-in-desktop;
+    }
+
+    .fab {
+      animation: none;
     }
   }
 }
@@ -573,10 +602,60 @@ p {
   }
 }
 
+@keyframes fab-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.9);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
 :root[data-theme-switching] *,
 :root[data-theme-switching] *::before,
 :root[data-theme-switching] *::after {
   transition: none !important;
+}
+
+/* Loading spinner: the OPC seal rotating slowly. Text inside stays readable
+   while the outer ring turns. */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 32ch;
+  margin: var(--sp-8) auto;
+  justify-content: center;
+}
+
+.loading-spinner__seal {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  color: var(--brand);
+  animation: spinner-rotate 1.8s linear infinite;
+}
+
+.loading-spinner__label {
+  font-family: var(--font-display);
+  color: var(--ink-2);
+}
+
+@keyframes spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner__seal {
+    animation: none;
+  }
 }
 
 /* Reduced motion: no movement, but colour and opacity feedback stays so actions

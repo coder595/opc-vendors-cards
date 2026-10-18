@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { EmailLink, PhoneLink } from '../../components/ContactLinks'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import type { Contact, Vendor } from '../../db/models'
 import { db } from '../../db/schema'
 import { foldText } from '../vendors/vendorQuery'
@@ -52,11 +53,7 @@ export function PeopleScreen() {
   }, [data])
 
   if (data === undefined) {
-    return (
-      <p className="form-summary" role="status">
-        Loading people…
-      </p>
-    )
+    return <LoadingSpinner>Loading people…</LoadingSpinner>
   }
 
   return (

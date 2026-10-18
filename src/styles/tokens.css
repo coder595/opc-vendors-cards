@@ -69,6 +69,7 @@
   --dur-1: 120ms; /* press, hover, colour */
   --dur-2: 200ms; /* state change, panel swap */
   --dur-3: 320ms; /* overlay entrance, seal stamp */
+  --dur-4: 400ms; /* entrance, reveal */
 }
 
 /* Dark theme. Applied as a resolved light|dark value on <html data-theme>. */

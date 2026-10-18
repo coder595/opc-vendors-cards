@@ -421,6 +421,12 @@ input[type='file']::file-selector-button:hover {
   background: var(--surface-2);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .manifest__link:active {
+    transform: scale(0.985);
+  }
+}
+
 .manifest__link .seal {
   grid-area: seal;
   transition: transform var(--dur-2) var(--ease-out);
@@ -564,12 +570,37 @@ input[type='file']::file-selector-button:hover {
   min-width: 0;
 }
 
-.list-filters:not([hidden]) > * {
+/* Filter panel: animates open/closed with overflow hidden + max-height.
+   Uses a nested grid wrapper so the transition runs on the outer container
+   while the inner elements lay out naturally. */
+.list-filters {
+  display: grid;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--dur-3) var(--ease-out);
+}
+
+.list-filters > * {
+  min-height: 0; /* FF needs this inside a max-height animation */
+}
+
+.list-filters--open {
+  max-height: 780px; /* tall enough for all 8 filter rows at any breakpoint */
+}
+
+.list-filters__inner {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.list-filters__inner > * {
   grid-column: 1 / -1;
 }
 
-.list-filters:not([hidden]) {
-  display: contents;
+.list-filters__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .list-count {
@@ -1064,8 +1095,12 @@ input[type='file']::file-selector-button:hover {
     grid-template-columns: 2fr 1fr 1fr;
   }
 
-  .list-filters:not([hidden]) > * {
-    grid-column: auto;
+  .list-filters__inner {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .list-filters__actions {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1079,6 +1114,10 @@ input[type='file']::file-selector-button:hover {
 @media (min-width: 1024px) {
   .list-controls {
     grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+
+  .list-filters__inner {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
@@ -1392,8 +1431,18 @@ input[type='file']::file-selector-button:hover {
 }
 
 .trip__stats dt {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   font-size: var(--fs-sm);
   color: var(--muted);
+}
+
+.trip__stats dt svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--brand);
 }
 
 .trip__stats dd {
