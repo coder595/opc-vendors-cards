@@ -45,11 +45,16 @@ deep-improvements.md.
 - `src/styles/tokens.css` is the visual source of truth. No colors outside the tokens.
   New colour tokens go in **all five** theme blocks (`:root`, dark, gruvbox, oled, sepia) in
   the same commit; size tokens (`--tap`, `--nav-h`) live only in `:root`.
+  In the **light** theme `--brand` (#d8321f) is 4.42:1 as small text on `--surface` — fails AA.
+  Use the brand as a background, border or icon, not as text on a light surface (e.g. the toast
+  "Undo" uses `--ink` with a brand border).
 - Buttons: `btn--primary` (one main action per screen), `btn--ghost` (secondary), `btn--danger`
   (destructive trigger, outlined), `btn--danger-solid` (the confirm step in a `<dialog className="dialog">`).
-  Hovers use `color-mix` on tokens. Motion uses `--ease-out` and `--dur-1..3`; the seal stamp
+  Hovers use `color-mix` on tokens. Motion uses `--ease-out` and `--dur-1..4`; the seal stamp
   (keyed on status) is the one authored animation. `applyTheme` sets `data-theme-switching` so
   theme changes skip colour transitions; the a11y spec waits for `document.getAnimations()`.
+  The global `prefers-reduced-motion: reduce` block zeroes `animation-*` but **not** transitions,
+  so gate every new transition or animation on `prefers-reduced-motion: no-preference` yourself.
 - Vendor form Save/Cancel live in the sticky `.form-bar` at the **end** of the form, not the
   form head. On phones it sits on the tab bar via `bottom: var(--nav-h)`, and `--nav-h` is also
   the `.nav` min-height, so change both together. A failed save focuses the first visible
@@ -159,18 +164,18 @@ deep-improvements.md.
   (`tests/e2e/helpers/seed.ts`) writes raw IndexedDB — specs must `reload()` after
   seeding before asserting.
 - E2E selectors are coupled to accessible labels/testids, so renaming one breaks specs.
-  Examples: the photo picker is two inputs, `vendor-photo-input-camera` (`capture`,
-  single) and `vendor-photo-input-gallery` (multiple); list filters are hidden behind a
-  `Filters` toggle button (the panel stays mounted and animates open/closed with
-  `grid-template-rows`, going `inert` while collapsed so its controls leave the tab
-  order). Below 1024px, "Quick add"
-  is a floating `.fab` and the top-bar copy is hidden. The bottom nav uses `grid-auto-flow: column`, so it fits
-  any number of tabs (5 now). E2E runs at desktop width, so it sees
-  the top-bar one. The seed's `v-cn` vendor is tagged `led-panel` and has a priced
-  product, so the Trip compare table renders for axe.
+  Examples: the photo picker is two inputs, `vendor-photo-input-camera` (`capture`, single)
+  and `vendor-photo-input-gallery` (multiple); the list filters sit behind a `Filters` toggle
+  whose panel stays mounted (animates open/closed with `grid-template-rows`, `inert` while
+  collapsed so its controls leave the tab order); below 1024px "Quick add" is a floating `.fab`
+  and the top-bar copy is hidden (E2E runs at desktop width, so it sees the top bar). The bottom
+  nav uses `grid-auto-flow: column` and fits any number of tabs (5 now). The seed's `v-cn` vendor
+  is tagged `led-panel` and has a priced product, so the Trip compare table renders for axe.
 - `tests/e2e/a11y.spec.ts` runs axe (WCAG 2.2 AA tags) across all 5 themes. To check a theme
   in an ad-hoc spec, copy its `setTheme` (sets `data-theme` after load); setting
   `localStorage["opc.theme"]` and reloading gets overwritten by the settings row (see Entry).
+  The file is heavy (the vendor-detail tab sweep alone does 30 scans) and sets
+  `test.describe.configure({ timeout: 60_000 })`; ~28s runs under parallel load are expected.
 - jsdom has no `scrollIntoView`; call it as `el.scrollIntoView?.(…)` in components that unit tests render.
 - To seed realistic data or produce a real export file, run `npx vite` and, in Playwright,
   `page.evaluate(() => import('/src/data/bundle.ts'))` (also `/src/lib/images.ts` `resizePhoto`,
@@ -220,9 +225,8 @@ deep-improvements.md.
 
 ## Open items (2026-10-18)
 
-- All pre-fair code work is merged and deployed (last: sticky vendor-form save bar, `2695445`;
-  before it Incoterm full names, tag suggestions and the tag field redesign).
-  The FX, order-totals, Rates, update, tag and form-bar work has no plan-doc item IDs.
+- All pre-fair code work is merged and deployed. The FX, order-totals, Rates, update, tag,
+  form-bar, UI-polish and accessibility/contrast work has no plan-doc item IDs.
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
   landed-cost quote checked by hand). Also paste the rates key on each device (it is
@@ -232,5 +236,6 @@ deep-improvements.md.
   (real data; each origin has its own IndexedDB).
 - Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
   (manifest screenshots, `share_target`), N8–N14. E3 is won't-fix.
-- About 27 `.ts`/`.tsx` files in `src` already fail `prettier --check` (`VendorForm.tsx` is now clean). Leave existing formatting alone in
-  feature commits; reformat in a separate commit if wanted.
+- ~22 `src` files (plus a css file and a few tests) already fail `prettier --check` — pre-existing
+  drift, not from your change. Leave unrelated formatting alone in feature commits; if you want it
+  clean, reformat in a separate commit.
