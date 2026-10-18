@@ -63,6 +63,7 @@ export function Tabs({ items, active, onChange, label, children }: TabsProps) {
         className="tabpanel"
         id={`${baseId}-panel`}
         role="tabpanel"
+        tabIndex={0}
         aria-labelledby={activeItem ? `${baseId}-tab-${activeItem.id}` : undefined}
       >
         {children}

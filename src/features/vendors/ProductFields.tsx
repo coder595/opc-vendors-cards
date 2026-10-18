@@ -273,7 +273,6 @@ function ProductRow({
           id={`${id}-photo`}
           label="Product photo"
           kind="product"
-          multiple
           onAdd={(photo) => dispatch({ type: 'addPhoto', photo, productKey: product.key })}
         />
         {photos.map((photo, index) => (

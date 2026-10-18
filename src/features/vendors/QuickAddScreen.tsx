@@ -197,7 +197,6 @@ export function QuickAddScreen() {
             id="quick-product-photo"
             label="Take product photo"
             kind="product"
-            multiple
             onAdd={(photo) =>
               setState((prev) => ({ ...prev, productPhotos: [...prev.productPhotos, photo] }))
             }
@@ -224,10 +223,7 @@ export function QuickAddScreen() {
         />
       </section>
 
-      <div
-        className="form-foot"
-        style={{ display: 'flex', gap: 'var(--sp-2)', justifyContent: 'flex-end' }}
-      >
+      <div className="form-foot">
         <button
           type="button"
           className="btn btn--primary"

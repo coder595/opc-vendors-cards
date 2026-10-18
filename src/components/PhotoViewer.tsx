@@ -38,8 +38,24 @@ export function PhotoViewer({ attachments, initialIndex, onClose, onDelete }: Ph
 
   useEffect(() => {
     const arrowHandler = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1))
-      if (event.key === 'ArrowRight') setIndex((i) => Math.min(attachments.length - 1, i + 1))
+      const target = event.target as HTMLElement | null
+      // Never hijack arrows while typing (guards any future embedded field).
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setIndex((i) => Math.max(0, i - 1))
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        setIndex((i) => Math.min(attachments.length - 1, i + 1))
+      }
     }
     window.addEventListener('keydown', arrowHandler)
     return () => window.removeEventListener('keydown', arrowHandler)

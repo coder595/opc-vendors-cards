@@ -3,6 +3,11 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { seed } from './helpers/seed'
 
+// This spec runs axe across five themes on many screens; the vendor-detail
+// tab sweep alone does 30 scans and runs close to the default 30s under
+// parallel load, so give the file headroom.
+test.describe.configure({ timeout: 60_000 })
+
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
 interface Violation {

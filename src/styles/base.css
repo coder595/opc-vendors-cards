@@ -124,6 +124,16 @@ p {
   transform: rotate(25deg) scale(1.1);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark {
+    transition: none;
+  }
+
+  .wordmark:hover .brand-mark {
+    transform: rotate(10deg);
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -606,13 +616,6 @@ p {
   from {
     opacity: 0;
     transform: translateY(16px) scale(0.9);
-  }
-}
-
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
   }
 }
 

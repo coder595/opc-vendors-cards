@@ -9,7 +9,7 @@ interface LoadingSpinnerProps {
  * Branded loading state: the OPC seal marking time. Replaces bare-text loaders.
  * When used as a wrapper (children passed), the children replace the default message.
  */
-export function LoadingSpinner({ label, children }: LoadingSpinnerProps) {
+export function LoadingSpinner({ label = 'Loading…', children }: LoadingSpinnerProps) {
   return (
     <p className="loading-spinner" role="status" aria-live="polite">
       <svg className="loading-spinner__seal" viewBox="0 0 96 96" fill="none" aria-hidden="true">
