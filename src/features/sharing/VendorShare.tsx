@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { StatusSeal } from '../../components/StatusSeal'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { getVendorBundle } from '../../data/bundle'
 import { STATUS_LABEL, TYPE_LABEL } from '../../db/labels'
 import { formatMoney } from '../../lib/currency'
-import { buildVendorCard, encodeVendorCardUrl, payloadFitsQr, renderQrToCanvas } from '../../lib/share'
+import {
+  buildVendorCard,
+  encodeVendorCardUrl,
+  payloadFitsQr,
+  renderQrToCanvas,
+} from '../../lib/share'
 
 export function VendorShare({ vendorId }: { vendorId: string }) {
   const bundle = useLiveQuery(async () => (await getVendorBundle(vendorId)) ?? null, [vendorId])
@@ -42,11 +48,7 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
   }, [code, fits])
 
   if (bundle === undefined) {
-    return (
-      <p className="form-summary" role="status">
-        Loading…
-      </p>
-    )
+    return <LoadingSpinner>Loading…</LoadingSpinner>
   }
 
   if (bundle === null || !card) {
@@ -126,7 +128,9 @@ export function VendorShare({ vendorId }: { vendorId: string }) {
                 {includePrices && product.price !== undefined ? (
                   <span className="mono">{formatMoney(product.price, product.currency)}</span>
                 ) : null}
-                {includePrices && product.moq !== undefined ? <span className="mono">MOQ {product.moq}</span> : null}
+                {includePrices && product.moq !== undefined ? (
+                  <span className="mono">MOQ {product.moq}</span>
+                ) : null}
                 {includePrices && product.orderQty !== undefined ? (
                   <span className="mono">Order {product.orderQty}</span>
                 ) : null}

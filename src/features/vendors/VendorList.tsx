@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
 import { EmptyState } from '../../components/EmptyState'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { StatusSeal } from '../../components/StatusSeal'
 import { STATUSES, STATUS_LABEL, TYPE_LABEL, VENDOR_TYPES } from '../../db/labels'
 import type { PipelineStatus, Vendor, VendorType } from '../../db/models'
@@ -118,11 +119,7 @@ export function VendorList() {
   )
 
   if (data === undefined) {
-    return (
-      <p className="form-summary" role="status">
-        Loading vendors…
-      </p>
-    )
+    return <LoadingSpinner>Loading vendors…</LoadingSpinner>
   }
 
   if (data.vendors.every((vendor) => vendor.deletedAt !== undefined)) return <EmptyState />
@@ -175,124 +172,136 @@ export function VendorList() {
           {filtersOpen ? 'Hide' : 'Filters'}
           {activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </button>
-        <div id="vendor-filters" className="list-filters" hidden={!filtersOpen}>
-          <div className="field">
-            <label htmlFor="filter-status">Status</label>
-            <select
-              id="filter-status"
-              value={query.filters.status}
-              onChange={(event) =>
-                updateFilters({ status: event.target.value as PipelineStatus | 'all' })
-              }
-            >
-              <option value="all">All</option>
-              {STATUSES.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
+        <div
+          id="vendor-filters"
+          className={`list-filters${filtersOpen ? ' list-filters--open' : ''}`}
+          // Keep the collapsed panel out of the tab order and the a11y tree while
+          // still letting the max-height transition play. The previous `hidden`
+          // attribute did this but blocked the animation.
+          inert={!filtersOpen}
+        >
+          <div className="list-filters__inner">
+            <div className="field">
+              <label htmlFor="filter-status">Status</label>
+              <select
+                id="filter-status"
+                value={query.filters.status}
+                onChange={(event) =>
+                  updateFilters({ status: event.target.value as PipelineStatus | 'all' })
+                }
+              >
+                <option value="all">All</option>
+                {STATUSES.map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="filter-country">Country</label>
+              <select
+                id="filter-country"
+                value={query.filters.country}
+                onChange={(event) => updateFilters({ country: event.target.value })}
+              >
+                <option value="all">All</option>
+                {index.countries.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="filter-type">Type</label>
+              <select
+                id="filter-type"
+                value={query.filters.type}
+                onChange={(event) =>
+                  updateFilters({ type: event.target.value as VendorType | 'all' })
+                }
+              >
+                <option value="all">All</option>
+                {VENDOR_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="filter-fair">Fair edition</label>
+              <select
+                id="filter-fair"
+                value={query.filters.fair}
+                onChange={(event) => updateFilters({ fair: event.target.value })}
+              >
+                <option value="all">All</option>
+                {index.fairEditions.map((edition) => (
+                  <option key={edition} value={edition}>
+                    {edition}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="filter-tag">Tag</label>
+              <select
+                id="filter-tag"
+                value={query.filters.tag}
+                onChange={(event) => updateFilters({ tag: event.target.value })}
+              >
+                <option value="all">All</option>
+                {index.allTags.map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="filter-rating">Minimum rating</label>
+              <select
+                id="filter-rating"
+                value={String(query.filters.minRating)}
+                onChange={(event) => updateFilters({ minRating: Number(event.target.value) })}
+              >
+                <option value="0">Any</option>
+                {[1, 2, 3, 4, 5].map((score) => (
+                  <option key={score} value={score}>
+                    {score} of 5
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="sort">Sort</label>
+              <select
+                id="sort"
+                value={query.sort}
+                onChange={(event) =>
+                  setQuery((prev) => ({ ...prev, sort: event.target.value as VendorSort }))
+                }
+              >
+                <option value="name">Name</option>
+                <option value="updated">Recently updated</option>
+                <option value="rating">Rating</option>
+              </select>
+            </div>
+            {hasFilters ? (
+              <div className="list-filters__actions">
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => setQuery(defaultVendorQuery)}
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : null}
           </div>
-          <div className="field">
-            <label htmlFor="filter-country">Country</label>
-            <select
-              id="filter-country"
-              value={query.filters.country}
-              onChange={(event) => updateFilters({ country: event.target.value })}
-            >
-              <option value="all">All</option>
-              {index.countries.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="filter-type">Type</label>
-            <select
-              id="filter-type"
-              value={query.filters.type}
-              onChange={(event) =>
-                updateFilters({ type: event.target.value as VendorType | 'all' })
-              }
-            >
-              <option value="all">All</option>
-              {VENDOR_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="filter-fair">Fair edition</label>
-            <select
-              id="filter-fair"
-              value={query.filters.fair}
-              onChange={(event) => updateFilters({ fair: event.target.value })}
-            >
-              <option value="all">All</option>
-              {index.fairEditions.map((edition) => (
-                <option key={edition} value={edition}>
-                  {edition}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="filter-tag">Tag</label>
-            <select
-              id="filter-tag"
-              value={query.filters.tag}
-              onChange={(event) => updateFilters({ tag: event.target.value })}
-            >
-              <option value="all">All</option>
-              {index.allTags.map((tag) => (
-                <option key={tag} value={tag}>
-                  {tag}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="filter-rating">Minimum rating</label>
-            <select
-              id="filter-rating"
-              value={String(query.filters.minRating)}
-              onChange={(event) => updateFilters({ minRating: Number(event.target.value) })}
-            >
-              <option value="0">Any</option>
-              {[1, 2, 3, 4, 5].map((score) => (
-                <option key={score} value={score}>
-                  {score} of 5
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="sort">Sort</label>
-            <select
-              id="sort"
-              value={query.sort}
-              onChange={(event) =>
-                setQuery((prev) => ({ ...prev, sort: event.target.value as VendorSort }))
-              }
-            >
-              <option value="name">Name</option>
-              <option value="updated">Recently updated</option>
-              <option value="rating">Rating</option>
-            </select>
-          </div>
-          {hasFilters ? (
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => setQuery(defaultVendorQuery)}
-            >
-              Clear filters
-            </button>
-          ) : null}
+          {/* /list-filters__inner */}
         </div>
       </div>
 

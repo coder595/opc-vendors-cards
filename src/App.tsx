@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { getSettings } from './data/settings'
+import { LoadingSpinner } from './components/LoadingSpinner'
 import { PeopleScreen } from './features/people/PeopleScreen'
 import { ShareScreen } from './features/sharing/ShareScreen'
 import { VendorDetail } from './features/vendors/VendorDetail'
@@ -56,13 +57,16 @@ const NAV: NavItem[] = [
     href: '#/rates',
     name: 'rates',
     label: 'Rates',
-    paths: ['M4 8h14', 'M14 4l4 4-4 4', 'M20 16H6', 'M10 12l-4 4 4 4'],
+    paths: ['M4 12h16', 'M14 8l4 4-4 4', 'M10 16l-4-4 4-4'],
   },
   {
     href: '#/me',
     name: 'me',
     label: 'Me',
-    paths: ['M12 12a4 4 0 100-8 4 4 0 000 8z', 'M5 20a7 7 0 0114 0'],
+    paths: [
+      'M12 15a3 3 0 100-6 3 3 0 000 6z',
+      'M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z',
+    ],
   },
 ]
 
@@ -157,8 +161,11 @@ export default function App() {
       </a>
       <header className="appbar">
         <div className="wordmark">
-          OPC Vendors Cards
-          <span className="wordmark__sub">Trade fair notebook</span>
+          <span className="brand-mark" aria-hidden="true" />
+          <div className="wordmark__text">
+            OPC Vendors Cards
+            <span className="wordmark__sub">Trade fair notebook</span>
+          </div>
         </div>
         {onForm ? null : (
           <div className="form-head__actions">
@@ -174,7 +181,15 @@ export default function App() {
       {onForm ? null : (
         // Phone thumb zone: the fair-speed capture action sits above the tab bar.
         <a className="btn btn--primary fab" href="#/vendors/quick">
-          <svg className="btn__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round">
+          <svg
+            className="btn__icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.25"
+            strokeLinecap="round"
+          >
             <path d="M12 5v14M5 12h14" />
           </svg>
           Quick add
@@ -194,13 +209,7 @@ export default function App() {
         ))}
       </nav>
       <main id="main" className="main" ref={mainRef} tabIndex={-1}>
-        <Suspense
-          fallback={
-            <p className="form-summary" role="status">
-              Loading…
-            </p>
-          }
-        >
+        <Suspense fallback={<LoadingSpinner />}>
           {route.name === 'vendorNew' ? (
             <VendorForm key="new" mode="new" />
           ) : route.name === 'vendorsQuick' ? (

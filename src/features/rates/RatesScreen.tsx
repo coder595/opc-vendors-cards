@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SelectField, TextField } from '../../components/Field'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { getSettings, updateSettings } from '../../data/settings'
 import type { Settings } from '../../db/models'
 import {
@@ -140,7 +141,10 @@ function Converter({ settings }: { settings: Settings }) {
         </p>
       ) : (
         <div className="converter__result" role="status" data-testid="convert-result">
-          <output htmlFor="convert-amount convert-from convert-to" className="converter__value mono">
+          <output
+            htmlFor="convert-amount convert-from convert-to"
+            className="converter__value mono"
+          >
             {validAmount ? formatMoney(value * rate, pair.to) : '—'}
           </output>
           <p className="converter__rates mono">
@@ -388,11 +392,7 @@ function RatesForm({ initial }: { initial: Settings }) {
 export function RatesScreen() {
   const settings = useLiveQuery(() => getSettings(), [])
   if (!settings) {
-    return (
-      <p className="form-summary" role="status">
-        Loading rates…
-      </p>
-    )
+    return <LoadingSpinner>Loading rates…</LoadingSpinner>
   }
   return (
     <section className="settings" aria-labelledby="rates-heading">

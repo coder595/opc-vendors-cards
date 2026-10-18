@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { StatusSeal } from '../../components/StatusSeal'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { STATUSES } from '../../db/labels'
 import type { Vendor } from '../../db/models'
 import { db } from '../../db/schema'
@@ -60,11 +61,7 @@ export function TripScreen() {
   }, [data])
 
   if (data === undefined) {
-    return (
-      <p className="form-summary" role="status">
-        Loading trip…
-      </p>
-    )
+    return <LoadingSpinner>Loading trip…</LoadingSpinner>
   }
 
   if (summary === null) return null
@@ -102,19 +99,76 @@ export function TripScreen() {
 
       <dl className="trip__stats">
         <div>
-          <dt>Vendors</dt>
+          <dt>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M4 7V4h16v3" />
+              <path d="M9 20h6" />
+              <path d="M12 4v16" />
+              <path d="M4 7h16l-2 10H6L4 7z" />
+            </svg>
+            Vendors
+          </dt>
           <dd className="mono">{vendors.length}</dd>
         </div>
         <div>
-          <dt>Countries</dt>
+          <dt>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="7" r="4" />
+              <path d="M5 21a8 8 0 0114 0" />
+            </svg>
+            Countries
+          </dt>
           <dd className="mono">{countries.size}</dd>
         </div>
         <div>
-          <dt>Open tasks</dt>
+          <dt>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg>
+            Open tasks
+          </dt>
           <dd className="mono">{tasks.length}</dd>
         </div>
         <div>
-          <dt>Booths</dt>
+          <dt>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z" />
+              <circle cx="12" cy="11" r="2" />
+            </svg>
+            Booths
+          </dt>
           <dd className="mono">{booths.length}</dd>
         </div>
       </dl>

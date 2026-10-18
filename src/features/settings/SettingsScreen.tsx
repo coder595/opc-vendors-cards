@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { SelectField, TextField } from '../../components/Field'
 import { getSettings, updateSettings } from '../../data/settings'
 import {
@@ -53,7 +54,11 @@ function AppUpdateSection() {
         photos and settings stay on this device.
       </p>
       <button type="button" className="btn btn--ghost" onClick={check} disabled={busy !== 'idle'}>
-        {busy === 'checking' ? 'Checking for updates…' : busy === 'updating' ? 'Updating…' : 'Update app'}
+        {busy === 'checking'
+          ? 'Checking for updates…'
+          : busy === 'updating'
+            ? 'Updating…'
+            : 'Update app'}
       </button>
       {message ? (
         <p className="form-summary" role="status">
@@ -347,7 +352,11 @@ function RecentlyDeletedSection() {
             <button type="submit" className="btn btn--ghost">
               Cancel
             </button>
-            <button type="button" className="btn btn--danger-solid" onClick={confirmPermanentDelete}>
+            <button
+              type="button"
+              className="btn btn--danger-solid"
+              onClick={confirmPermanentDelete}
+            >
               Delete permanently
             </button>
           </div>
@@ -360,11 +369,7 @@ function RecentlyDeletedSection() {
 export function SettingsScreen() {
   const settings = useLiveQuery(() => getSettings(), [])
   if (!settings) {
-    return (
-      <p className="form-summary" role="status">
-        Loading settings…
-      </p>
-    )
+    return <LoadingSpinner>Loading settings…</LoadingSpinner>
   }
   return (
     <>

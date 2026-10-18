@@ -161,7 +161,8 @@ deep-improvements.md.
 - E2E selectors are coupled to accessible labels/testids, so renaming one breaks specs.
   Examples: the photo picker is two inputs, `vendor-photo-input-camera` (`capture`,
   single) and `vendor-photo-input-gallery` (multiple); list filters are hidden behind a
-  `Filters` toggle button (the panel stays mounted with `hidden`). Below 1024px, "Quick add"
+  `Filters` toggle button (the panel stays mounted and animates its max-height, going
+  `inert` while collapsed so its controls leave the tab order). Below 1024px, "Quick add"
   is a floating `.fab` and the top-bar copy is hidden. The bottom nav uses `grid-auto-flow: column`, so it fits
   any number of tabs (5 now). E2E runs at desktop width, so it sees
   the top-bar one. The seed's `v-cn` vendor is tagged `led-panel` and has a priced

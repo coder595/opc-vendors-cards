@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { SocialPlatform } from '../../db/models'
 import { RatingField, SelectField, TextAreaField, TextField } from '../../components/Field'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { getVendorBundle, saveVendorBundle, type VendorBundle } from '../../data/bundle'
 import { loadDraft, saveDraft, deleteDraft } from '../../data/drafts'
@@ -411,11 +412,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   }
 
   if (loading) {
-    return (
-      <p className="form-summary" role="status">
-        Loading vendor…
-      </p>
-    )
+    return <LoadingSpinner>Loading vendor…</LoadingSpinner>
   }
 
   if (loadError !== '') {
