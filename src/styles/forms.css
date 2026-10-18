@@ -755,6 +755,27 @@ input[type='file']::file-selector-button:hover {
   font-weight: 500;
 }
 
+.tag-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.chip--suggest {
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+}
+
+.chip--suggest:hover {
+  background: color-mix(in srgb, var(--brand-soft) 70%, transparent);
+  color: var(--ink);
+}
+
 .blob-image {
   object-fit: cover;
   border: 1px solid var(--line);
