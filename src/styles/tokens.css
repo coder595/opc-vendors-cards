@@ -61,6 +61,7 @@
   --overlay-fg: #ffffff; /* glyph on the always-dark photo-remove disc */
 
   --tap: 44px; /* minimum touch target */
+  --nav-h: 60px; /* bottom tab bar, without the safe-area inset; the form save bar sits on it */
 
   /* Motion: fast feedback, confident deceleration, exits faster than entrances. */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

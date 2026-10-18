@@ -130,6 +130,21 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   const draftId = mode === 'edit' && vendorId ? vendorId : 'new'
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const isDirtyRef = useRef(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const summaryRef = useRef<HTMLParagraphElement>(null)
+  const [failedSaves, setFailedSaves] = useState(0)
+
+  // Save sits at the bottom, so after a failed save bring the problem into view:
+  // the first visible invalid field, else the error summary at the top.
+  useEffect(() => {
+    if (failedSaves === 0) return
+    const invalid = [
+      ...(formRef.current?.querySelectorAll<HTMLElement>('[aria-invalid="true"]') ?? []),
+    ].find((el) => el.getClientRects().length > 0)
+    const target = invalid ?? summaryRef.current
+    target?.scrollIntoView?.({ block: 'center' }) // optional: jsdom lacks it
+    target?.focus({ preventScroll: true })
+  }, [failedSaves])
 
   useEffect(() => {
     photosRef.current = draft.photos
@@ -376,6 +391,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
     setErrors(result.errors)
     if (!result.bundle) {
       setSummary('Fix the highlighted fields before saving.')
+      setFailedSaves((n) => n + 1)
       return
     }
     setSaving(true)
@@ -388,6 +404,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
     } catch (err) {
       console.error(err)
       setSummary('The vendor could not be saved. Try again.')
+      setFailedSaves((n) => n + 1)
     } finally {
       setSaving(false)
     }
@@ -416,24 +433,19 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
 
   return (
     <VendorFormContext.Provider value={{ draft, dispatch, errors, removePhoto }}>
-      <form className="vendor-form" onSubmit={handleSubmit} noValidate aria-busy={saving}>
+      <form
+        ref={formRef}
+        className="vendor-form"
+        onSubmit={handleSubmit}
+        noValidate
+        aria-busy={saving}
+      >
         <div className="form-head">
           <h1>{mode === 'edit' ? 'Edit vendor' : 'New vendor'}</h1>
-          <div className="form-head__actions">
-            <a
-              className="btn btn--ghost"
-              href={mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'}
-            >
-              Cancel
-            </a>
-            <button type="submit" className="btn btn--primary" disabled={saving}>
-              {saving ? 'Saving…' : 'Save vendor'}
-            </button>
-          </div>
         </div>
 
         {summary ? (
-          <p className="form-summary" role="alert">
+          <p className="form-summary" role="alert" ref={summaryRef} tabIndex={-1}>
             {summary}
           </p>
         ) : null}
@@ -769,6 +781,19 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             onChange={(value) => dispatch({ type: 'setField', field: 'description', value })}
           />
         </section>
+
+        {/* Sticky at the bottom of the screen while the form scrolls, above the tab bar on phones. */}
+        <div className="form-bar">
+          <a
+            className="btn btn--ghost"
+            href={mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'}
+          >
+            Cancel
+          </a>
+          <button type="submit" className="btn btn--primary form-bar__save" disabled={saving}>
+            {saving ? 'Saving…' : 'Save vendor'}
+          </button>
+        </div>
       </form>
     </VendorFormContext.Provider>
   )

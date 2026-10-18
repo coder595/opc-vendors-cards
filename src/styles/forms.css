@@ -23,6 +23,42 @@
   gap: var(--sp-2);
 }
 
+/* Save bar: sticky to the screen bottom while the form is in view. Phones: edge to edge,
+   resting on the tab bar, Save fills the thumb zone. Desktop (rail nav): a floating card. */
+.form-bar {
+  position: sticky;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-inline: calc(var(--sp-4) * -1);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.form-bar__save {
+  flex: 1;
+}
+
+@media (min-width: 1024px) {
+  .form-bar {
+    bottom: var(--sp-4);
+    margin-inline: 0;
+    padding: var(--sp-3);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-2);
+  }
+
+  .form-bar__save {
+    flex: 0 0 auto;
+  }
+}
+
 .form-summary {
   margin: 0;
   padding: var(--sp-3);
