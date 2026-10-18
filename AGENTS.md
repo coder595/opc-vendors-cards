@@ -43,18 +43,24 @@ deep-improvements.md.
 - Validate all imported payloads (`src/lib/validate.ts`). CSV export guards formula
   injection (`= + - @`, tab, CR/LF) — exempts phone-shaped values — see `src/lib/csv.ts`.
 - `src/styles/tokens.css` is the visual source of truth. No colors outside the tokens.
-  New tokens go in **all five** theme blocks (`:root`, dark, gruvbox, oled, sepia) in
-  the same commit.
+  New colour tokens go in **all five** theme blocks (`:root`, dark, gruvbox, oled, sepia) in
+  the same commit; size tokens (`--tap`, `--nav-h`) live only in `:root`.
 - Buttons: `btn--primary` (one main action per screen), `btn--ghost` (secondary), `btn--danger`
   (destructive trigger, outlined), `btn--danger-solid` (the confirm step in a `<dialog className="dialog">`).
   Hovers use `color-mix` on tokens. Motion uses `--ease-out` and `--dur-1..3`; the seal stamp
   (keyed on status) is the one authored animation. `applyTheme` sets `data-theme-switching` so
   theme changes skip colour transitions; the a11y spec waits for `document.getAnimations()`.
+- Vendor form Save/Cancel live in the sticky `.form-bar` at the **end** of the form, not the
+  form head. On phones it sits on the tab bar via `bottom: var(--nav-h)`, and `--nav-h` is also
+  the `.nav` min-height, so change both together. A failed save focuses the first visible
+  `[aria-invalid]` field, else the error summary. Quick add keeps its own layout.
 
 ## Architecture map (non-obvious)
 
 - Entry: `src/main.tsx` → `ErrorBoundary` → `src/App.tsx`. `initTheme()` runs
-  synchronously before React render, reading `localStorage["opc.theme"]`.
+  synchronously before React render, reading `localStorage["opc.theme"]`; once the IndexedDB
+  settings row loads, `App.tsx` re-applies **its** theme, so writing only localStorage does not
+  stick past first paint.
 - Routing: hand-rolled hash router in `src/lib/useHashRoute.ts`. Routes:
   `#/vendors`, `#/vendors/new`, `#/vendors/quick`, `#/vendors/:id` (detail),
   `#/vendors/:id/edit`, `#/vendors/:id/share`, `#/import`, `#/share`, `#/people`,
@@ -84,6 +90,12 @@ deep-improvements.md.
   WhatsApp/mailto follow-up links (N7). `src/lib/csv.ts` — vendor CSV and one-row-per-product
   CSV (`buildProductCsv`, D6). `src/features/trip/compare.ts` — tag-based product
   comparison on the Trip screen (N3).
+- Tags: `src/lib/tags.ts` `tagKey` ignores case, spaces, `-` and `_`. The vendor form offers every
+  known tag (`db.vendors.orderBy('tags').uniqueKeys()`, which deliberately includes soft-deleted
+  vendors) as one-click chips, and `resolveTag` stores an existing spelling instead of a
+  near-duplicate. Existing duplicates are not merged (no rename/merge tool).
+- Incoterm `<select>` labels come from `INCOTERM_NAMES` (`landedCost.ts`), e.g. "FOB (Free On
+  Board)"; the stored value stays the bare code.
 - Downloads go through `downloadBlob` in `src/lib/share.ts`, which revokes the object URL
   after a timeout (Safari). Do not hand-roll `<a download>` + an immediate revoke.
 - Decode caps: NDJSON import enforces `LIMITS.maxTotalAttachmentBytes` per line; QR inflate is
@@ -154,7 +166,10 @@ deep-improvements.md.
   any number of tabs (5 now). E2E runs at desktop width, so it sees
   the top-bar one. The seed's `v-cn` vendor is tagged `led-panel` and has a priced
   product, so the Trip compare table renders for axe.
-- `tests/e2e/a11y.spec.ts` runs axe (WCAG 2.2 AA tags) across all 5 themes.
+- `tests/e2e/a11y.spec.ts` runs axe (WCAG 2.2 AA tags) across all 5 themes. To check a theme
+  in an ad-hoc spec, copy its `setTheme` (sets `data-theme` after load); setting
+  `localStorage["opc.theme"]` and reloading gets overwritten by the settings row (see Entry).
+- jsdom has no `scrollIntoView`; call it as `el.scrollIntoView?.(…)` in components that unit tests render.
 - To seed realistic data or produce a real export file, run `npx vite` and, in Playwright,
   `page.evaluate(() => import('/src/data/bundle.ts'))` (also `/src/lib/images.ts` `resizePhoto`,
   `/src/lib/exportImport.ts` `exportNdjsonStream`/`parseImport`). Vite dev serves `src` modules,
@@ -184,7 +199,7 @@ deep-improvements.md.
 - npm 11 blocks install scripts by default; `package.json` pins
   `allowScripts: { "esbuild@0.28.2": true }`. If a fresh install breaks esbuild:
   `npm install-scripts approve esbuild && npm rebuild esbuild`.
-- Manual update: Settings → "Update app" (`src/lib/appUpdate.ts`) calls `registration.update()`,
+- Manual update: Me tab (Settings screen) → "Update app" (`src/lib/appUpdate.ts`) calls `registration.update()`,
   then posts `SKIP_WAITING` to the new worker and reloads on `controllerchange`; it answers
   "already on the latest version" when nothing is waiting. It only swaps the SW precache;
   IndexedDB and localStorage are untouched. `__APP_BUILT_AT__` (build time, set in
@@ -201,18 +216,19 @@ deep-improvements.md.
   Regenerate with `python3 scripts/install-ecc-agents.py`; `scripts/` is not
   Prettier-formatted.
 
-## Open items (2026-10-17)
+## Open items (2026-10-18)
 
-- All pre-fair code work is merged and deployed (last: Rates tab, Update app button, `130b1fa`).
-  The FX, order-totals, Rates and update work has no plan-doc item IDs.
+- All pre-fair code work is merged and deployed (last: sticky vendor-form save bar, `2695445`;
+  before it Incoterm full names, tag suggestions and the tag field redesign).
+  The FX, order-totals, Rates, update, tag and form-bar work has no plan-doc item IDs.
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
   landed-cost quote checked by hand). Also paste the rates key on each device (it is
   device-local), check one OMR→CNY fetch, and press Me → Update app once on the installed app.
 - Sample data: `docs/sample-data-prompt.md` describes the Canton Fair 140th demo file (20 fictional
-  vendors, `sample` tag). Import it at `opc-vendors-cards.vercel.app`, never `www.skhazaen.com`
+  vendors, `sample` tag; the doc is untracked, local only). Import it at `opc-vendors-cards.vercel.app`, never `www.skhazaen.com`
   (real data; each origin has its own IndexedDB).
 - Post-fair backlog: A6 (import limits, needs device data), C5 (desktop two-pane), E2 leftovers
   (manifest screenshots, `share_target`), N8–N14. E3 is won't-fix.
-- About 28 `.ts`/`.tsx` files in `src` already fail `prettier --check`. Leave existing formatting alone in
+- About 27 `.ts`/`.tsx` files in `src` already fail `prettier --check` (`VendorForm.tsx` is now clean). Leave existing formatting alone in
   feature commits; reformat in a separate commit if wanted.
