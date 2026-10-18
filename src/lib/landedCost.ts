@@ -3,6 +3,12 @@ import { convertToBase } from './currency'
 
 export const INCOTERMS = ['EXW', 'FOB', 'CIF'] as const
 
+export const INCOTERM_NAMES: Record<(typeof INCOTERMS)[number], string> = {
+  EXW: 'Ex Works',
+  FOB: 'Free On Board',
+  CIF: 'Cost, Insurance and Freight',
+}
+
 /** Carton volume in m³ from centimetres, or null when a side is missing. */
 export function cartonCbm(
   product: Pick<Product, 'cartonLengthCm' | 'cartonWidthCm' | 'cartonHeightCm'>,
