@@ -46,6 +46,7 @@
 
 @media (min-width: 1024px) {
   .form-bar {
+    align-self: flex-end;
     bottom: var(--sp-4);
     margin-inline: 0;
     padding: var(--sp-3);
