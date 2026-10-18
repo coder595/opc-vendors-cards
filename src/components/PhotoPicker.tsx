@@ -9,7 +9,6 @@ interface PhotoPickerProps {
   label: string
   kind: AttachmentKind
   onAdd: (photo: PhotoDraft) => void
-  multiple?: boolean
   testId?: string
 }
 

@@ -22,7 +22,15 @@ test('searches, filters by status and country, and opens a detail', async ({ pag
   await expect(page.getByRole('link', { name: /Berlin Metal/ })).toHaveCount(0)
 
   await page.getByLabel('Search').fill('')
+  const filtersPanel = page.locator('#vendor-filters')
+  // Collapsed by default (grid-template-rows: 0fr) — must occupy no height.
+  expect(await filtersPanel.evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(2)
   await page.getByRole('button', { name: /^Filters/ }).click()
+  await expect(page.getByLabel('Status')).toBeVisible()
+  // Open: spans the full controls row (guard the regression where it did not).
+  const controlsWidth = (await page.locator('.list-controls').boundingBox())!.width
+  const panelWidth = (await filtersPanel.boundingBox())!.width
+  expect(Math.abs(panelWidth - controlsWidth)).toBeLessThanOrEqual(1)
   await page.getByLabel('Status').selectOption('quoted')
   await page.getByLabel('Country').selectOption('China')
   await expect(page.getByRole('link', { name: /Guangzhou Lighting/ })).toBeVisible()

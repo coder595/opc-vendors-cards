@@ -375,7 +375,9 @@ input[type='file']::file-selector-button:hover {
 
 .form-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: var(--sp-2);
   padding-top: var(--sp-4);
   border-top: 1px solid var(--line);
 }
@@ -570,25 +572,29 @@ input[type='file']::file-selector-button:hover {
   min-width: 0;
 }
 
-/* Filter panel: animates open/closed with overflow hidden + max-height.
-   Uses a nested grid wrapper so the transition runs on the outer container
-   while the inner elements lay out naturally. */
+/* Filter panel: a full-width band that animates open/closed with the
+   grid-template-rows 0fr→1fr technique, so it grows to any content height
+   (no fragile max-height cap that could clip the last rows under zoom/large
+   text). The panel is a grid item of .list-controls, so it must span the row. */
 .list-filters {
+  grid-column: 1 / -1;
   display: grid;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height var(--dur-3) var(--ease-out);
+  grid-template-rows: 0fr;
 }
 
-.list-filters > * {
-  min-height: 0; /* FF needs this inside a max-height animation */
+@media (prefers-reduced-motion: no-preference) {
+  .list-filters {
+    transition: grid-template-rows var(--dur-3) var(--ease-out);
+  }
 }
 
 .list-filters--open {
-  max-height: 780px; /* tall enough for all 8 filter rows at any breakpoint */
+  grid-template-rows: 1fr;
 }
 
 .list-filters__inner {
+  min-height: 0;
+  overflow: hidden;
   display: grid;
   gap: var(--sp-3);
 }
@@ -1596,7 +1602,9 @@ input[type='file']::file-selector-button:hover {
   border: 1px solid var(--brand);
   border-radius: var(--r-md);
   background: transparent;
-  color: var(--brand);
+  /* Ink, not brand: brand text on --surface is 4.42:1 in the light theme.
+     The brand stays as the border, which is a non-text mark (>= 3:1). */
+  color: var(--ink);
   font-weight: 600;
   cursor: pointer;
 }

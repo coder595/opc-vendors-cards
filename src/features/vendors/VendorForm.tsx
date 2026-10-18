@@ -753,7 +753,6 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
               testId="vendor-photo-input"
               label="Add photo"
               kind="booth"
-              multiple
               onAdd={(photo) => dispatch({ type: 'addPhoto', photo })}
             />
             {draft.photos

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { BlobImage } from '../../components/BlobImage'
 import { EmptyState } from '../../components/EmptyState'
@@ -96,6 +96,7 @@ export function VendorList() {
   }, [])
   const [query, setQuery] = useState<VendorQuery>(parseHashQuery)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const filtersButtonRef = useRef<HTMLButtonElement>(null)
   const [bannerDismissed, setBannerDismissed] = useState(
     () => localStorage.getItem('opc.backupBannerDismissed') === 'true',
   )
@@ -164,8 +165,14 @@ export function VendorList() {
         </div>
         <button
           type="button"
+          ref={filtersButtonRef}
           className="btn btn--ghost"
-          onClick={() => setFiltersOpen((prev) => !prev)}
+          onClick={() => {
+            // Collapsing makes the panel inert, so move focus back to the toggle
+            // before the focused control would be removed from the tab order.
+            if (filtersOpen) filtersButtonRef.current?.focus()
+            setFiltersOpen((prev) => !prev)
+          }}
           aria-expanded={filtersOpen}
           aria-controls="vendor-filters"
         >
