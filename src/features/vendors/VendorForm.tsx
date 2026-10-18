@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import type { SocialPlatform } from '../../db/models'
 import { RatingField, SelectField, TextAreaField, TextField } from '../../components/Field'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
@@ -11,6 +12,7 @@ import { parseCardText } from '../../lib/cardParser'
 import { formatDate } from '../../lib/format'
 import { validateVendorDraft } from '../../lib/formValidation'
 import { requestPersistentStorage } from '../../lib/storage'
+import { resolveTag, suggestTags } from '../../lib/tags'
 import { ContactFields } from './ContactFields'
 import { ProductFields } from './ProductFields'
 import {
@@ -22,7 +24,6 @@ import {
   type VendorDraft,
 } from './formState'
 import { VendorFormContext } from './VendorFormContext'
-
 
 function bundleToDraft(bundle: VendorBundle): VendorDraft {
   const { vendor, contacts, products, attachments } = bundle
@@ -100,6 +101,16 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   const [draft, dispatch] = useReducer(vendorReducer, undefined, createEmptyDraft)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [summary, setSummary] = useState('')
+  const [tagInput, setTagInput] = useState('')
+  // Every tag already used on a vendor, from the *tags multi-entry index.
+  const knownTags = useLiveQuery(
+    async () =>
+      ((await db.vendors.orderBy('tags').uniqueKeys()) as string[]).sort((a, b) =>
+        a.localeCompare(b),
+      ),
+    [],
+    [] as string[],
+  )
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(mode === 'edit')
   const [loadError, setLoadError] = useState('')
@@ -125,16 +136,10 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
       }
       const needle = name.toLowerCase()
       const matches = await db.vendors
-        .filter(
-          (v) =>
-            v.deletedAt === undefined &&
-            v.name.toLowerCase().includes(needle),
-        )
+        .filter((v) => v.deletedAt === undefined && v.name.toLowerCase().includes(needle))
         .toArray()
       if (!active) return
-      const best = matches.find(
-        (v) => !(mode === 'edit' && v.id === vendorId),
-      )
+      const best = matches.find((v) => !(mode === 'edit' && v.id === vendorId))
       if (best) {
         setDuplicateHint({
           id: best.id,
@@ -229,7 +234,13 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
           photos: saved.photos.map((ph) => ({
             key: ph.key,
             kind: ph.kind,
-            image: { blob: ph.blob, thumb: ph.thumb, width: ph.width, height: ph.height, bytes: ph.bytes },
+            image: {
+              blob: ph.blob,
+              thumb: ph.thumb,
+              width: ph.width,
+              height: ph.height,
+              bytes: ph.bytes,
+            },
             previewUrl: URL.createObjectURL(ph.thumb),
           })),
         }
@@ -249,7 +260,8 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   }, [draftId])
 
   useEffect(() => {
-    isDirtyRef.current = draft.name !== '' || draft.contacts.some((c) => c.name !== '') || draft.photos.length > 0
+    isDirtyRef.current =
+      draft.name !== '' || draft.contacts.some((c) => c.name !== '') || draft.photos.length > 0
   }, [draft])
 
   useEffect(() => {
@@ -320,7 +332,9 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
         updatedAt: Date.now(),
       })
     }, 800)
-    return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current) }
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
+    }
   }, [draft, draftId])
 
   useEffect(() => {
@@ -455,7 +469,9 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
                 type="button"
                 className="btn btn--primary"
                 onClick={() => {
-                  const ta = document.getElementById('card-paste-text') as HTMLTextAreaElement | null
+                  const ta = document.getElementById(
+                    'card-paste-text',
+                  ) as HTMLTextAreaElement | null
                   if (!ta || !ta.value.trim()) return
                   const parsed = parseCardText(ta.value)
                   if (parsed.company && draft.name.trim() === '') {
@@ -483,7 +499,11 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
                   if (parsed.wechat) {
                     for (const contact of draft.contacts) {
                       if (contact.wechat === '') {
-                        dispatch({ type: 'updateContact', key: contact.key, patch: { wechat: parsed.wechat } })
+                        dispatch({
+                          type: 'updateContact',
+                          key: contact.key,
+                          patch: { wechat: parsed.wechat },
+                        })
                       }
                     }
                   }
@@ -604,17 +624,37 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             id="vendor-tags"
             aria-label="Add a tag"
             placeholder="Add a tag and press Enter"
+            value={tagInput}
+            onChange={(event) => setTagInput(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ',') {
                 event.preventDefault()
-                const value = (event.target as HTMLInputElement).value.trim()
-                if (value && !draft.tags.includes(value)) {
-                  dispatch({ type: 'addTag', value })
+                if (tagInput.trim()) {
+                  const value = resolveTag(tagInput, [...draft.tags, ...knownTags])
+                  if (!draft.tags.includes(value)) dispatch({ type: 'addTag', value })
                 }
-                (event.target as HTMLInputElement).value = ''
+                setTagInput('')
               }
             }}
           />
+          {suggestTags(knownTags, draft.tags, tagInput).length > 0 ? (
+            <div className="tag-suggest" role="group" aria-label="Saved tags">
+              {suggestTags(knownTags, draft.tags, tagInput).map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className="chip chip--suggest"
+                  aria-label={`Add tag ${tag}`}
+                  onClick={() => {
+                    dispatch({ type: 'addTag', value: tag })
+                    setTagInput('')
+                  }}
+                >
+                  + {tag}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <section className="form-section" aria-labelledby="socials-heading">
@@ -626,7 +666,11 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
                 label="Platform"
                 value={social.platform}
                 onChange={(value) =>
-                  dispatch({ type: 'updateSocial', index, patch: { platform: value as SocialPlatform } })
+                  dispatch({
+                    type: 'updateSocial',
+                    index,
+                    patch: { platform: value as SocialPlatform },
+                  })
                 }
                 options={[
                   { value: 'wechat', label: 'WeChat' },
@@ -642,9 +686,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
                 id={`social-${index}-value`}
                 label="Handle or URL"
                 value={social.value}
-                onChange={(value) =>
-                  dispatch({ type: 'updateSocial', index, patch: { value } })
-                }
+                onChange={(value) => dispatch({ type: 'updateSocial', index, patch: { value } })}
               />
               <button
                 type="button"
@@ -656,7 +698,11 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
               </button>
             </div>
           ))}
-          <button type="button" className="btn btn--ghost" onClick={() => dispatch({ type: 'addSocial' })}>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => dispatch({ type: 'addSocial' })}
+          >
             Add social link
           </button>
         </section>
