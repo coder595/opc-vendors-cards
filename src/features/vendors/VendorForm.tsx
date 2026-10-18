@@ -111,6 +111,15 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
     [],
     [] as string[],
   )
+  const tagSuggestions = suggestTags(knownTags, draft.tags, tagInput)
+
+  function addTag(typed: string) {
+    if (typed.trim()) {
+      const value = resolveTag(typed, [...draft.tags, ...knownTags])
+      if (!draft.tags.includes(value)) dispatch({ type: 'addTag', value })
+    }
+    setTagInput('')
+  }
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(mode === 'edit')
   const [loadError, setLoadError] = useState('')
@@ -605,54 +614,71 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
 
         <section className="form-section" aria-labelledby="tags-heading">
           <h2 id="tags-heading">Tags</h2>
-          <div className="chip-row" role="group" aria-label="Tags">
-            {draft.tags.map((tag) => (
-              <span key={tag} className="chip">
-                {tag}
-                <button
-                  type="button"
-                  className="chip__remove"
-                  aria-label={`Remove tag ${tag}`}
-                  onClick={() => dispatch({ type: 'removeTag', value: tag })}
-                >
-                  &times;
-                </button>
-              </span>
-            ))}
-          </div>
-          <input
-            id="vendor-tags"
-            aria-label="Add a tag"
-            placeholder="Add a tag and press Enter"
-            value={tagInput}
-            onChange={(event) => setTagInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ',') {
-                event.preventDefault()
-                if (tagInput.trim()) {
-                  const value = resolveTag(tagInput, [...draft.tags, ...knownTags])
-                  if (!draft.tags.includes(value)) dispatch({ type: 'addTag', value })
+          <div className="tag-field">
+            {draft.tags.length > 0 ? (
+              <ul className="tag-field__tags" aria-label="Tags">
+                {draft.tags.map((tag) => (
+                  <li key={tag} className="tag">
+                    <span className="tag__text">{tag}</span>
+                    <button
+                      type="button"
+                      className="tag__remove"
+                      aria-label={`Remove tag ${tag}`}
+                      onClick={() => dispatch({ type: 'removeTag', value: tag })}
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <input
+              id="vendor-tags"
+              className="tag-field__input"
+              aria-label="Add a tag"
+              aria-describedby="vendor-tags-hint"
+              placeholder={draft.tags.length > 0 ? 'Add another…' : 'Type a tag, e.g. LED panel'}
+              autoComplete="off"
+              enterKeyHint="done"
+              value={tagInput}
+              onChange={(event) => setTagInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ',') {
+                  event.preventDefault()
+                  addTag(tagInput)
+                } else if (event.key === 'Backspace' && tagInput === '') {
+                  const last = draft.tags.at(-1)
+                  if (last !== undefined) dispatch({ type: 'removeTag', value: last })
                 }
-                setTagInput('')
-              }
-            }}
-          />
-          {suggestTags(knownTags, draft.tags, tagInput).length > 0 ? (
-            <div className="tag-suggest" role="group" aria-label="Saved tags">
-              {suggestTags(knownTags, draft.tags, tagInput).map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className="chip chip--suggest"
-                  aria-label={`Add tag ${tag}`}
-                  onClick={() => {
-                    dispatch({ type: 'addTag', value: tag })
-                    setTagInput('')
-                  }}
-                >
-                  + {tag}
-                </button>
-              ))}
+              }}
+            />
+          </div>
+          <p id="vendor-tags-hint" className="tag-field__hint">
+            Press Enter to add. Matching tags reuse the saved spelling.
+          </p>
+          {tagSuggestions.length > 0 ? (
+            <div className="tag-suggest" role="group" aria-labelledby="tag-suggest-label">
+              <span id="tag-suggest-label" className="tag-suggest__label">
+                Saved tags
+              </span>
+              <div className="tag-suggest__list">
+                {tagSuggestions.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="tag-suggest__btn"
+                    aria-label={`Add tag ${tag}`}
+                    onClick={() => addTag(tag)}
+                  >
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M8 3.5v9M3.5 8h9" />
+                    </svg>
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
         </section>
