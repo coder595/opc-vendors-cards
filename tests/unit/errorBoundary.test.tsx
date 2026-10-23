@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ErrorBoundary } from '../../src/components/ErrorBoundary'
+import { ErrorBoundary, isIdbConnectionLost } from '../../src/components/ErrorBoundary'
 
 function Boom(): never {
   throw new Error('kaboom')
@@ -29,6 +29,18 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('kaboom')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /reload/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /export a backup/i })).toBeInTheDocument()
+  })
+
+  it('recognises the iOS IndexedDB connection-lost errors', () => {
+    const unknown = new Error('Unable to open cursor UnknownError: Unable to open cursor')
+    unknown.name = 'UnknownError'
+    expect(isIdbConnectionLost(unknown)).toBe(true)
+    expect(
+      isIdbConnectionLost(
+        new Error('Connection to Indexed Database server lost. Refresh the page'),
+      ),
+    ).toBe(true)
+    expect(isIdbConnectionLost(new Error('kaboom'))).toBe(false)
   })
 
   it('normalizes non-Error throws', () => {
