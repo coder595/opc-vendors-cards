@@ -8,6 +8,26 @@ interface ErrorBoundaryState {
   error: Error | null
 }
 
+const IDB_RELOAD_KEY = 'opc.idbReloadAt'
+
+export function isIdbConnectionLost(error: Error): boolean {
+  return (
+    error.name === 'UnknownError' ||
+    /unable to open cursor|indexed ?d(b|atabase) server lost/i.test(error.message)
+  )
+}
+
+function reloadedRecently(): boolean {
+  try {
+    const last = Number(sessionStorage.getItem(IDB_RELOAD_KEY) ?? 0)
+    if (Date.now() - last < 10_000) return true
+    sessionStorage.setItem(IDB_RELOAD_KEY, String(Date.now()))
+    return false
+  } catch {
+    return true // no storage → no loop guard, so don't auto-reload
+  }
+}
+
 /**
  * Last-resort UI guard. There is no telemetry: the error is logged locally only.
  * Data stays in IndexedDB, so a reload recovers it.
@@ -22,6 +42,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error('Unhandled UI error', error, info.componentStack)
+    // iOS Safari drops its IndexedDB connection after the app sits in the background
+    // ("Unable to open cursor", "Connection to Indexed Database server lost"). Only a reload
+    // reopens it, so do that once; a repeat within 10 s falls through to the fallback UI.
+    if (isIdbConnectionLost(error) && !reloadedRecently()) window.location.reload()
   }
 
   override render(): ReactNode {
