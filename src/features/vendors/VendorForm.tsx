@@ -103,10 +103,12 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [summary, setSummary] = useState('')
   const [tagInput, setTagInput] = useState('')
-  // Every tag already used on a vendor, from the *tags multi-entry index.
+  // Every tag already used on a vendor, soft-deleted ones included. Not
+  // orderBy('tags').uniqueKeys(): iOS Safari fails a unique key cursor on the
+  // multi-entry index with "UnknownError: Unable to open cursor".
   const knownTags = useLiveQuery(
     async () =>
-      ((await db.vendors.orderBy('tags').uniqueKeys()) as string[]).sort((a, b) =>
+      [...new Set((await db.vendors.toArray()).flatMap((v) => v.tags))].sort((a, b) =>
         a.localeCompare(b),
       ),
     [],
