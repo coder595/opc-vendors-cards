@@ -23,7 +23,8 @@ deep-improvements.md.
   `npx playwright test tests/e2e/<file>`.
 - `test:e2e` = `npm run build && playwright test` (not bare `playwright test`).
   `playwright.config.ts` serves `vite preview` on port 4173 and only reuses an
-  existing server outside `CI`.
+  existing server outside `CI`. When several worktrees run e2e at once, use `CI=1 npm run test:e2e`
+  so a spec doesn't hit another worktree's server on 4173.
 - `tsc -b` is incremental (`node_modules/.tmp/*.tsbuildinfo`) and can pass on stale info. Use
   `npx tsc -b --force` to see what a clean CI checkout sees. The test project
   (`tsconfig.test.json`, adds Node types) type-checks any `src` file a test imports.
@@ -55,6 +56,19 @@ deep-improvements.md.
   theme changes skip colour transitions; the a11y spec waits for `document.getAnimations()`.
   The global `prefers-reduced-motion: reduce` block zeroes `animation-*` but **not** transitions,
   so gate every new transition or animation on `prefers-reduced-motion: no-preference` yourself.
+- Microinteractions (keep them subtle: transform/opacity, ≤ `--dur-2`):
+  - Async buttons render their text through `ActionLabel` (`src/components/ActionLabel.tsx`). It stacks
+    every label (idle/busy/done) in one grid cell, so the button never changes width. Set
+    `aria-busy` while working. `useMutation` returns `status` (`idle`/`busy`/`done`; `done` lasts
+    `DONE_MS` = 1.5 s). For those 1.5 s the button's accessible name is the done label (e.g. "Saved ✓").
+  - Vibrate only via `haptic('success' | 'error')` in `src/lib/haptics.ts`. It is a no-op on iOS
+    and under reduced motion.
+  - New repeatable rows in the vendor form fade in via `@starting-style` under
+    `.vendor-form[data-live]` (forms.css). `data-live` is set on the first pointer/key event, so
+    loading a vendor doesn't animate every row. To animate a new row type, add its class to that
+    `:is(…)` list.
+  - `PhotoPicker` prefixes its label with "Take " / "Choose ", so pass a lowercase noun
+    (`label="product photo"`), not "Add photo".
 - Vendor form Save/Cancel live in the sticky `.form-bar` at the **end** of the form, not the
   form head. On phones it sits on the tab bar via `bottom: var(--nav-h)`, and `--nav-h` is also
   the `.nav` min-height, so change both together. A failed save focuses the first visible
@@ -102,7 +116,9 @@ deep-improvements.md.
 - Incoterm `<select>` labels come from `INCOTERM_NAMES` (`landedCost.ts`), e.g. "FOB (Free On
   Board)"; the stored value stays the bare code.
 - Downloads go through `downloadBlob` in `src/lib/share.ts`, which revokes the object URL
-  after a timeout (Safari). Do not hand-roll `<a download>` + an immediate revoke.
+  after a timeout (Safari). Do not hand-roll `<a download>` + an immediate revoke. The photo
+  viewer's Share button sends the photo through `navigator.share({ files })` and falls back to
+  `downloadBlob`. The vendor QR card never carries photos.
 - Decode caps: NDJSON import enforces `LIMITS.maxTotalAttachmentBytes` per line; QR inflate is
   capped at 64 KB (`MAX_INFLATED_BYTES`), and decoded cards are length-checked against `LIMITS`.
 - Money: `src/lib/currency.ts`. Rates are **units of C per 1 base**, so
@@ -183,6 +199,8 @@ deep-improvements.md.
   `opc.idbReloadAt`). E2E runs Chromium only, and Playwright WebKit cannot launch on the dev
   machine (missing system libs), so iOS-only bugs need the real device.
 - jsdom has no `scrollIntoView`; call it as `el.scrollIntoView?.(…)` in components that unit tests render.
+- jsdom's `<dialog>` lacks a working `showModal`. Stub it to `setAttribute('open', '')`, otherwise
+  `getByRole` treats the dialog's buttons as hidden (see `tests/unit/photoViewer.test.tsx`).
 - To seed realistic data or produce a real export file, run `npx vite` and, in Playwright,
   `page.evaluate(() => import('/src/data/bundle.ts'))` (also `/src/lib/images.ts` `resizePhoto`,
   `/src/lib/exportImport.ts` `exportNdjsonStream`/`parseImport`). Vite dev serves `src` modules,
@@ -234,7 +252,11 @@ deep-improvements.md.
 ## Open items (2026-10-24)
 
 - All pre-fair code work is merged and deployed. The FX, order-totals, Rates, update, tag,
-  form-bar, UI-polish and accessibility/contrast work has no plan-doc item IDs.
+  form-bar, UI-polish, accessibility/contrast, photo-share and microinteraction work has no
+  plan-doc item IDs.
+- Known small gaps: removing a form row has no exit animation. The tag remove "×" is 26px, below
+  `--tap`. The "Draft saved" indicator appears on edit before any change, because the form
+  writes its draft right after it loads.
 - **Real-device testing before the fair:** use the checklist in `docs/field-notes.md`
   (Android, iPhone, Windows laptop, 100-vendor/500-photo round-trip, QR scan, and one
   landed-cost quote checked by hand). Also paste the rates key on each device (it is
