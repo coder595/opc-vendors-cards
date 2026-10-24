@@ -1732,3 +1732,48 @@ input[type='file']::file-selector-button:hover {
   color: var(--muted);
   margin: var(--sp-2) 0;
 }
+
+/* ── Async button states and draft indicator (microinteractions B) ──────────
+   ActionLabel stacks every label a button can show in one grid cell, so the
+   widest sets the width and switching "Save rates" → "Saving…" → "Saved ✓"
+   never shifts the layout. No motion: the label swap is the feedback. */
+.action-label {
+  display: inline-grid;
+}
+
+.action-label__text {
+  grid-area: 1 / 1;
+  text-align: center;
+}
+
+.action-label__text:not([data-shown]) {
+  visibility: hidden;
+}
+
+/* A busy button is disabled, but it is working, not unavailable: keep it
+   readable instead of the 0.45 disabled fade. */
+.btn[aria-busy='true']:disabled {
+  opacity: 0.8;
+}
+
+/* "Draft saved 14:02" in the vendor form bar. Small and muted; on a 360px phone
+   the time wraps under the words so Cancel and Save keep their size. */
+.form-bar__draft {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 auto 0 0;
+  align-self: center;
+  font-size: var(--fs-xs);
+  line-height: 1.25;
+  color: var(--ink-2);
+}
+
+/* Stays rendered while empty so the live region exists before its first
+   message; the negative margin cancels the flex gap it would add. */
+.form-bar__draft:empty {
+  margin-right: calc(var(--sp-2) * -1);
+}
+
+.form-bar__draft-time {
+  display: inline-block;
+}
