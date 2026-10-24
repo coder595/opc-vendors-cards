@@ -96,7 +96,7 @@ deep-improvements.md.
   CSV (`buildProductCsv`, D6). `src/features/trip/compare.ts` — tag-based product
   comparison on the Trip screen (N3).
 - Tags: `src/lib/tags.ts` `tagKey` ignores case, spaces, `-` and `_`. The vendor form offers every
-  known tag (`db.vendors.orderBy('tags').uniqueKeys()`, which deliberately includes soft-deleted
+  known tag (collected from `db.vendors.toArray()`, which deliberately includes soft-deleted
   vendors) as one-click chips, and `resolveTag` stores an existing spelling instead of a
   near-duplicate. Existing duplicates are not merged (no rename/merge tool).
 - Incoterm `<select>` labels come from `INCOTERM_NAMES` (`landedCost.ts`), e.g. "FOB (Free On
@@ -176,6 +176,12 @@ deep-improvements.md.
   `localStorage["opc.theme"]` and reloading gets overwritten by the settings row (see Entry).
   The file is heavy (the vendor-detail tab sweep alone does 30 scans) and sets
   `test.describe.configure({ timeout: 60_000 })`; ~28s runs under parallel load are expected.
+- **iOS Safari IndexedDB** ("UnknownError: Unable to open cursor"): never open a unique key
+  cursor on a multi-entry index (`orderBy('tags').uniqueKeys()` crashed Add vendor on iPhone);
+  read rows and dedupe in JS. Separately, iOS can drop the IDB connection after backgrounding;
+  `ErrorBoundary` auto-reloads once on that error (10 s guard in sessionStorage
+  `opc.idbReloadAt`). E2E runs Chromium only, and Playwright WebKit cannot launch on the dev
+  machine (missing system libs), so iOS-only bugs need the real device.
 - jsdom has no `scrollIntoView`; call it as `el.scrollIntoView?.(…)` in components that unit tests render.
 - To seed realistic data or produce a real export file, run `npx vite` and, in Playwright,
   `page.evaluate(() => import('/src/data/bundle.ts'))` (also `/src/lib/images.ts` `resizePhoto`,
@@ -191,7 +197,9 @@ deep-improvements.md.
   when the user asks.
 - CI (`.github/workflows/deploy.yml`) on push to `master`: `verify` (lint → typecheck →
   test) → `test-e2e` → `deploy`. The deploy job needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`,
-  `VERCEL_PROJECT_ID` secrets; if the token expires the job fails.
+  `VERCEL_PROJECT_ID` secrets. An expired token fails as "Could not retrieve Project Settings";
+  the user sets a new one with `gh secret set VERCEL_TOKEN` (pasting at the prompt, never in
+  chat), then `gh run rerun <id> --failed`.
 - Production: `https://www.skhazaen.com` (aliases `opc-vendors-cards.vercel.app`,
   `opc-vendors-cards-sama-khazaen.vercel.app`).
 - Vercel blocks a deployment whose commit author has no seat on the team. That is why
@@ -223,7 +231,7 @@ deep-improvements.md.
   Regenerate with `python3 scripts/install-ecc-agents.py`; `scripts/` is not
   Prettier-formatted.
 
-## Open items (2026-10-18)
+## Open items (2026-10-24)
 
 - All pre-fair code work is merged and deployed. The FX, order-totals, Rates, update, tag,
   form-bar, UI-polish and accessibility/contrast work has no plan-doc item IDs.
