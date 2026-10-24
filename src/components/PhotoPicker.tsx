@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import type { AttachmentKind } from '../db/models'
 import { resizePhoto } from '../lib/images'
 import { newKey } from '../lib/app'
+import { ActionLabel } from './ActionLabel'
 import type { PhotoDraft } from '../features/vendors/formState'
 
 interface PhotoPickerProps {
@@ -91,18 +92,26 @@ export function PhotoPicker({ id, label, kind, onAdd, testId }: PhotoPickerProps
         className="btn btn--ghost"
         onClick={triggerCamera}
         disabled={busy}
+        aria-busy={busy}
         aria-describedby={error ? `${id}-error` : undefined}
       >
-        {busy ? 'Processing\u2026' : `Take ${label}`}
+        <ActionLabel
+          show={busy ? 'busy' : 'idle'}
+          labels={{ idle: `Take ${label}`, busy: 'Processing\u2026' }}
+        />
       </button>
       <button
         type="button"
         className="btn btn--ghost"
         onClick={triggerGallery}
         disabled={busy}
+        aria-busy={busy}
         aria-describedby={error ? `${id}-error` : undefined}
       >
-        {busy ? 'Processing\u2026' : `Choose ${label}`}
+        <ActionLabel
+          show={busy ? 'busy' : 'idle'}
+          labels={{ idle: `Choose ${label}`, busy: 'Processing\u2026' }}
+        />
       </button>
       {error ? (
         <p className="field__error" id={`${id}-error`} role="alert">

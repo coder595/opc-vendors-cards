@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ActionLabel } from '../../components/ActionLabel'
 import { TextField } from '../../components/Field'
 import type { ExportEnvelope, ImportMode } from '../../db/models'
 import { db } from '../../db/schema'
@@ -27,10 +28,13 @@ import {
 } from '../../lib/share'
 import { validateEnvelope, type RejectedRecord } from '../../lib/validate'
 
+type ExportAction = 'share' | 'download' | 'csv' | 'products'
+
 function ExportPanel() {
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
+  /** The export action in flight; the other export buttons are disabled meanwhile. */
+  const [busy, setBusy] = useState<ExportAction | null>(null)
   const [format, setFormat] = useState<1 | 2>(2)
   const [includePhotos, setIncludePhotos] = useState(true)
   const [sizeEstimate, setSizeEstimate] = useState<ExportSizeEstimate | null>(null)
@@ -48,22 +52,30 @@ function ExportPanel() {
   const markExported = () =>
     localStorage.setItem('opc.lastExportAt', Date.now().toString())
 
-  const runExport = async (task: () => Promise<string>) => {
-    setBusy(true)
+  const runExport = async (action: ExportAction, task: () => Promise<string>) => {
+    setBusy(action)
     setError('')
-    setStatus('')
+    setStatus('Preparing the file…')
     try {
       setStatus(await task())
     } catch (err) {
       console.error(err)
+      setStatus('')
       setError('Export failed. Your data is unchanged.')
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
+  const exportLabel = (action: ExportAction, label: string, busyLabel = 'Exporting…') => (
+    <ActionLabel
+      show={busy === action ? 'busy' : 'idle'}
+      labels={{ idle: label, busy: busyLabel }}
+    />
+  )
+
   const exportJson = () =>
-    runExport(async () => {
+    runExport('download', async () => {
       let blob: Blob
       if (format === 2) {
         const chunks: Uint8Array[] = []
@@ -80,7 +92,7 @@ function ExportPanel() {
     })
 
   const exportCsv = () =>
-    runExport(async () => {
+    runExport('csv', async () => {
       const [vendors, contacts, products] = await Promise.all([
         db.vendors.toArray(),
         db.contacts.toArray(),
@@ -97,7 +109,7 @@ function ExportPanel() {
     })
 
   const exportProductsCsv = () =>
-    runExport(async () => {
+    runExport('products', async () => {
       const [vendors, products, settings] = await Promise.all([
         db.vendors.toArray(),
         db.products.toArray(),
@@ -118,7 +130,7 @@ function ExportPanel() {
     })
 
   const shareJson = () =>
-    runExport(async () => {
+    runExport('share', async () => {
       let blob: Blob
       if (format === 2) {
         const chunks: Uint8Array[] = []
@@ -179,34 +191,38 @@ function ExportPanel() {
             type="button"
             className="btn btn--primary"
             onClick={() => void shareJson()}
-            disabled={busy}
+            disabled={busy !== null}
+            aria-busy={busy === 'share'}
           >
-            Share file
+            {exportLabel('share', 'Share file', 'Sharing…')}
           </button>
         ) : null}
         <button
           type="button"
           className={canShareFiles() ? 'btn btn--ghost' : 'btn btn--primary'}
           onClick={() => void exportJson()}
-          disabled={busy}
+          disabled={busy !== null}
+          aria-busy={busy === 'download'}
         >
-          Download export
+          {exportLabel('download', 'Download export')}
         </button>
         <button
           type="button"
           className="btn btn--ghost"
           onClick={() => void exportCsv()}
-          disabled={busy}
+          disabled={busy !== null}
+          aria-busy={busy === 'csv'}
         >
-          Export CSV
+          {exportLabel('csv', 'Export CSV')}
         </button>
         <button
           type="button"
           className="btn btn--ghost"
           onClick={() => void exportProductsCsv()}
-          disabled={busy}
+          disabled={busy !== null}
+          aria-busy={busy === 'products'}
         >
-          Products CSV
+          {exportLabel('products', 'Products CSV')}
         </button>
       </div>
       {status ? (
@@ -413,8 +429,15 @@ function ImportPanel() {
             className="btn btn--primary"
             onClick={() => void apply()}
             disabled={busy}
+            aria-busy={busy}
           >
-            {mode === 'replace' ? 'Replace all data' : 'Merge into this device'}
+            <ActionLabel
+              show={busy ? 'busy' : 'idle'}
+              labels={{
+                idle: mode === 'replace' ? 'Replace all data' : 'Merge into this device',
+                busy: 'Importing…',
+              }}
+            />
           </button>
         </div>
       ) : null}

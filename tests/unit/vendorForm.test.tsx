@@ -99,6 +99,17 @@ describe('VendorForm', () => {
     )
   })
 
+  it('shows "Draft saved" in the form bar only once a draft is written', async () => {
+    const user = userEvent.setup()
+    render(<VendorForm mode="new" />)
+    expect(screen.queryByText(/draft saved/i)).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText(/company name/i), 'ACME')
+
+    expect(await screen.findByText(/draft saved/i, {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(saveDraft).toHaveBeenCalled()
+  })
+
   it('gives every text input an accessible name', () => {
     render(<VendorForm mode="new" />)
     for (const input of screen.getAllByRole('textbox')) {
