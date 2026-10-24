@@ -753,7 +753,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
             <PhotoPicker
               id="vendor-photo"
               testId="vendor-photo-input"
-              label="Add photo"
+              label="photo"
               kind="booth"
               onAdd={(photo) => dispatch({ type: 'addPhoto', photo })}
             />

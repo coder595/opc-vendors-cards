@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Attachment } from '../db/models'
 import { ATTACHMENT_KIND_LABEL } from '../db/labels'
+import { canShareFiles, downloadBlob } from '../lib/share'
 
 const blobUrls = new Map<string, string>()
 
@@ -73,6 +74,20 @@ export function PhotoViewer({ attachments, initialIndex, onClose, onDelete }: Ph
   const prev = useCallback(() => setIndex((i) => Math.max(0, i - 1)), [])
   const next = useCallback(() => setIndex((i) => Math.min(attachments.length - 1, i + 1)), [attachments.length])
 
+  // Share sheet (WhatsApp, WeChat, Mail…) where the browser can share files, else download.
+  const sharePhoto = useCallback(async (att: Attachment, name: string) => {
+    const file = new File([att.blob], name, { type: att.blob.type || 'image/jpeg' })
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] })
+      } catch {
+        // Cancelled by the user; nothing to do.
+      }
+      return
+    }
+    downloadBlob(att.blob, name)
+  }, [])
+
   if (!attachment) return null
 
   return (
@@ -102,6 +117,13 @@ export function PhotoViewer({ attachments, initialIndex, onClose, onDelete }: Ph
               Previous
             </button>
           ) : <span />}
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => void sharePhoto(attachment, `${attachment.kind}-photo-${index + 1}.jpg`)}
+          >
+            {canShareFiles() ? 'Share' : 'Download'}
+          </button>
           {onDelete ? (
             <button type="button" className="btn btn--ghost" onClick={() => { onDelete(attachment.id); handleClose() }}>
               Delete

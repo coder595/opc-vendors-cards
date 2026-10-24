@@ -271,7 +271,7 @@ function ProductRow({
       <div className="photo-row">
         <PhotoPicker
           id={`${id}-photo`}
-          label="Product photo"
+          label="product photo"
           kind="product"
           onAdd={(photo) => dispatch({ type: 'addPhoto', photo, productKey: product.key })}
         />

@@ -70,7 +70,7 @@ function ContactRow({ contact }: { contact: ContactDraft }) {
       <div className="photo-row">
         <PhotoPicker
           id={`${id}-card`}
-          label="Business card photo"
+          label="business card photo"
           kind="business_card"
           onAdd={addCard}
         />
