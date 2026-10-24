@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, SyntheticEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { SocialPlatform } from '../../db/models'
 import { RatingField, SelectField, TextAreaField, TextField } from '../../components/Field'
@@ -413,6 +413,10 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
     }
   }
 
+  const armAddMotion = (event: SyntheticEvent<HTMLFormElement>) => {
+    event.currentTarget.dataset.live = ''
+  }
+
   if (loading) {
     return <LoadingSpinner>Loading vendor…</LoadingSpinner>
   }
@@ -435,6 +439,10 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
       <form
         ref={formRef}
         className="vendor-form"
+        // Arms the add-item enter motion (forms.css) on the first interaction, so
+        // opening a saved vendor or restoring a draft does not animate every row.
+        onPointerDownCapture={armAddMotion}
+        onKeyDownCapture={armAddMotion}
         onSubmit={handleSubmit}
         noValidate
         aria-busy={saving}
