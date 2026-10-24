@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { ActionLabel } from '../../components/ActionLabel'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { SelectField, TextField } from '../../components/Field'
 import { getSettings, updateSettings } from '../../data/settings'
@@ -13,6 +14,7 @@ import type { LandedCostSettings, Settings, Theme } from '../../db/models'
 import { setThemePreference } from '../../lib/theme'
 import { APP_BUILT_AT } from '../../lib/app'
 import { updateApp, type UpdateResult } from '../../lib/appUpdate'
+import { haptic } from '../../lib/haptics'
 import { useMutation } from '../vendors/useMutation'
 
 const builtAtText = APP_BUILT_AT
@@ -53,12 +55,17 @@ function AppUpdateSection() {
         This copy was built {builtAtText}. Updating replaces only the app itself; your vendors,
         photos and settings stay on this device.
       </p>
-      <button type="button" className="btn btn--ghost" onClick={check} disabled={busy !== 'idle'}>
-        {busy === 'checking'
-          ? 'Checking for updates…'
-          : busy === 'updating'
-            ? 'Updating…'
-            : 'Update app'}
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={check}
+        disabled={busy !== 'idle'}
+        aria-busy={busy !== 'idle'}
+      >
+        <ActionLabel
+          show={busy}
+          labels={{ idle: 'Update app', checking: 'Checking for updates…', updating: 'Updating…' }}
+        />
       </button>
       {message ? (
         <p className="form-summary" role="status">
@@ -86,7 +93,7 @@ function SettingsForm({ initial }: { initial: Settings }) {
   const [vat, setVat] = useState(numberText(initial.landed?.vatPercent))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
-  const { error: saveError, run } = useMutation()
+  const { error: saveError, status: saveStatus, run } = useMutation()
   const changeTheme = (next: Theme) => {
     setTheme(next)
     setThemePreference(next)
@@ -208,8 +215,16 @@ function SettingsForm({ initial }: { initial: Settings }) {
           error={errors['landed.vat']}
         />
         <div className="form-foot">
-          <button type="submit" className="btn btn--primary">
-            Save settings
+          <button
+            type="submit"
+            className="btn btn--primary"
+            disabled={saveStatus === 'busy'}
+            aria-busy={saveStatus === 'busy'}
+          >
+            <ActionLabel
+              show={saveStatus}
+              labels={{ idle: 'Save settings', busy: 'Saving…', done: 'Saved ✓' }}
+            />
           </button>
         </div>
         {notice ? (
@@ -295,6 +310,7 @@ function RecentlyDeletedSection() {
     if (pendingId) {
       void run(
         permanentDeleteVendor(pendingId).then(() => {
+          haptic('success')
           setPendingId(null)
         }),
       )

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import type { FormEvent, SyntheticEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { SocialPlatform } from '../../db/models'
+import { ActionLabel } from '../../components/ActionLabel'
 import { RatingField, SelectField, TextAreaField, TextField } from '../../components/Field'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
@@ -12,6 +13,7 @@ import { db } from '../../db/schema'
 import { parseCardText } from '../../lib/cardParser'
 import { formatDate } from '../../lib/format'
 import { validateVendorDraft } from '../../lib/formValidation'
+import { haptic } from '../../lib/haptics'
 import { requestPersistentStorage } from '../../lib/storage'
 import { resolveTag, suggestTags } from '../../lib/tags'
 import { ContactFields } from './ContactFields'
@@ -128,6 +130,8 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
   const [loadError, setLoadError] = useState('')
   const [duplicateHint, setDuplicateHint] = useState<{ id: string; date: string } | null>(null)
   const [draftBanner, setDraftBanner] = useState('')
+  /** Minute of the last crash-recovery draft write, e.g. "14:02"; announced only when it changes. */
+  const [draftSavedAt, setDraftSavedAt] = useState('')
 
   const photosRef = useRef<PhotoDraft[]>([])
   const draftId = mode === 'edit' && vendorId ? vendorId : 'new'
@@ -357,7 +361,14 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
           bytes: ph.image.bytes,
         })),
         updatedAt: Date.now(),
-      })
+      }).then(
+        () =>
+          setDraftSavedAt(
+            new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          ),
+        // A failed draft write only loses crash recovery; the form itself is untouched.
+        () => {},
+      )
     }, 800)
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
@@ -395,6 +406,7 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
     if (!result.bundle) {
       setSummary('Fix the highlighted fields before saving.')
       setFailedSaves((n) => n + 1)
+      haptic('error')
       return
     }
     setSaving(true)
@@ -403,11 +415,13 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
       void deleteDraft(draftId)
       setDraftBanner('')
       void requestPersistentStorage()
+      haptic('success')
       window.location.hash = mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'
     } catch (err) {
       console.error(err)
       setSummary('The vendor could not be saved. Try again.')
       setFailedSaves((n) => n + 1)
+      haptic('error')
     } finally {
       setSaving(false)
     }
@@ -790,14 +804,29 @@ export function VendorForm({ mode, vendorId }: VendorFormProps) {
 
         {/* Sticky at the bottom of the screen while the form scrolls, above the tab bar on phones. */}
         <div className="form-bar">
+          <p className="form-bar__draft" role="status">
+            {draftSavedAt ? (
+              <>
+                Draft saved <span className="form-bar__draft-time mono">{draftSavedAt}</span>
+              </>
+            ) : null}
+          </p>
           <a
             className="btn btn--ghost"
             href={mode === 'edit' && vendorId ? `#/vendors/${vendorId}` : '#/vendors'}
           >
             Cancel
           </a>
-          <button type="submit" className="btn btn--primary form-bar__save" disabled={saving}>
-            {saving ? 'Saving…' : 'Save vendor'}
+          <button
+            type="submit"
+            className="btn btn--primary form-bar__save"
+            disabled={saving}
+            aria-busy={saving}
+          >
+            <ActionLabel
+              show={saving ? 'busy' : 'idle'}
+              labels={{ idle: 'Save vendor', busy: 'Saving…' }}
+            />
           </button>
         </div>
       </form>

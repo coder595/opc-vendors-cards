@@ -23,6 +23,7 @@ import { downloadBlob } from '../../lib/share'
 import { buildVcard } from '../../lib/vcard'
 import { LIMITS } from '../../lib/validate'
 import { useMutation } from './useMutation'
+import { haptic } from '../../lib/haptics'
 
 interface DetailData {
   vendor: Vendor
@@ -687,6 +688,7 @@ export function VendorDetail({ vendorId }: { vendorId: string }) {
     void run(
       softDeleteVendor(vendorId).then(
         () => {
+          haptic('success')
           window.location.hash = '#/vendors'
         },
         () => {

@@ -3,6 +3,7 @@ import { type ImportSummary } from '../../lib/exportImport'
 import { cardToEnvelope, decodeVendorCard, type VendorCardData } from '../../lib/share'
 import { importData } from '../../lib/exportImport'
 import { validateEnvelope } from '../../lib/validate'
+import { haptic } from '../../lib/haptics'
 
 const MAX_C_CHARS = 4000
 
@@ -138,6 +139,7 @@ export function ImportCardScreen() {
           for (const barcode of barcodes) {
             const decoded = await decodeVendorCard(barcode.rawValue)
             if (decoded) {
+              haptic('success')
               stopCamera()
               dispatch({ type: 'decoded', card: decoded })
               return
@@ -240,6 +242,7 @@ export function ImportCardScreen() {
               className="btn btn--primary"
               onClick={() => void add()}
               disabled={busy}
+              aria-busy={busy}
             >
               Add {cardState.card.name}
             </button>

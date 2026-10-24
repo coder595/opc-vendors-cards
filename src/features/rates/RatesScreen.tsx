@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { SelectField, TextField } from '../../components/Field'
+import { ActionLabel } from '../../components/ActionLabel'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { getSettings, updateSettings } from '../../data/settings'
 import type { Settings } from '../../db/models'
@@ -21,7 +22,7 @@ import {
   writeFxStorage,
 } from '../../lib/fx'
 import { newKey } from '../../lib/app'
-import { useMutation } from '../vendors/useMutation'
+import { DONE_MS, useMutation, type MutationStatus } from '../vendors/useMutation'
 
 interface RateRow {
   key: string
@@ -164,10 +165,11 @@ function RatesForm({ initial }: { initial: Settings }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
   const originalRows = useRef<RateRow[]>(toRows(initial.rates))
-  const { error: saveError, run } = useMutation()
+  const { error: saveError, status: saveStatus, run } = useMutation()
   const [fxKey, setFxKey] = useState(() => readFxStorage().key)
   const [fxStatus, setFxStatus] = useState('')
-  const [fetching, setFetching] = useState(false)
+  const [fxError, setFxError] = useState('')
+  const [fetchStatus, setFetchStatus] = useState<MutationStatus>('idle')
   const baseRef = useRef(initial.baseCurrency)
 
   // Auto-refresh: once a day per base, when a key is set and the device is online. Saves
@@ -193,7 +195,7 @@ function RatesForm({ initial }: { initial: Settings }) {
         setFxStatus(`Saved rates updated from openexchangerates.org (${asOfText(asOf)}).`)
       })
       .catch((error: unknown) => {
-        setFxStatus(error instanceof Error ? error.message : 'Rates fetch failed.')
+        setFxError(error instanceof Error ? error.message : 'Rates fetch failed.')
       })
   }, [initial.baseCurrency])
 
@@ -208,12 +210,14 @@ function RatesForm({ initial }: { initial: Settings }) {
       setErrors((prev) => ({ ...prev, base: 'Enter a 3-letter base currency.' }))
       return
     }
-    setFetching(true)
+    setFetchStatus('busy')
     setFxStatus('')
+    setFxError('')
     fetchLiveRates(fxKey.trim(), code)
       .then(({ rates: live, asOf }) => {
         if (baseRef.current !== code) {
           setFxStatus('The base currency changed while fetching. Press Fetch live rates again.')
+          setFetchStatus('idle')
           return
         }
         writeFxStorage({ fetched: { base: code, at: Date.now() } })
@@ -221,11 +225,13 @@ function RatesForm({ initial }: { initial: Settings }) {
         setFxStatus(
           `Live rates filled in from openexchangerates.org (${asOfText(asOf)}). Edit any value, then press Save rates.`,
         )
+        setFetchStatus('done')
+        setTimeout(() => setFetchStatus('idle'), DONE_MS)
       })
       .catch((error: unknown) => {
-        setFxStatus(error instanceof Error ? error.message : 'Rates fetch failed.')
+        setFxError(error instanceof Error ? error.message : 'Rates fetch failed.')
+        setFetchStatus('idle')
       })
-      .finally(() => setFetching(false))
   }
 
   const changeBase = (value: string) => {
@@ -356,18 +362,35 @@ function RatesForm({ initial }: { initial: Settings }) {
         type="button"
         className="btn btn--ghost"
         onClick={fetchRates}
-        disabled={!fxKey.trim() || fetching}
+        disabled={!fxKey.trim() || fetchStatus === 'busy'}
+        aria-busy={fetchStatus === 'busy'}
       >
-        {fetching ? 'Fetching rates…' : 'Fetch live rates'}
+        <ActionLabel
+          show={fetchStatus}
+          labels={{ idle: 'Fetch live rates', busy: 'Fetching rates…', done: 'Rates fetched ✓' }}
+        />
       </button>
       {fxStatus ? (
         <p className="field__hint" role="status">
           {fxStatus}
         </p>
       ) : null}
+      {fxError ? (
+        <p className="field__error" role="alert">
+          {fxError}
+        </p>
+      ) : null}
       <div className="form-foot">
-        <button type="submit" className="btn btn--primary">
-          Save rates
+        <button
+          type="submit"
+          className="btn btn--primary"
+          disabled={saveStatus === 'busy'}
+          aria-busy={saveStatus === 'busy'}
+        >
+          <ActionLabel
+            show={saveStatus}
+            labels={{ idle: 'Save rates', busy: 'Saving…', done: 'Saved ✓' }}
+          />
         </button>
       </div>
       {notice ? (

@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ActionLabel } from '../../components/ActionLabel'
 import { PhotoPicker, PhotoThumb } from '../../components/PhotoPicker'
 import { RatingField, TextAreaField, TextField } from '../../components/Field'
 import { saveVendorBundle } from '../../data/bundle'
+import { haptic } from '../../lib/haptics'
 import { requestPersistentStorage } from '../../lib/storage'
 import type { PhotoDraft } from './formState'
+import { DONE_MS } from './useMutation'
 
 interface QuickState {
   name: string
@@ -29,8 +32,13 @@ function emptyState(): QuickState {
 
 export function QuickAddScreen() {
   const [state, setState] = useState<QuickState>(emptyState)
-  const [saving, setSaving] = useState(false)
+  /** Which save button is running; both are disabled meanwhile. */
+  const [saving, setSaving] = useState<'next' | 'open' | null>(null)
+  /** "Save & next" reads "Saved ✓" briefly, since the form just clears. */
+  const [justSaved, setJustSaved] = useState(false)
+  const [savedNotice, setSavedNotice] = useState('')
   const [summary, setSummary] = useState('')
+  const justSavedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const allPhotosRef = useRef<PhotoDraft[]>([])
 
   const allPhotos = [...state.cardPhotos, ...state.productPhotos]
@@ -42,6 +50,7 @@ export function QuickAddScreen() {
   useEffect(() => {
     return () => {
       for (const photo of allPhotosRef.current) URL.revokeObjectURL(photo.previewUrl)
+      clearTimeout(justSavedTimer.current)
     }
   }, [])
 
@@ -67,10 +76,14 @@ export function QuickAddScreen() {
     const name = state.name.trim()
     if (!name) {
       setSummary('Enter a company name')
+      haptic('error')
       return
     }
-    setSaving(true)
+    setSaving(navigate)
     setSummary('')
+    setSavedNotice('')
+    clearTimeout(justSavedTimer.current)
+    setJustSaved(false)
     try {
       const photos = allPhotos
       const vendorId = await saveVendorBundle({
@@ -97,6 +110,7 @@ export function QuickAddScreen() {
       localStorage.setItem('opc.lastHall', state.hall)
       localStorage.setItem('opc.lastBooth', state.booth)
       void requestPersistentStorage()
+      haptic('success')
 
       if (navigate === 'open') {
         window.location.hash = `#/vendors/${vendorId}`
@@ -111,11 +125,15 @@ export function QuickAddScreen() {
           cardPhotos: [],
           productPhotos: [],
         })
+        setSavedNotice(`Saved ${name}. Ready for the next vendor.`)
+        setJustSaved(true)
+        justSavedTimer.current = setTimeout(() => setJustSaved(false), DONE_MS)
       }
     } catch {
       setSummary('Could not be saved. Try again.')
+      haptic('error')
     } finally {
-      setSaving(false)
+      setSaving(null)
     }
   }
 
@@ -124,7 +142,7 @@ export function QuickAddScreen() {
       className="vendor-form"
       onSubmit={(e) => e.preventDefault()}
       noValidate
-      aria-busy={saving}
+      aria-busy={saving !== null}
     >
       <div className="form-head">
         <h1>Quick add vendor</h1>
@@ -140,6 +158,9 @@ export function QuickAddScreen() {
           {summary}
         </p>
       ) : null}
+      <p className="sr-only" role="status">
+        {savedNotice}
+      </p>
 
       <section className="form-section" aria-labelledby="quick-identity">
         <h2 id="quick-identity">Company</h2>
@@ -227,18 +248,26 @@ export function QuickAddScreen() {
         <button
           type="button"
           className="btn btn--primary"
-          disabled={saving}
+          disabled={saving !== null}
+          aria-busy={saving === 'next'}
           onClick={() => void save('next')}
         >
-          {saving ? 'Saving\u2026' : 'Save & next'}
+          <ActionLabel
+            show={saving === 'next' ? 'busy' : justSaved ? 'done' : 'idle'}
+            labels={{ idle: 'Save & next', busy: 'Saving\u2026', done: 'Saved \u2713' }}
+          />
         </button>
         <button
           type="button"
           className="btn btn--ghost"
-          disabled={saving}
+          disabled={saving !== null}
+          aria-busy={saving === 'open'}
           onClick={() => void save('open')}
         >
-          {saving ? 'Saving\u2026' : 'Save & open'}
+          <ActionLabel
+            show={saving === 'open' ? 'busy' : 'idle'}
+            labels={{ idle: 'Save & open', busy: 'Saving\u2026' }}
+          />
         </button>
       </div>
     </form>
